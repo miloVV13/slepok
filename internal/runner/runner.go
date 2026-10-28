@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -169,6 +170,26 @@ func Build(e *Env, src, build string, o Options) (*Result, error) {
 }
 
 var errNoIsolation = errors.New("network isolation is only implemented on Linux")
+
+// IsolationAvailable reports whether builds on this host can run without
+// network access. It starts a program that does not exist with isolation:
+// creating the namespaces happens before exec, so "not found" means they
+// work, and no code runs either way.
+func IsolationAvailable() bool {
+	attr := isolation()
+	if attr == nil {
+		return false
+	}
+	cmd := exec.Command("/nonexistent/slepok-isolation-probe")
+	cmd.SysProcAttr = attr
+	err := cmd.Start()
+	if err == nil {
+		cmd.Process.Kill()
+		cmd.Wait()
+		return true
+	}
+	return errors.Is(err, fs.ErrNotExist)
+}
 
 type runner struct {
 	env     []string

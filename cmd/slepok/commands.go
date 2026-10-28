@@ -597,7 +597,11 @@ var versionCmd = &command{
 	name:    "version",
 	summary: "print the slepok version",
 	run: func(*flag.FlagSet, []string) error {
-		fmt.Printf("slepok %s (snapshot format %d, %s)\n", version, manifest.FormatVersion, manifest.HostPlatform())
+		isolation := "available"
+		if !runner.IsolationAvailable() {
+			isolation = "not available: builds can reach the network"
+		}
+		fmt.Printf("slepok %s (snapshot format %d, %s)\nnetwork isolation: %s\n", version, manifest.FormatVersion, manifest.HostPlatform(), isolation)
 		return nil
 	},
 }

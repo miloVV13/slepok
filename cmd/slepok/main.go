@@ -33,16 +33,23 @@ func usage() {
 	fmt.Fprintf(os.Stderr, "\nRun 'slepok <command> -h' for the flags of a command.\n")
 }
 
-func main() {
-	if len(os.Args) < 2 || os.Args[1] == "-h" || os.Args[1] == "--help" || os.Args[1] == "help" {
+// usageError is a mistake in how slepok was invoked (exit status 2).
+type usageError struct{ msg string }
+
+func (e *usageError) Error() string { return e.msg }
+
+// execute runs one slepok invocation; args excludes the program name.
+func execute(args []string) error {
+	if len(args) == 0 {
 		usage()
-		if len(os.Args) < 2 {
-			os.Exit(2)
-		}
-		return
+		return &usageError{"no command given"}
+	}
+	if args[0] == "-h" || args[0] == "--help" || args[0] == "help" {
+		usage()
+		return nil
 	}
 	for _, c := range commands {
-		if c.name != os.Args[1] {
+		if c.name != args[0] {
 			continue
 		}
 		fs := flag.NewFlagSet("slepok "+c.name, flag.ContinueOnError)
@@ -56,21 +63,33 @@ func main() {
 		if c.flags != nil {
 			c.flags(fs)
 		}
-		if err := fs.Parse(os.Args[2:]); err != nil {
+		if err := fs.Parse(args[1:]); err != nil {
 			if errors.Is(err, flag.ErrHelp) {
-				return
+				return nil
 			}
-			os.Exit(2)
+			return &usageError{err.Error()}
 		}
 		if err := c.run(fs, fs.Args()); err != nil {
-			fmt.Fprintf(os.Stderr, "slepok %s: %v\n", c.name, err)
-			os.Exit(1)
+			return fmt.Errorf("%s: %w", c.name, err)
 		}
+		return nil
+	}
+	usage()
+	return &usageError{fmt.Sprintf("unknown command %q", args[0])}
+}
+
+func main() {
+	err := execute(os.Args[1:])
+	if err == nil {
 		return
 	}
-	fmt.Fprintf(os.Stderr, "slepok: unknown command %q\n\n", os.Args[1])
-	usage()
-	os.Exit(2)
+	var ue *usageError
+	if errors.As(err, &ue) {
+		fmt.Fprintf(os.Stderr, "slepok: %v\n", err)
+		os.Exit(2)
+	}
+	fmt.Fprintf(os.Stderr, "slepok %v\n", err)
+	os.Exit(1)
 }
 
 func hasFlags(fs *flag.FlagSet) bool {

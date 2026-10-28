@@ -125,3 +125,11 @@ func TestIsolationHasNoNetwork(t *testing.T) {
 		t.Fatalf("uid inside = %s, want %d (not namespace root)", fields[1], os.Getuid())
 	}
 }
+
+func TestIsolationAvailable(t *testing.T) {
+	got := IsolationAvailable()
+	if runtime.GOOS != "linux" && got {
+		t.Fatal("isolation reported outside Linux")
+	}
+	t.Logf("isolation available: %v", got)
+}

@@ -4,6 +4,7 @@ package profile
 import (
 	"embed"
 	"fmt"
+	"io/fs"
 	"path"
 	"regexp"
 	"slices"
@@ -15,20 +16,24 @@ import (
 )
 
 //go:embed profiles/*.toml all:templates
-var files embed.FS
+var builtin embed.FS
+
+// FS holds the profiles (profiles/<id>.toml) and project templates
+// (templates/<id>/). It is the built-in set; tests replace it.
+var FS fs.FS = builtin
 
 // Template returns the starter project of a profile: file names mapped to
 // contents, with @NAME@ replaced by name. A stored "gitignore" becomes
 // ".gitignore" (embedding dot files needs care).
 func Template(id, name string) (map[string][]byte, error) {
 	dir := path.Join("templates", id)
-	entries, err := files.ReadDir(dir)
+	entries, err := fs.ReadDir(FS, dir)
 	if err != nil {
 		return nil, fmt.Errorf("profile %s has no project template", id)
 	}
 	out := map[string][]byte{}
 	for _, e := range entries {
-		data, err := files.ReadFile(path.Join(dir, e.Name()))
+		data, err := fs.ReadFile(FS, path.Join(dir, e.Name()))
 		if err != nil {
 			return nil, err
 		}
@@ -81,7 +86,7 @@ type Source struct {
 
 // IDs returns the identifiers of the built-in profiles.
 func IDs() []string {
-	entries, _ := files.ReadDir("profiles")
+	entries, _ := fs.ReadDir(FS, "profiles")
 	var ids []string
 	for _, e := range entries {
 		ids = append(ids, strings.TrimSuffix(e.Name(), ".toml"))
@@ -91,7 +96,7 @@ func IDs() []string {
 
 // Load returns the built-in profile with the given id.
 func Load(id string) (*Profile, error) {
-	data, err := files.ReadFile(path.Join("profiles", id+".toml"))
+	data, err := fs.ReadFile(FS, path.Join("profiles", id+".toml"))
 	if err != nil {
 		return nil, fmt.Errorf("unknown profile %q (available: %s)", id, strings.Join(IDs(), ", "))
 	}
