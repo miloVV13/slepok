@@ -90,6 +90,10 @@ func Pack(dst string, opt Options) (*manifest.Manifest, error) {
 	if _, err := Validate(tmp.Name()); err != nil {
 		return nil, fmt.Errorf("written snapshot failed validation: %w", err)
 	}
+	// CreateTemp makes the file private; a snapshot is meant to be shared.
+	if err := os.Chmod(tmp.Name(), 0o644); err != nil {
+		return nil, err
+	}
 	// Link fails if dst appeared in the meantime, unlike Rename.
 	if err := os.Link(tmp.Name(), dst); err != nil {
 		return nil, err
@@ -498,7 +502,7 @@ func (u *unpacker) file(f manifest.File, r io.Reader) error {
 }
 
 func (u *unpacker) pkg(p manifest.Package, r io.Reader) error {
-	if p.Platform != u.platform {
+	if p.Platform != u.platform && p.Platform != manifest.AnyPlatform {
 		return verifier{}.pkg(p, r)
 	}
 	if err := u.store.Install(p.Digest, r); err != nil {

@@ -1,0 +1,103 @@
+# Raspberry Pi RP2040 with Pico SDK, bare-metal C/C++.
+#
+# Every source is pinned twice: by the vendor checksum (sha256 of the
+# download, or the git commit) and by the digest of the resulting package.
+
+id = "rp2040"
+version = "1"
+description = "Raspberry Pi RP2040 · Pico SDK 2.3.1 · ARM GCC 14.2"
+boards = ["pico", "pico_w"]
+
+path = ["{python}/bin", "{arm-gcc}/bin", "{cmake}/bin", "{ninja}"]
+
+configure = [
+    "-G", "Ninja",
+    "-DPICO_BOARD={board}",
+    "-DPICO_TOOLCHAIN_PATH={arm-gcc}",
+    "-Dpioasm_DIR={pioasm}/pioasm",
+    "-Dpicotool_DIR={picotool}/picotool",
+    "-DPython3_ROOT_DIR={python}",
+    "-DPICO_SDK_FETCH_FROM_GIT=OFF",
+    "-DFETCHCONTENT_FULLY_DISCONNECTED=ON",
+    "-DCMAKE_FIND_USE_CMAKE_SYSTEM_PATH=OFF",
+    "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+]
+
+outputs = ["*.uf2", "*.elf", "*.bin", "*.hex"]
+
+[env]
+PICO_SDK_PATH = "{pico-sdk}"
+PYTHONDONTWRITEBYTECODE = "1"
+
+[[components]]
+name = "arm-gcc"
+version = "14.2.rel1"
+license = "GPL-3.0-or-later WITH GCC-exception-3.1; newlib: BSD-style"
+[components.sources.linux-x64]
+url = "https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi.tar.xz"
+sha256 = "62a63b981fe391a9cbad7ef51b17e49aeaa3e7b0d029b36ca1e9c3b2a9b78823"
+format = "tar.xz"
+strip = 1
+digest = "sha256:97a1b0815f92b31c01e86d4aa42763474c5a16a997d17c5296fc1f2928f31085"
+
+[[components]]
+name = "cmake"
+version = "4.3.6"
+license = "BSD-3-Clause"
+[components.sources.linux-x64]
+url = "https://github.com/Kitware/CMake/releases/download/v4.3.6/cmake-4.3.6-linux-x86_64.tar.gz"
+sha256 = "fba967b44c7b40f155f9492dacb5477aab8333699986e1e07a7d90803aba7219"
+format = "tar.gz"
+strip = 1
+digest = "sha256:7fd0623a01208e3bcf8b4752e31995bfdd76f60035444602240311a389f5ce7e"
+
+[[components]]
+name = "ninja"
+version = "1.13.2"
+license = "Apache-2.0"
+[components.sources.linux-x64]
+url = "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-linux.zip"
+sha256 = "5749cbc4e668273514150a80e387a957f933c6ed3f5f11e03fb30955e2bbead6"
+format = "zip"
+digest = "sha256:d22916dcd743f8cad75f12cb8d8e5ba02115b654b2d90287cd101e6547f3166a"
+
+[[components]]
+name = "python"
+version = "3.12.16+20261026"
+license = "PSF-2.0"
+[components.sources.linux-x64]
+url = "https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.12.16+20261026-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz"
+sha256 = "ce4f6d0a6cfdb3bed6e44c2f9affd85943c76a42e25ad3a259002f31d6fb8a20"
+format = "tar.gz"
+strip = 1
+digest = "sha256:a7d41c384e4211540539ba314873faeab17b8b48bfc9c9980484a5a689cae4dc"
+
+[[components]]
+name = "pioasm"
+version = "2.3.1"
+license = "BSD-3-Clause"
+[components.sources.linux-x64]
+url = "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.3.1-0/pico-sdk-tools-2.3.1-x86_64-lin.tar.gz"
+sha256 = "39758f147a8e615f8c77586ce3c85a25c6728910a86612eea184fc86eb606992"
+format = "tar.gz"
+digest = "sha256:f4615960feef3889508658223794a979801bfc3258a0e56751d2a05ab63b0362"
+
+[[components]]
+name = "picotool"
+version = "2.3.1"
+license = "BSD-3-Clause"
+[components.sources.linux-x64]
+url = "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.3.1-0/picotool-2.3.1-x86_64-lin.tar.gz"
+sha256 = "878a1a1e7d8336b8be60300c7218f366d9790c0d3a211b181d6d172e80b1248e"
+format = "tar.gz"
+digest = "sha256:f683feb537319b7b9e1661328ed319357d64628be26b76dcf8cb68d305dce85d"
+
+[[components]]
+name = "pico-sdk"
+version = "2.3.1"
+license = "BSD-3-Clause; submodules under their own licenses, see lib/*/LICENSE*"
+[components.sources.any]
+git = "https://github.com/raspberrypi/pico-sdk.git"
+ref = "2.3.1"
+commit = "079c6f39023649b154152db30f1d781e884879bc"
+digest = "sha256:b6f7eccbf2159b28801e0ffee13ba178656d5f649f5b280fe3420a0c66f2e92c"

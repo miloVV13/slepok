@@ -25,6 +25,10 @@ const MaxSize = 64 << 20
 // EntryName is the archive path of the manifest.
 const EntryName = "manifest.json"
 
+// AnyPlatform marks a package that works on every host platform, such as
+// an SDK distributed as source.
+const AnyPlatform = "any"
+
 type Manifest struct {
 	FormatVersion int       `json:"formatVersion"`
 	CreatedBy     string    `json:"createdBy"`
@@ -130,7 +134,7 @@ func (m *Manifest) Validate() error {
 			return fmt.Errorf("package with empty name")
 		case !digestRe.MatchString(p.Digest):
 			return fmt.Errorf("package %s: invalid digest %q", p.Name, p.Digest)
-		case !platforms[p.Platform]:
+		case !platforms[p.Platform] && p.Platform != AnyPlatform:
 			return fmt.Errorf("package %s: platform %q not listed in platforms", p.Name, p.Platform)
 		case p.Size < 0:
 			return fmt.Errorf("package %s: negative size", p.Name)

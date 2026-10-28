@@ -84,6 +84,25 @@ func TestInstallRejectsWrongDigest(t *testing.T) {
 	}
 }
 
+func TestInstallDir(t *testing.T) {
+	s := openStore(t)
+	_, want := newPackage(t)
+	src := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(src, "bin"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(src, "bin", "tool"), []byte("tool"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.InstallDir(src, "sha256:"+strings.Repeat("1", 64)); err == nil {
+		t.Fatal("InstallDir accepted a wrong expected digest")
+	}
+	got, err := s.InstallDir(src, want)
+	if err != nil || got != want || !s.Has(want) {
+		t.Fatalf("InstallDir = %s, %v; want %s installed", got, err, want)
+	}
+}
+
 func TestPathRejectsBadDigest(t *testing.T) {
 	s := openStore(t)
 	for _, d := range []string{"", "sha256:../../etc", "md5:abc", "sha256:" + strings.Repeat("G", 64)} {

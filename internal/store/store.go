@@ -63,6 +63,44 @@ func hexOf(digest string) (string, error) {
 	return h, nil
 }
 
+// Root returns the store directory.
+func (s *Store) Root() string { return s.root }
+
+// TempDir creates a scratch directory inside the store, on the same file
+// system as the packages. The caller removes it.
+func (s *Store) TempDir(pattern string) (string, error) {
+	dir := filepath.Join(s.root, "tmp")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return "", err
+	}
+	return os.MkdirTemp(dir, pattern)
+}
+
+// InstallDir stores the tree at dir as a package and returns its digest.
+// If want is not empty, the tree must have exactly that digest.
+func (s *Store) InstallDir(dir, want string) (string, error) {
+	digest, _, err := pkgtar.Write(io.Discard, dir)
+	if err != nil {
+		return "", err
+	}
+	if want != "" && digest != want {
+		return "", fmt.Errorf("package digest mismatch: got %s, want %s", digest, want)
+	}
+	pr, pw := io.Pipe()
+	go func() {
+		_, _, err := pkgtar.Write(pw, dir)
+		pw.CloseWithError(err)
+	}()
+	if err := s.Install(digest, pr); err != nil {
+		pr.CloseWithError(err)
+		return "", err
+	}
+	return digest, nil
+}
+
+// RemoveTree deletes a directory tree that may contain read-only entries.
+func RemoveTree(dir string) error { return removeTree(dir) }
+
 // Path returns where the package with the given digest lives.
 func (s *Store) Path(digest string) (string, error) {
 	h, err := hexOf(digest)

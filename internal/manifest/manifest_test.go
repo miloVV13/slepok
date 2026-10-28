@@ -32,6 +32,14 @@ func TestRoundTrip(t *testing.T) {
 	}
 }
 
+func TestAnyPlatformPackage(t *testing.T) {
+	m := valid()
+	m.Packages[0].Platform = AnyPlatform
+	if err := m.Validate(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestParseVersion(t *testing.T) {
 	_, err := Parse([]byte(`{"formatVersion": 7, "somethingNew": true}`))
 	var tooNew *TooNewError

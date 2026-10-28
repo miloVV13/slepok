@@ -101,6 +101,9 @@ func TestPackValidateUnpack(t *testing.T) {
 	if got := listDir(t, filepath.Dir(dst)); len(got) != 1 {
 		t.Fatalf("output dir contains %v, want only abc.slepok", got)
 	}
+	if info, err := os.Stat(dst); err != nil || info.Mode().Perm()&0o044 != 0o044 {
+		t.Fatalf("snapshot mode %v, want readable by others", info.Mode())
+	}
 
 	m, err := Validate(dst)
 	must(t, err)
