@@ -39,7 +39,26 @@ type PackageSource struct {
 	Version  string
 	Platform string
 	License  string
-	Dir      string
+	// SourceCode and Notice are copied into the manifest (spec 15.1).
+	SourceCode string
+	Notice     string
+	Dir        string
+}
+
+// Extra is an additional file stored outside project/, such as a NOTICE
+// under reports/ or bundled source code under sources/. Either Data or
+// Path, a file on disk, holds the content.
+type Extra struct {
+	Name string
+	Data []byte
+	Path string
+}
+
+func (e Extra) open() (io.ReadCloser, error) {
+	if e.Path != "" {
+		return os.Open(e.Path)
+	}
+	return io.NopCloser(bytes.NewReader(e.Data)), nil
 }
 
 type Options struct {
@@ -53,6 +72,7 @@ type Options struct {
 	Packages     []PackageSource
 	// Report, if set, is stored as reports/verify.json.
 	Report []byte
+	Extras []Extra
 }
 
 // Pack writes a snapshot to dst, which must not exist. The file is written
@@ -126,6 +146,13 @@ func plan(opt Options) (*manifest.Manifest, error) {
 			Digest: digestOf(opt.Report),
 		})
 	}
+	for _, e := range opt.Extras {
+		f, err := extraFile(e)
+		if err != nil {
+			return nil, err
+		}
+		m.Files = append(m.Files, f)
+	}
 	for _, p := range opt.Packages {
 		digest, size, err := pkgtar.Write(io.Discard, p.Dir)
 		if err != nil {
@@ -133,10 +160,24 @@ func plan(opt Options) (*manifest.Manifest, error) {
 		}
 		m.Packages = append(m.Packages, manifest.Package{
 			Name: p.Name, Version: p.Version, Platform: p.Platform, License: p.License,
-			Digest: digest, Size: size,
+			SourceCode: p.SourceCode, Notice: p.Notice, Digest: digest, Size: size,
 		})
 	}
 	return m, nil
+}
+
+func extraFile(e Extra) (manifest.File, error) {
+	r, err := e.open()
+	if err != nil {
+		return manifest.File{}, err
+	}
+	defer r.Close()
+	h := sha256.New()
+	n, err := io.Copy(h, r)
+	if err != nil {
+		return manifest.File{}, err
+	}
+	return manifest.File{Path: e.Name, Size: n, Digest: pkgtar.Digest(h.Sum(nil))}, nil
 }
 
 func projectFile(dir, rel string) (manifest.File, error) {
@@ -210,6 +251,16 @@ func addFile(tw *tar.Writer, f manifest.File, opt Options) error {
 	}
 	if f.Path == reportEntry {
 		return addEntry(tw, f.Path, mode, f.Size, f.Digest, bytes.NewReader(opt.Report))
+	}
+	for _, e := range opt.Extras {
+		if e.Name == f.Path {
+			r, err := e.open()
+			if err != nil {
+				return err
+			}
+			defer r.Close()
+			return addEntry(tw, f.Path, mode, f.Size, f.Digest, r)
+		}
 	}
 	rel := strings.TrimPrefix(f.Path, "project/")
 	src, err := os.Open(filepath.Join(opt.ProjectDir, filepath.FromSlash(rel)))

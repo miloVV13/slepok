@@ -133,6 +133,13 @@ func reason(err error) string {
 	return msg
 }
 
+// Download fetches a file pinned by its sha256 into the download cache and
+// returns its path. It is used for archives that are bundled as they are,
+// such as the source code of GPL components.
+func (f *Fetcher) Download(name, url, sha256 string) (string, error) {
+	return f.download(name, profile.Source{URL: url, SHA256: sha256})
+}
+
 // download returns the path of the verified archive in the download cache.
 func (f *Fetcher) download(name string, src profile.Source) (string, error) {
 	dir := filepath.Join(f.Store.Root(), "downloads")

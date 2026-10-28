@@ -19,6 +19,7 @@ import (
 	"github.com/miloVV13/slepok/internal/profile"
 	"github.com/miloVV13/slepok/internal/project"
 	"github.com/miloVV13/slepok/internal/runner"
+	"github.com/miloVV13/slepok/internal/snapshot"
 	"github.com/miloVV13/slepok/internal/store"
 )
 
@@ -98,8 +99,9 @@ func toolchainArchive(t *testing.T, cmake string) []byte {
 
 // fakeProfile installs a profile whose toolchain is served by srvURL and
 // whose SDK comes from a local git repository.
-func fakeProfile(t *testing.T, srvURL string, archive []byte, sdkURL, sdkCommit string) {
+func fakeProfile(t *testing.T, srvURL string, archive, source []byte, sdkURL, sdkCommit string) {
 	sum := sha256.Sum256(archive)
+	srcSum := sha256.Sum256(source)
 	toml := `id = "fake"
 version = "1"
 description = "end-to-end test profile"
@@ -114,7 +116,10 @@ SDK_PATH = "{sdk}"
 [[components]]
 name = "tc"
 version = "1.0"
-license = "MIT"
+license = "GPL-3.0-or-later"
+[components.source_code]
+url = "` + srvURL + `/tc-src.tar.gz"
+sha256 = "` + hex.EncodeToString(srcSum[:]) + `"
 [components.sources.` + manifest.HostPlatform() + `]
 url = "` + srvURL + `/tc.tar.gz"
 sha256 = "` + hex.EncodeToString(sum[:]) + `"
@@ -125,6 +130,7 @@ strip = 1
 name = "sdk"
 version = "2.0"
 license = "BSD-3-Clause"
+notice = "test notice: non-commercial part inside"
 [components.sources.any]
 git = "` + sdkURL + `"
 ref = "v2.0"
@@ -154,16 +160,20 @@ func TestEndToEnd(t *testing.T) {
 		t.Fatalf("build fakecmake: %v\n%s", err, out)
 	}
 	archive := toolchainArchive(t, fakeCmake)
+	source := []byte("the corresponding source of tc")
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/tc.tar.gz" {
+		switch r.URL.Path {
+		case "/tc.tar.gz":
+			w.Write(archive)
+		case "/tc-src.tar.gz":
+			w.Write(source)
+		default:
 			http.NotFound(w, r)
-			return
 		}
-		w.Write(archive)
 	}))
 	defer srv.Close()
 	sdkURL, sdkCommit := sdkRepo(t)
-	fakeProfile(t, srv.URL, archive, sdkURL, sdkCommit)
+	fakeProfile(t, srv.URL, archive, source, sdkURL, sdkCommit)
 
 	isolated := runner.IsolationAvailable()
 	probeLog := filepath.Join(tmp, "probe.log")
@@ -221,6 +231,12 @@ func TestEndToEnd(t *testing.T) {
 	}
 	must(t, execute([]string{"validate", snap}))
 	must(t, execute([]string{"inspect", snap}))
+	checkLicenses(t, snap, srv.URL, nil)
+
+	// -with-sources bundles the published source code of GPL components.
+	withSrc := filepath.Join(work, "proj-src.slepok")
+	must(t, execute([]string{"pack", "-with-sources", "-o", withSrc}))
+	checkLicenses(t, withSrc, srv.URL, source)
 	mustFail(t, execute([]string{"pack", "-o", snap}), "exists")
 
 	corrupt, err := os.ReadFile(snap)
@@ -269,5 +285,49 @@ func TestEndToEnd(t *testing.T) {
 	must(t, err)
 	if len(pkgs) != 2 {
 		t.Fatalf("gc removed packages younger than the grace period: %v", pkgs)
+	}
+}
+
+// checkLicenses verifies the license information of a snapshot: the NOTICE,
+// the per-package source code and notice fields, and, when source is not
+// nil, the bundled source archive.
+func checkLicenses(t *testing.T, snap, srvURL string, source []byte) {
+	t.Helper()
+	m, err := snapshot.Validate(snap)
+	must(t, err)
+	files := map[string]bool{}
+	for _, f := range m.Files {
+		files[f.Path] = true
+	}
+	if !files[noticeEntry] {
+		t.Fatalf("%s has no %s", snap, noticeEntry)
+	}
+	for _, p := range m.Packages {
+		switch p.Name {
+		case "tc":
+			if p.SourceCode != srvURL+"/tc-src.tar.gz" {
+				t.Errorf("tc source code = %q", p.SourceCode)
+			}
+		case "sdk":
+			if !strings.Contains(p.Notice, "non-commercial") {
+				t.Errorf("sdk notice = %q", p.Notice)
+			}
+		}
+	}
+	bundled := files["sources/tc-src.tar.gz"]
+	if (source != nil) != bundled {
+		t.Fatalf("source bundled = %v, want %v", bundled, source != nil)
+	}
+	if source == nil {
+		return
+	}
+	out := t.TempDir()
+	if b, err := exec.Command("tar", "--zstd", "-xf", snap, "-C", out, "sources/").CombinedOutput(); err != nil {
+		t.Skipf("tar cannot extract zstd here: %v %s", err, b)
+	}
+	got, err := os.ReadFile(filepath.Join(out, "sources", "tc-src.tar.gz"))
+	must(t, err)
+	if !bytes.Equal(got, source) {
+		t.Fatal("bundled source differs from the published one")
 	}
 }

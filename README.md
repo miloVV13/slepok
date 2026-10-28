@@ -63,7 +63,7 @@ are planned.
 | `slepok init [--profile rp2040] [--board pico\|pico_w] [dir]` | Creates a blink project in an empty directory, or adds Slepok to an existing one, then downloads and verifies the environment. Needs network unless the packages are already in the store. |
 | `slepok build` | Configures and builds the project without network access. |
 | `slepok shell` | Opens your shell with the environment first in `PATH`. Running `cmake -S . -B build` by hand configures the project exactly like `slepok build`. Not network-isolated. |
-| `slepok pack [-o file]` | Builds a clean copy offline, then writes the snapshot. Refuses files that look like secrets unless `-allow-sensitive`. |
+| `slepok pack [-o file] [-with-sources]` | Builds a clean copy offline, then writes the snapshot. Refuses files that look like secrets unless `-allow-sensitive`. `-with-sources` bundles the source code of GPL components (see Licenses). |
 | `slepok unpack <file> [dir]` | Verifies and restores a snapshot. No network needed. |
 | `slepok validate <file>` | Checks every size and checksum without extracting or running anything. |
 | `slepok inspect <file>` | Shows what a snapshot contains, reading only its manifest. |
@@ -138,11 +138,24 @@ The full specification, including design decisions and measurements, is in
 
 ## Licenses
 
-Slepok is MIT licensed. **Snapshots contain third-party software** under
-its own licenses, listed per package by `slepok inspect`. The ARM GNU
-Toolchain is GPL-licensed: if you distribute snapshots (beyond your own
-team, for example publicly), you take on the GPL obligation to provide the
-corresponding source code, which Arm publishes for each release.
+Slepok is MIT licensed. The binary includes Go modules under BSD and MIT
+licenses; their texts are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
+(regenerate with `scripts/third_party_notices.sh`).
+
+**Snapshots contain third-party software** under its own licenses. Every
+package keeps its license files, every snapshot carries
+`reports/NOTICE.txt`, and `slepok inspect`, `pack` and `unpack` point out
+what matters when you share one. This is not legal advice; in short, for
+the RP2040 profile:
+
+| Situation | |
+|---|---|
+| Use snapshots yourself or inside your team or company | fine |
+| Give a snapshot to someone else, publish it | fine, but the ARM GNU Toolchain is GPL: you must offer its source code. `slepok pack -with-sources` bundles it (about 300 MB) so you do not depend on Arm keeping it online |
+| Sell snapshots or ship them in a commercial product | check first: the Pico SDK includes **BTstack**, whose license allows only personal, non-commercial use without a commercial license from BlueKitchen, and **cyw43-driver**, which may only be used with Raspberry Pi chips |
+| Sell devices with firmware built by Slepok | same as without Slepok: GCC's runtime library exception keeps your firmware free of the GPL; keep the BSD notices of the Pico SDK in your documentation |
+
+Bundled sources come out with `tar --zstd -xf project.slepok sources/`.
 
 ## Compared to
 

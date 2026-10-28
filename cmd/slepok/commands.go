@@ -311,6 +311,7 @@ var shellCmd = &command{
 var packFlags struct {
 	output         *string
 	allowSensitive *bool
+	withSources    *bool
 }
 
 var packCmd = &command{
@@ -320,6 +321,7 @@ var packCmd = &command{
 	flags: func(fs *flag.FlagSet) {
 		packFlags.output = fs.String("o", "", "snapshot file (default: <project>.slepok in the current directory)")
 		packFlags.allowSensitive = fs.Bool("allow-sensitive", false, "include files that look like secrets")
+		packFlags.withSources = fs.Bool("with-sources", false, "bundle the source code of GPL components (downloads it; needed to publish snapshots)")
 	},
 	run: runPack,
 }
@@ -361,10 +363,21 @@ func runPack(_ *flag.FlagSet, args []string) error {
 		return fmt.Errorf("these files look like secrets and are not packed by default:\n  %s\nexclude them in %s or pass -allow-sensitive",
 			strings.Join(sel.Sensitive, "\n  "), project.IgnoreName)
 	}
-	packages, err := snapshotPackages(p, st)
+	prof, err := profile.Load(p.Config.Profile)
 	if err != nil {
 		return err
 	}
+	packages, err := snapshotPackages(p, st, prof)
+	if err != nil {
+		return err
+	}
+	var sources []snapshot.Extra
+	if *packFlags.withSources {
+		if sources, err = sourceExtras(st, prof, packages); err != nil {
+			return err
+		}
+	}
+	extras := append([]snapshot.Extra{{Name: noticeEntry, Data: noticeText(packages, sources)}}, sources...)
 
 	work, err := st.TempDir("pack-")
 	if err != nil {
@@ -414,6 +427,7 @@ func runPack(_ *flag.FlagSet, args []string) error {
 		ProjectFiles: sel.Files,
 		Packages:     packages,
 		Report:       rep,
+		Extras:       extras,
 	})
 	if err != nil {
 		return err
@@ -423,12 +437,17 @@ func runPack(_ *flag.FlagSet, args []string) error {
 		return err
 	}
 	fmt.Printf("Wrote %s: %s, %d project files, %d packages.\n", out, humanSize(info.Size()), len(sel.Files), len(m.Packages))
+	printNotices(os.Stdout, m, len(sources) > 0)
 	return nil
 }
 
 // snapshotPackages lists the packages of every configured platform, each
 // once. All of them must be in the store.
-func snapshotPackages(p *project.Project, st *store.Store) ([]snapshot.PackageSource, error) {
+func snapshotPackages(p *project.Project, st *store.Store, prof *profile.Profile) ([]snapshot.PackageSource, error) {
+	components := map[string]profile.Component{}
+	for _, c := range prof.Components {
+		components[c.Name] = c
+	}
 	seen := map[string]bool{}
 	var out []snapshot.PackageSource
 	for _, platform := range p.Config.Platforms {
@@ -448,9 +467,16 @@ func snapshotPackages(p *project.Project, st *store.Store) ([]snapshot.PackageSo
 			if err != nil {
 				return nil, err
 			}
-			out = append(out, snapshot.PackageSource{
+			ps := snapshot.PackageSource{
 				Name: pkg.Name, Version: pkg.Version, Platform: pkg.Platform, License: pkg.License, Dir: dir,
-			})
+			}
+			if c, ok := components[pkg.Name]; ok && c.Version == pkg.Version {
+				ps.Notice = c.Notice
+				if c.SourceCode != nil {
+					ps.SourceCode = c.SourceCode.URL
+				}
+			}
+			out = append(out, ps)
 		}
 	}
 	return out, nil
@@ -540,7 +566,9 @@ var unpackCmd = &command{
 			return err
 		}
 		register(st, dest)
-		fmt.Printf("Restored %s (%s profile, %d packages).\nNext: cd %s && slepok build\n", dest, m.Profile.ID, len(m.Packages), dest)
+		fmt.Printf("Restored %s (%s profile, %d packages).\n", dest, m.Profile.ID, len(m.Packages))
+		printNotices(os.Stdout, m, hasSources(m))
+		fmt.Printf("Next: cd %s && slepok build\n", dest)
 		return nil
 	},
 }
@@ -588,6 +616,13 @@ var inspectCmd = &command{
 		for _, pkg := range m.Packages {
 			fmt.Printf("  %-10s %-18s %-10s %9s  %s\n", pkg.Name, pkg.Version, pkg.Platform, humanSize(pkg.Size), pkg.License)
 		}
+		for _, f := range m.Files {
+			if strings.HasPrefix(f.Path, "sources/") {
+				fmt.Printf("Source:     %s (%s)\n", f.Path, humanSize(f.Size))
+			}
+		}
+		fmt.Println()
+		printNotices(os.Stdout, m, hasSources(m))
 		fmt.Printf("\nOnly the manifest was read; run 'slepok validate' to check the contents.\n")
 		return nil
 	},

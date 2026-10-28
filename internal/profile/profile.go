@@ -67,6 +67,18 @@ type Component struct {
 	License string `toml:"license"`
 	// Sources maps a platform, or "any", to where the component comes from.
 	Sources map[string]Source `toml:"sources"`
+	// SourceCode is the corresponding source published by the vendor, for
+	// licenses such as the GPL that oblige distributors to offer it.
+	SourceCode *SourceArchive `toml:"source_code,omitempty"`
+	// Notice warns about license conditions beyond keeping notices, such
+	// as non-commercial terms. Shown by pack, unpack and inspect.
+	Notice string `toml:"notice,omitempty"`
+}
+
+// SourceArchive is a downloadable source archive.
+type SourceArchive struct {
+	URL    string `toml:"url"`
+	SHA256 string `toml:"sha256"`
 }
 
 // Source is either a downloadable archive or a git checkout.
@@ -130,6 +142,9 @@ func (p *Profile) validate() error {
 			return fmt.Errorf("component name %q missing or duplicated", c.Name)
 		}
 		names[c.Name] = true
+		if sc := c.SourceCode; sc != nil && (sc.URL == "" || !sha256Re.MatchString(sc.SHA256)) {
+			return fmt.Errorf("%s: source_code needs url and sha256", c.Name)
+		}
 		for platform, s := range c.Sources {
 			where := c.Name + "/" + platform
 			switch {

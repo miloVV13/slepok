@@ -145,6 +145,50 @@ func TestPackValidateUnpack(t *testing.T) {
 	}
 }
 
+func TestExtras(t *testing.T) {
+	opt := options(t)
+	src := filepath.Join(t.TempDir(), "gcc-src.tar.xz")
+	must(t, os.WriteFile(src, []byte("source code"), 0o644))
+	opt.Extras = []Extra{
+		{Name: "reports/NOTICE.txt", Data: []byte("notice")},
+		{Name: "sources/gcc-src.tar.xz", Path: src},
+	}
+	opt.Packages[0].SourceCode = "https://example.com/src.tar.xz"
+	opt.Packages[0].Notice = "be careful"
+	dst := filepath.Join(t.TempDir(), "abc.slepok")
+	_, err := Pack(dst, opt)
+	must(t, err)
+
+	m, err := Validate(dst)
+	must(t, err)
+	var names []string
+	for _, f := range m.Files {
+		names = append(names, f.Path)
+	}
+	for _, want := range []string{"reports/NOTICE.txt", "sources/gcc-src.tar.xz"} {
+		if !strings.Contains(strings.Join(names, " "), want) {
+			t.Errorf("manifest lacks %s: %v", want, names)
+		}
+	}
+	if p := m.Packages[0]; p.SourceCode == "" || p.Notice != "be careful" {
+		t.Errorf("package notice fields lost: %+v", p)
+	}
+
+	dest := filepath.Join(t.TempDir(), "restored")
+	_, err = Unpack(dst, dest, openStore(t), "linux-x64")
+	must(t, err)
+	for _, gone := range []string{"NOTICE.txt", "gcc-src.tar.xz", "reports", "sources"} {
+		if _, err := os.Stat(filepath.Join(dest, gone)); err == nil {
+			t.Errorf("%s was restored into the project", gone)
+		}
+	}
+
+	opt.Extras = []Extra{{Name: "etc/passwd", Data: []byte("x")}}
+	if _, err := Pack(filepath.Join(t.TempDir(), "bad.slepok"), opt); err == nil {
+		t.Fatal("Pack accepted an extra outside reports/ and sources/")
+	}
+}
+
 func TestPackRefusesExisting(t *testing.T) {
 	dst := filepath.Join(t.TempDir(), "abc.slepok")
 	must(t, os.WriteFile(dst, []byte("keep"), 0o644))

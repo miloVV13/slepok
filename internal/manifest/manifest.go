@@ -8,6 +8,7 @@ import (
 	"path"
 	"regexp"
 	"runtime"
+	"slices"
 	"strings"
 	"time"
 
@@ -52,6 +53,10 @@ type Package struct {
 	Digest   string `json:"digest"`
 	Size     int64  `json:"size"`
 	License  string `json:"license,omitempty"`
+	// SourceCode is where the vendor publishes the corresponding source.
+	SourceCode string `json:"sourceCode,omitempty"`
+	// Notice describes license conditions beyond keeping notices.
+	Notice string `json:"notice,omitempty"`
 }
 
 // File is a project or report file stored under its archive path.
@@ -109,6 +114,11 @@ func (m *Manifest) Marshal() ([]byte, error) {
 	return json.MarshalIndent(m, "", "  ")
 }
 
+// filePrefixes are the archive directories files may live in: the project,
+// reports such as the verification build and NOTICE, and bundled source
+// code of third-party components.
+var filePrefixes = []string{"project/", "reports/", "sources/"}
+
 var (
 	platformRe = regexp.MustCompile(`^[a-z0-9]+-[a-z0-9]+$`)
 	digestRe   = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
@@ -149,8 +159,8 @@ func (m *Manifest) Validate() error {
 		if err := safepath.Check(f.Path); err != nil {
 			return fmt.Errorf("file: %w", err)
 		}
-		if !strings.HasPrefix(f.Path, "project/") && !strings.HasPrefix(f.Path, "reports/") {
-			return fmt.Errorf("file %s: must be under project/ or reports/", f.Path)
+		if !slices.ContainsFunc(filePrefixes, func(p string) bool { return strings.HasPrefix(f.Path, p) }) {
+			return fmt.Errorf("file %s: must be under %s", f.Path, strings.Join(filePrefixes, ", "))
 		}
 		switch {
 		case !digestRe.MatchString(f.Digest):
