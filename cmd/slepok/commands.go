@@ -131,6 +131,9 @@ func runInit(fs *flag.FlagSet, args []string) error {
 		}
 		pkg.Source.Digest = digest
 	}
+	if lock.SourceDateEpoch == 0 {
+		lock.SourceDateEpoch = time.Now().Unix()
+	}
 	if err := project.WriteLock(dir, *lock); err != nil {
 		return err
 	}

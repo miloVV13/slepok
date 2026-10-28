@@ -34,10 +34,16 @@ name = "arm-gcc"
 version = "14.2.rel1"
 license = "GPL-3.0-or-later WITH GCC-exception-3.1; newlib: BSD-style"
 [components.source_code]
-url = "https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/srcrel/arm-gnu-toolchain-src-snapshot-14.2.rel1.tar.xz"
+# Arm's own storage, where developer.arm.com redirects; that name comes
+# second because it does not resolve on some networks.
+url = "https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.2.rel1/srcrel/arm-gnu-toolchain-src-snapshot-14.2.rel1.tar.xz"
+mirrors = ["https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/srcrel/arm-gnu-toolchain-src-snapshot-14.2.rel1.tar.xz"]
 sha256 = "e6405f20f8a817a50d92dbf7974d0ee77708dfdf9e79900a59c5d343b464ef9c"
 [components.sources.linux-x64]
-url = "https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi.tar.xz"
+# Arm's own storage, where developer.arm.com redirects; that name comes
+# second because it does not resolve on some networks.
+url = "https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi.tar.xz"
+mirrors = ["https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi.tar.xz"]
 sha256 = "62a63b981fe391a9cbad7ef51b17e49aeaa3e7b0d029b36ca1e9c3b2a9b78823"
 format = "tar.xz"
 strip = 1

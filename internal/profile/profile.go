@@ -77,8 +77,9 @@ type Component struct {
 
 // SourceArchive is a downloadable source archive.
 type SourceArchive struct {
-	URL    string `toml:"url"`
-	SHA256 string `toml:"sha256"`
+	URL     string   `toml:"url"`
+	Mirrors []string `toml:"mirrors,omitempty"`
+	SHA256  string   `toml:"sha256"`
 }
 
 // Source is either a downloadable archive or a git checkout.

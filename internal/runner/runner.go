@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/miloVV13/slepok/internal/profile"
@@ -53,6 +54,12 @@ func Resolve(prof *profile.Profile, lock *project.Lock, st *store.Store, platfor
 	}
 
 	e := &Env{Vars: map[string]string{}, Outputs: prof.Outputs, StoreRoot: st.Root()}
+	// A SOURCE_DATE_EPOCH set by the user wins, as is the convention.
+	if v := os.Getenv("SOURCE_DATE_EPOCH"); v != "" {
+		e.Vars["SOURCE_DATE_EPOCH"] = v
+	} else if lock.SourceDateEpoch != 0 {
+		e.Vars["SOURCE_DATE_EPOCH"] = strconv.FormatInt(lock.SourceDateEpoch, 10)
+	}
 	expand := func(s string) (string, error) {
 		out, err := profile.Expand(s, vars)
 		if err != nil {

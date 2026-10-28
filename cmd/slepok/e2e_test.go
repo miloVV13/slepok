@@ -203,6 +203,9 @@ func TestEndToEnd(t *testing.T) {
 			t.Fatalf("lock has no digest for %s", pkg.Name)
 		}
 	}
+	if p.Lock.SourceDateEpoch == 0 {
+		t.Fatal("init did not pin source_date_epoch in the lock")
+	}
 	mustFail(t, execute([]string{"init", "--board", "board-b", "proj"}), "already sets")
 
 	t.Chdir(proj)

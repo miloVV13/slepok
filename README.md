@@ -54,6 +54,7 @@ without Go:
 $ CGO_ENABLED=0 go build -trimpath -o slepok ./cmd/slepok
 ```
 
+Downloads honour `HTTPS_PROXY`; `git` uses its own proxy settings.
 If a download fails because a server is unreachable from your network,
 the error message names the file, its sha256 and where to put it: fetch it
 any other way (a browser, a VPN, another computer) and run the command
@@ -128,8 +129,11 @@ The full specification, including design decisions and measurements, is in
   (same OS and architecture as listed by `slepok inspect`) with the same
   pinned tools, without network.
 - **Observed, not promised:** identical firmware. The RP2040 blink builds
-  bit-for-bit identically on two stores; projects that embed paths or
-  timestamps may not.
+  bit-for-bit identically on different stores and directories. Builds
+  get `SOURCE_DATE_EPOCH` from `slepok.lock` (the moment the environment
+  was pinned), so the build date the Pico SDK embeds is the same
+  everywhere; set `SOURCE_DATE_EPOCH` yourself to override it. Projects
+  that embed absolute paths may still differ.
 - **Not covered:** flashing and debugging. For RP2040, hold BOOTSEL and
   copy the `.uf2` from the build directory onto the `RPI-RP2` drive.
 

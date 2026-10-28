@@ -133,3 +133,25 @@ func TestIsolationAvailable(t *testing.T) {
 	}
 	t.Logf("isolation available: %v", got)
 }
+
+func TestResolveSourceDateEpoch(t *testing.T) {
+	root := t.TempDir()
+	t.Cleanup(func() { store.RemoveTree(root) })
+	st, err := store.Open(root)
+	must(t, err)
+	prof := &profile.Profile{}
+	lock := &project.Lock{SourceDateEpoch: 1577836800}
+
+	t.Setenv("SOURCE_DATE_EPOCH", "")
+	e, err := Resolve(prof, lock, st, "linux-x64", "pico")
+	must(t, err)
+	if got := e.Vars["SOURCE_DATE_EPOCH"]; got != "1577836800" {
+		t.Fatalf("SOURCE_DATE_EPOCH = %q, want the lock's value", got)
+	}
+	t.Setenv("SOURCE_DATE_EPOCH", "42")
+	e, err = Resolve(prof, lock, st, "linux-x64", "pico")
+	must(t, err)
+	if got := e.Vars["SOURCE_DATE_EPOCH"]; got != "42" {
+		t.Fatalf("SOURCE_DATE_EPOCH = %q, want the user's value", got)
+	}
+}

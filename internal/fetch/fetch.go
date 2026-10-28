@@ -144,8 +144,8 @@ func reason(err error) string {
 // Download fetches a file pinned by its sha256 into the download cache and
 // returns its path. It is used for archives that are bundled as they are,
 // such as the source code of GPL components.
-func (f *Fetcher) Download(name, url, sha256 string) (string, error) {
-	return f.download(name, profile.Source{URL: url, SHA256: sha256})
+func (f *Fetcher) Download(name, url, sha256 string, mirrors ...string) (string, error) {
+	return f.download(name, profile.Source{URL: url, Mirrors: mirrors, SHA256: sha256})
 }
 
 // download returns the path of the verified archive in the download cache.

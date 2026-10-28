@@ -33,9 +33,13 @@ type Config struct {
 }
 
 type Lock struct {
-	Profile        string          `toml:"profile"`
-	ProfileVersion string          `toml:"profile_version"`
-	Packages       []LockedPackage `toml:"package"`
+	Profile        string `toml:"profile"`
+	ProfileVersion string `toml:"profile_version"`
+	// SourceDateEpoch is exported as SOURCE_DATE_EPOCH to every build, so
+	// that dates the toolchain embeds (__DATE__, __TIME__) are the same on
+	// every machine: the moment the environment was pinned.
+	SourceDateEpoch int64           `toml:"source_date_epoch,omitempty"`
+	Packages        []LockedPackage `toml:"package"`
 }
 
 type LockedPackage struct {

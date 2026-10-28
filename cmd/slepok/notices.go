@@ -40,7 +40,7 @@ func sourceExtras(st *store.Store, prof *profile.Profile, packages []snapshot.Pa
 			return nil, fmt.Errorf("no checksum for the source code of %s", pkg.Name)
 		}
 		fmt.Printf("Bundling the source code of %s %s\n", pkg.Name, pkg.Version)
-		file, err := f.Download(pkg.Name+" source code", sc.URL, sc.SHA256)
+		file, err := f.Download(pkg.Name+" source code", sc.URL, sc.SHA256, sc.Mirrors...)
 		if err != nil {
 			return nil, fmt.Errorf("source code of %s: %w", pkg.Name, err)
 		}
