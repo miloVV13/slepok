@@ -5,6 +5,7 @@ package fetch
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -16,6 +17,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/miloVV13/slepok/internal/profile"
@@ -23,11 +25,15 @@ import (
 )
 
 type Fetcher struct {
-	Store      *store.Store
-	Log        io.Writer
-	Client     *http.Client
+	Store  *store.Store
+	Log    io.Writer
+	Client *http.Client
+	// Retries is how many attempts in a row may fail without progress.
 	Retries    int
 	RetryDelay time.Duration
+	// IdleTimeout aborts a download attempt that receives no data.
+	IdleTimeout   time.Duration
+	ProgressEvery time.Duration
 }
 
 func New(st *store.Store, log io.Writer) *Fetcher {
@@ -39,8 +45,10 @@ func New(st *store.Store, log io.Writer) *Fetcher {
 			TLSHandshakeTimeout:   30 * time.Second,
 			ResponseHeaderTimeout: 60 * time.Second,
 		}},
-		Retries:    8,
-		RetryDelay: 3 * time.Second,
+		Retries:       8,
+		RetryDelay:    3 * time.Second,
+		IdleTimeout:   60 * time.Second,
+		ProgressEvery: 10 * time.Second,
 	}
 }
 
@@ -141,6 +149,8 @@ func (f *Fetcher) Download(name, url, sha256 string) (string, error) {
 }
 
 // download returns the path of the verified archive in the download cache.
+// It tries the URL and its mirrors in turn and keeps resuming as long as
+// attempts make progress, so a slow, flaky network still gets there.
 func (f *Fetcher) download(name string, src profile.Source) (string, error) {
 	dir := filepath.Join(f.Store.Root(), "downloads")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -150,11 +160,36 @@ func (f *Fetcher) download(name string, src profile.Source) (string, error) {
 	if sum, err := fileSHA256(final); err == nil && sum == src.SHA256 {
 		return final, nil
 	}
-
+	urls := append([]string{src.URL}, src.Mirrors...)
 	part := final + ".part"
 	f.logf("  downloading %s\n", name)
-	if err := f.retry("download "+name, func() error { return f.downloadOnce(src.URL, part) }); err != nil {
-		return "", err
+
+	dead := map[string]bool{}
+	var lastErr error
+	for attempt, stuck := 0, 0; stuck < f.Retries && len(dead) < len(urls); attempt++ {
+		url := urls[attempt%len(urls)]
+		if dead[url] {
+			continue
+		}
+		before := fileSize(part)
+		lastErr = f.downloadOnce(name, url, part)
+		if lastErr == nil {
+			break
+		}
+		var status *statusError
+		if errors.As(lastErr, &status) && status.permanent() {
+			dead[url] = true
+		}
+		if fileSize(part) > before {
+			stuck = 0
+		} else {
+			stuck++
+		}
+		f.logf("  download %s: %s; retrying\n", name, reason(lastErr))
+		time.Sleep(f.RetryDelay)
+	}
+	if lastErr != nil {
+		return "", fmt.Errorf("%w\n%s", lastErr, manualDownload(urls, src.SHA256, final))
 	}
 	sum, err := fileSHA256(part)
 	if err != nil {
@@ -167,9 +202,45 @@ func (f *Fetcher) download(name string, src profile.Source) (string, error) {
 	return final, os.Rename(part, final)
 }
 
+// manualDownload explains how to provide a file slepok cannot download:
+// the cache is addressed by checksum, so any copy with the right sha256
+// will do and a wrong one is rejected.
+func manualDownload(urls []string, sum, final string) string {
+	return fmt.Sprintf("To get it another way (a browser, a VPN, another computer), download\n  %s\n"+
+		"check that its sha256 is %s and save it as\n  %s\nthen run the command again.",
+		strings.Join(urls, "\n  or "), sum, final)
+}
+
+func fileSize(p string) int64 {
+	info, err := os.Stat(p)
+	if err != nil {
+		return 0
+	}
+	return info.Size()
+}
+
+// statusError is an unexpected HTTP status.
+type statusError struct {
+	url  string
+	code int
+	text string
+}
+
+func (e *statusError) Error() string { return fmt.Sprintf("GET %s: %s", e.url, e.text) }
+
+// permanent reports whether retrying the same URL is pointless.
+func (e *statusError) permanent() bool {
+	switch e.code {
+	case http.StatusForbidden, http.StatusNotFound, http.StatusGone, http.StatusUnavailableForLegalReasons:
+		return true
+	}
+	return false
+}
+
 // downloadOnce continues an interrupted download in part when the server
-// supports range requests.
-func (f *Fetcher) downloadOnce(url, part string) error {
+// supports range requests. It gives up when no data arrives for
+// f.IdleTimeout, so a stalled connection is retried instead of hanging.
+func (f *Fetcher) downloadOnce(name, url, part string) error {
 	out, err := os.OpenFile(part, os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
 		return err
@@ -180,7 +251,9 @@ func (f *Fetcher) downloadOnce(url, part string) error {
 		return err
 	}
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return err
 	}
@@ -202,17 +275,79 @@ func (f *Fetcher) downloadOnce(url, part string) error {
 		if _, err := out.Seek(0, io.SeekStart); err != nil {
 			return err
 		}
+		offset = 0
 	case http.StatusPartialContent:
 	case http.StatusRequestedRangeNotSatisfiable:
 		return nil // already complete; the checksum decides
 	default:
-		return fmt.Errorf("GET %s: %s", url, resp.Status)
+		return &statusError{url: url, code: resp.StatusCode, text: resp.Status}
 	}
-	if _, err := io.Copy(out, resp.Body); err != nil {
+
+	body := newIdleReader(resp.Body, f.IdleTimeout, cancel)
+	defer body.stop()
+	total := int64(-1)
+	if resp.ContentLength >= 0 {
+		total = offset + resp.ContentLength
+	}
+	progress := &progressWriter{f: f, name: name, done: offset, total: total, last: time.Now()}
+	if _, err := io.Copy(io.MultiWriter(out, progress), body); err != nil {
+		if body.stalled.Load() {
+			return fmt.Errorf("no data received for %s", f.IdleTimeout)
+		}
 		return err
 	}
 	return out.Close()
 }
+
+// idleReader cancels the request when no data arrives for a while.
+type idleReader struct {
+	r       io.Reader
+	d       time.Duration
+	timer   *time.Timer
+	stalled atomic.Bool
+}
+
+func newIdleReader(r io.Reader, d time.Duration, cancel func()) *idleReader {
+	ir := &idleReader{r: r, d: d}
+	ir.timer = time.AfterFunc(d, func() {
+		ir.stalled.Store(true)
+		cancel()
+	})
+	return ir
+}
+
+func (ir *idleReader) Read(p []byte) (int, error) {
+	n, err := ir.r.Read(p)
+	if n > 0 {
+		ir.timer.Reset(ir.d)
+	}
+	return n, err
+}
+
+func (ir *idleReader) stop() { ir.timer.Stop() }
+
+// progressWriter reports download progress every few seconds.
+type progressWriter struct {
+	f           *Fetcher
+	name        string
+	done, total int64
+	last        time.Time
+}
+
+func (p *progressWriter) Write(b []byte) (int, error) {
+	p.done += int64(len(b))
+	if time.Since(p.last) >= p.f.ProgressEvery {
+		p.last = time.Now()
+		if p.total > 0 {
+			p.f.logf("  %s: %.1f of %.1f MiB (%d%%)\n", p.name, mib(p.done), mib(p.total), p.done*100/p.total)
+		} else {
+			p.f.logf("  %s: %.1f MiB\n", p.name, mib(p.done))
+		}
+	}
+	return len(b), nil
+}
+
+func mib(n int64) float64 { return float64(n) / (1 << 20) }
 
 func fileSHA256(p string) (string, error) {
 	f, err := os.Open(p)

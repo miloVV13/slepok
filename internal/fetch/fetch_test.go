@@ -16,6 +16,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/miloVV13/slepok/internal/profile"
 	"github.com/miloVV13/slepok/internal/store"
@@ -289,5 +290,106 @@ func TestInstallRejectsWrongDigest(t *testing.T) {
 	entries, _ := os.ReadDir(filepath.Join(f.Store.Root(), "packages"))
 	for _, e := range entries {
 		t.Errorf("package dir %s left behind", e.Name())
+	}
+}
+
+func TestDownloadSurvivesStalledConnection(t *testing.T) {
+	data := []byte(strings.Repeat("x", 1<<20))
+	var requests atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := 0
+		if rng := r.Header.Get("Range"); rng != "" {
+			start, _ = strconv.Atoi(strings.TrimSuffix(strings.TrimPrefix(rng, "bytes="), "-"))
+			w.WriteHeader(http.StatusPartialContent)
+		}
+		if requests.Add(1) == 1 {
+			// Send half, then go silent without closing the connection.
+			w.Write(data[:len(data)/2])
+			w.(http.Flusher).Flush()
+			<-r.Context().Done()
+			return
+		}
+		w.Write(data[start:])
+	}))
+	defer srv.Close()
+	f := newFetcher(t)
+	f.IdleTimeout = 200 * time.Millisecond
+	path, err := f.Download("big", srv.URL+"/big", sha(data))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := os.ReadFile(path); !bytes.Equal(got, data) {
+		t.Fatal("downloaded data differs")
+	}
+}
+
+func TestDownloadFallsBackToMirror(t *testing.T) {
+	data := []byte("from the mirror")
+	var deadHits atomic.Int32
+	dead := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deadHits.Add(1)
+		http.Error(w, "blocked", http.StatusForbidden)
+	}))
+	defer dead.Close()
+	mirror := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write(data) }))
+	defer mirror.Close()
+
+	f := newFetcher(t)
+	path, err := f.download("file", profile.Source{URL: dead.URL + "/f", Mirrors: []string{mirror.URL + "/f"}, SHA256: sha(data)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := os.ReadFile(path); !bytes.Equal(got, data) {
+		t.Fatal("wrong content")
+	}
+	if deadHits.Load() != 1 {
+		t.Fatalf("a permanently failing URL was tried %d times", deadHits.Load())
+	}
+}
+
+// TestDownloadKeepsGoingWhileProgressing cuts every response short: more
+// attempts than Retries are needed, which is fine as long as each one
+// brings new data.
+func TestDownloadKeepsGoingWhileProgressing(t *testing.T) {
+	data := []byte(strings.Repeat("0123456789", 10000))
+	const chunk = 7000
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := 0
+		if rng := r.Header.Get("Range"); rng != "" {
+			start, _ = strconv.Atoi(strings.TrimSuffix(strings.TrimPrefix(rng, "bytes="), "-"))
+		}
+		end := min(start+chunk, len(data))
+		w.Header().Set("Content-Length", strconv.Itoa(len(data)-start))
+		if start > 0 {
+			w.WriteHeader(http.StatusPartialContent)
+		}
+		w.Write(data[start:end])
+		if end < len(data) {
+			panic(http.ErrAbortHandler)
+		}
+	}))
+	defer srv.Close()
+	f := newFetcher(t)
+	f.Retries = 2
+	if _, err := f.Download("chunked", srv.URL+"/c", sha(data)); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestDownloadFailureExplainsManualDownload(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "unavailable in your region", http.StatusUnavailableForLegalReasons)
+	}))
+	defer srv.Close()
+	f := newFetcher(t)
+	want := strings.Repeat("ab", 32)
+	_, err := f.Download("tool", srv.URL+"/tool.tar.xz", want)
+	if err == nil {
+		t.Fatal("download succeeded")
+	}
+	for _, s := range []string{"451", srv.URL + "/tool.tar.xz", want, filepath.Join(f.Store.Root(), "downloads", want)} {
+		if !strings.Contains(err.Error(), s) {
+			t.Errorf("error does not mention %q:\n%v", s, err)
+		}
 	}
 }

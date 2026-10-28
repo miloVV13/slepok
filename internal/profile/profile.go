@@ -83,10 +83,12 @@ type SourceArchive struct {
 
 // Source is either a downloadable archive or a git checkout.
 type Source struct {
-	URL    string `toml:"url,omitempty"`
-	SHA256 string `toml:"sha256,omitempty"`
-	Format string `toml:"format,omitempty"`
-	Strip  int    `toml:"strip,omitempty"`
+	URL string `toml:"url,omitempty"`
+	// Mirrors serve the same file; the sha256 decides, not the source.
+	Mirrors []string `toml:"mirrors,omitempty"`
+	SHA256  string   `toml:"sha256,omitempty"`
+	Format  string   `toml:"format,omitempty"`
+	Strip   int      `toml:"strip,omitempty"`
 
 	Git    string `toml:"git,omitempty"`
 	Ref    string `toml:"ref,omitempty"`

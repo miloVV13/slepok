@@ -46,11 +46,18 @@ Slepok makes the environment a pinned, verifiable, portable object:
 Requirements: Linux x86-64 with glibc 2.34 or newer (Ubuntu 22.04+,
 Debian 12+, Fedora 35+); `git` for `slepok init` only.
 
-Build from a checkout with Go 1.25+:
+Build from a checkout with Go 1.25+. `CGO_ENABLED=0` makes a static
+binary that runs on any Linux x86-64, so you can copy it to machines
+without Go:
 
 ```console
-$ go build -o slepok ./cmd/slepok
+$ CGO_ENABLED=0 go build -trimpath -o slepok ./cmd/slepok
 ```
+
+If a download fails because a server is unreachable from your network,
+the error message names the file, its sha256 and where to put it: fetch it
+any other way (a browser, a VPN, another computer) and run the command
+again. The checksum makes sure it is the right file.
 
 Once the repository is published, `go install
 github.com/miloVV13/slepok/cmd/slepok@latest` works too; release binaries
