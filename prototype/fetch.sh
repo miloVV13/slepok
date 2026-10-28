@@ -82,6 +82,8 @@ if [[ ! -d $env/pico-sdk ]]; then
     [[ -d $env/pico-sdk.part/.git ]] || retry clone_sdk || { echo "pico-sdk clone failed" >&2; exit 1; }
     retry git -C "$env/pico-sdk.part" submodule update -q --init --recursive --depth 1 \
         || { echo "pico-sdk submodules failed" >&2; exit 1; }
+    # Git metadata is not needed to build and adds ~95 MB.
+    find "$env/pico-sdk.part" -name .git -prune -exec rm -rf {} +
     mv "$env/pico-sdk.part" "$env/pico-sdk"
 fi
 

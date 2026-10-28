@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Stage 1 prototype: build a project with the Slepok environment only.
 # The host environment is wiped (env -i) and, where user namespaces are
-# available, the network is removed (unshare -rn).
+# available, the network is removed (unshare -cn).
 #
 # usage: build.sh [project_dir] [build_dir]   (env dir: $ENV_DIR or prototype/work/env)
 set -euo pipefail
@@ -14,16 +14,18 @@ E=$(cd "${ENV_DIR:-$here/work/env}" && pwd)
 path="$E/arm-gcc/bin:$E/cmake/bin:$E/ninja"
 [[ -d $E/python/bin ]] && path="$E/python/bin:$path"
 
+# -c keeps the current uid inside the namespace. With -r the build would
+# run as namespace root and bypass the read-only permissions of the store.
 isolate=()
-if /usr/bin/unshare -rn /bin/true 2>/dev/null; then
-    isolate=(/usr/bin/unshare -rn)
+if /usr/bin/unshare -cn /bin/true 2>/dev/null; then
+    isolate=(/usr/bin/unshare -cn)
 else
     echo "warning: network namespace unavailable, building with network" >&2
 fi
 
 run() {
     "${isolate[@]}" /usr/bin/env -i \
-        HOME=/nonexistent LANG=C.UTF-8 PATH="$path" \
+        HOME=/nonexistent LANG=C.UTF-8 PATH="$path" PYTHONDONTWRITEBYTECODE=1 \
         PICO_SDK_PATH="$E/pico-sdk" \
         "$@"
 }
