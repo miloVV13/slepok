@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Stage 1 prototype: build a project with the SLPK environment only.
+# Stage 1 prototype: build a project with the Slepok environment only.
 # The host environment is wiped (env -i) and, where user namespaces are
 # available, the network is removed (unshare -rn).
 #
