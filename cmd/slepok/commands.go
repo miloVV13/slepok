@@ -134,6 +134,7 @@ func runInit(fs *flag.FlagSet, args []string) error {
 	if err := project.WriteLock(dir, *lock); err != nil {
 		return err
 	}
+	register(st, dir)
 	fmt.Printf("\nEnvironment ready: %d packages, pinned in %s.\nNext: slepok build\n", len(lock.Packages), project.LockName)
 	return nil
 }
@@ -250,6 +251,7 @@ func loadEnv() (*project.Project, *runner.Env, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+	register(st, p.Dir)
 	env, err := runner.Resolve(prof, p.Lock, st, manifest.HostPlatform(), p.Config.Board)
 	if err != nil {
 		return nil, nil, err
@@ -537,6 +539,7 @@ var unpackCmd = &command{
 		if err != nil {
 			return err
 		}
+		register(st, dest)
 		fmt.Printf("Restored %s (%s profile, %d packages).\nNext: cd %s && slepok build\n", dest, m.Profile.ID, len(m.Packages), dest)
 		return nil
 	},

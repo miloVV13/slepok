@@ -21,7 +21,7 @@ type command struct {
 }
 
 var commands = []*command{
-	initCmd, buildCmd, shellCmd, packCmd, unpackCmd, validateCmd, inspectCmd, versionCmd,
+	initCmd, buildCmd, shellCmd, packCmd, unpackCmd, validateCmd, inspectCmd, listCmd, gcCmd, versionCmd,
 }
 
 func usage() {

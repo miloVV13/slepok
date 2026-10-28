@@ -91,6 +91,21 @@ func Load(dir string) (*Project, error) {
 	return p, nil
 }
 
+// ReadLock reads the slepok.lock of the project in dir without validating
+// slepok.toml, so that a broken configuration never hides which packages a
+// project needs. It returns nil, nil when there is no lock.
+func ReadLock(dir string) (*Lock, error) {
+	var lock Lock
+	err := decodeFile(filepath.Join(dir, LockName), &lock)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &lock, nil
+}
+
 func decodeFile(p string, v any) error {
 	data, err := os.ReadFile(p)
 	if err != nil {
