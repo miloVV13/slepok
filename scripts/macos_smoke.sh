@@ -12,6 +12,7 @@ if [[ $(uname -s) != Darwin ]]; then
     exit 1
 fi
 smoke_dir=$(mktemp -d "${TMPDIR:-/tmp}/slepok-roundtrip.XXXXXX")
+smoke_dir=$(cd "$smoke_dir" && pwd -P)
 cleanup() {
     chmod -R u+w "$smoke_dir"
     rm -rf -- "$smoke_dir"
@@ -37,7 +38,10 @@ export SLEPOK_HOME="$smoke_dir/store b"
 cd "$smoke_dir/restored"
 "$slepok_bin" build
 test -s build/compile_commands.json
-grep -Fq "$SLEPOK_HOME/" build/compile_commands.json
+if ! grep -Fq "$SLEPOK_HOME/" build/compile_commands.json; then
+    echo 'Restored compilation database does not refer to the receiver store.' >&2
+    exit 1
+fi
 if grep -Fq "$smoke_dir/store a/" build/compile_commands.json; then
     echo 'Restored compilation database refers to the original store.' >&2
     exit 1
