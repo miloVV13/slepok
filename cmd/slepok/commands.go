@@ -152,12 +152,14 @@ func runInit(ctx context.Context, fs *flag.FlagSet, args []string) error {
 			needed[pkg.Name+"/"+pkg.Platform] = true
 		}
 	}
+	prepared := 0
 	for i := range lock.Packages {
 		pkg := &lock.Packages[i]
 		if !needed[pkg.Name+"/"+pkg.Platform] {
 			continue
 		}
-		fmt.Printf("%s %s (%s)\n", pkg.Name, pkg.Version, pkg.Platform)
+		prepared++
+		fmt.Printf("[%d/%d] %s %s (%s)\n", prepared, len(needed), pkg.Name, pkg.Version, pkg.Platform)
 		var digest string
 		var err error
 		if manifest.HostPlatform() == "windows-x64" && !native[pkg.Name+"/"+pkg.Platform] {

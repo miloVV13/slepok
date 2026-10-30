@@ -350,14 +350,17 @@ func (f *Fetcher) downloadOnce(name, url, part string) error {
 	if resp.ContentLength >= 0 {
 		total = offset + resp.ContentLength
 	}
-	progress := &progressWriter{f: f, name: name, done: offset, total: total, last: time.Now()}
+	progress := newProgress(f, name, offset, total)
 	if _, err := io.Copy(io.MultiWriter(out, progress), body); err != nil {
+		progress.finish(false)
 		if body.stalled.Load() {
 			return fmt.Errorf("no data received for %s", f.IdleTimeout)
 		}
 		return err
 	}
-	return out.Close()
+	err = out.Close()
+	progress.finish(err == nil)
+	return err
 }
 
 // idleReader cancels the request when no data arrives for a while.
@@ -386,27 +389,6 @@ func (ir *idleReader) Read(p []byte) (int, error) {
 }
 
 func (ir *idleReader) stop() { ir.timer.Stop() }
-
-// progressWriter reports download progress every few seconds.
-type progressWriter struct {
-	f           *Fetcher
-	name        string
-	done, total int64
-	last        time.Time
-}
-
-func (p *progressWriter) Write(b []byte) (int, error) {
-	p.done += int64(len(b))
-	if time.Since(p.last) >= p.f.ProgressEvery {
-		p.last = time.Now()
-		if p.total > 0 {
-			p.f.logf("  %s: %.1f of %.1f MiB (%d%%)\n", p.name, mib(p.done), mib(p.total), p.done*100/p.total)
-		} else {
-			p.f.logf("  %s: %.1f MiB\n", p.name, mib(p.done))
-		}
-	}
-	return len(b), nil
-}
 
 func mib(n int64) float64 { return float64(n) / (1 << 20) }
 

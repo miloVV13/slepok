@@ -62,6 +62,10 @@ $ CGO_ENABLED=0 go build -trimpath -o slepok ./cmd/slepok
 ```
 
 Downloads honour `HTTPS_PROXY`; `git` uses its own proxy settings.
+On Linux and Windows terminals, downloads update one progress line with a
+bar, percentage, transferred bytes, speed and ETA. Redirected output keeps
+plain, infrequent log lines; `TERM=dumb` also disables interactive updates.
+
 If a download fails because a server is unreachable from your network,
 the error message names the file, its sha256 and where to put it: fetch it
 any other way (a browser, a VPN, another computer) and run the command
