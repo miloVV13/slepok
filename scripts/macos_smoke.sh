@@ -37,7 +37,7 @@ export SLEPOK_HOME="$smoke_dir/store b"
 cd "$smoke_dir/restored"
 "$slepok_bin" build
 test -s build/compile_commands.json
-grep -Fq "$SLEPOK_HOME/packages/" build/compile_commands.json
+grep -Fq "$SLEPOK_HOME/" build/compile_commands.json
 if grep -Fq "$smoke_dir/store a/" build/compile_commands.json; then
     echo 'Restored compilation database refers to the original store.' >&2
     exit 1

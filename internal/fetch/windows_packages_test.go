@@ -39,6 +39,9 @@ func TestPrepareWindowsPackages(t *testing.T) {
 	}
 	results := map[string]string{}
 	for _, c := range prof.Components {
+		if !c.Supports("windows-x64") {
+			continue
+		}
 		if c.Name == "pico-sdk" {
 			continue
 		} // separately checked against the full SDK tree

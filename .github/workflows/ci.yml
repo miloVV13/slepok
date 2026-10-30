@@ -49,7 +49,7 @@ jobs:
           go-version-file: go.mod
       - run: go vet ./...
       - run: go test -race ./internal/process ./internal/filelock ./internal/safepath ./internal/runner ./internal/pkgtar
-      - run: go test ./internal/store -run '^(TestArchive|TestDefaultRootWithoutOverride|TestRelativeStoreRoot)'
+      - run: go test ./internal/store -run '^(TestArchive|TestContainer|TestDefaultRootWithoutOverride|TestRelativeStoreRoot)'
       - run: go test ./internal/snapshot -run '^TestForeignArchiveSurvivesUnpackAndRepack$'
       - run: go test ./internal/fetch -run '^(TestPortable|TestWindowsGitLayout|TestProgress|TestInteractiveProgress|TestRedirectedProgress)'
       - run: go build -trimpath -o slepok ./cmd/slepok
@@ -65,7 +65,7 @@ jobs:
       - run: go vet ./...
       - run: go test ./internal/process ./internal/filelock ./internal/safepath ./internal/runner
       - run: go test ./internal/pkgtar -run '^TestPortable'
-      - run: go test ./internal/store -run '^(TestArchive|TestDefaultRootWithoutOverride|TestRelativeStoreRoot)'
+      - run: go test ./internal/store -run '^(TestArchive|TestContainer|TestDefaultRootWithoutOverride|TestRelativeStoreRoot)'
       - run: go test ./internal/snapshot -run '^TestForeignArchiveSurvivesUnpackAndRepack$'
       - run: go test ./internal/fetch -run '^(TestPortable|TestWindowsGitLayout|TestProgress|TestInteractiveProgress|TestRedirectedProgress)'
       - run: go build -trimpath -o slepok.exe ./cmd/slepok

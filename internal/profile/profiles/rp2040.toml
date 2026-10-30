@@ -88,6 +88,7 @@ mirrors = ["https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binr
 sha256 = "c7c78ffab9bebfce91d99d3c24da6bf4b81c01e16cf551eb2ff9f25b9e0a3818"
 format = "tar.xz"
 strip = 1
+digest = "sha256:26413b74839436b4acf8afc695d2ae9cb73084a9bbfdbbfd9ab3deb497ba2b01"
 
 [components.sources.macos-x64]
 url = "https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-darwin-x86_64-arm-none-eabi.tar.xz"
@@ -95,6 +96,7 @@ mirrors = ["https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binr
 sha256 = "2d9e717dd4f7751d18936ae1365d25916534105ebcb7583039eff1092b824505"
 format = "tar.xz"
 strip = 1
+digest = "sha256:d2c524a3057cdb0b0c0c110c14cd3706486b2231a10dd20032702ef39da49533"
 
 [[components]]
 name = "cmake"
@@ -120,12 +122,14 @@ url = "https://github.com/Kitware/CMake/releases/download/v4.3.6/cmake-4.3.6-mac
 sha256 = "b9864989cea0546f2482e0d645c92402a0fc5b254f1d745f06a823b8fb400aa0"
 format = "tar.gz"
 strip = 1
+digest = "sha256:f91983036470c1334df4e9af2cc5cc8a27c99c5763e7e64644cdc1b373316ea2"
 
 [components.sources.macos-x64]
 url = "https://github.com/Kitware/CMake/releases/download/v4.3.6/cmake-4.3.6-macos-universal.tar.gz"
 sha256 = "b9864989cea0546f2482e0d645c92402a0fc5b254f1d745f06a823b8fb400aa0"
 format = "tar.gz"
 strip = 1
+digest = "sha256:f91983036470c1334df4e9af2cc5cc8a27c99c5763e7e64644cdc1b373316ea2"
 
 [[components]]
 name = "ninja"
@@ -148,11 +152,13 @@ digest = "sha256:6a366fc97b1287958c4371573dbaacd7a362a221e8ff0974ba82255c0556d71
 url = "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-mac.zip"
 sha256 = "c99048673aa765960a99cf10c6ddb9f1fad506099ff0a0e137ad8960a88f321b"
 format = "zip"
+digest = "sha256:b5548b4c17cbcd2824bbe8d6929d3199aca88b2525137befd1fd284f18980633"
 
 [components.sources.macos-x64]
 url = "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-mac.zip"
 sha256 = "c99048673aa765960a99cf10c6ddb9f1fad506099ff0a0e137ad8960a88f321b"
 format = "zip"
+digest = "sha256:b5548b4c17cbcd2824bbe8d6929d3199aca88b2525137befd1fd284f18980633"
 
 [[components]]
 name = "python"
@@ -178,12 +184,14 @@ url = "https://github.com/astral-sh/python-build-standalone/releases/download/20
 sha256 = "353d5f1b4fd2715e7053f12f068435d5bbad16b91e057006b5d01e0925709a7e"
 format = "tar.gz"
 strip = 1
+digest = "sha256:abad5317ce077b58ee0807ed5b22644a1cf723e8413675dd60ec141831ea1067"
 
 [components.sources.macos-x64]
 url = "https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.12.16%2B20261026-x86_64-apple-darwin-install_only_stripped.tar.gz"
 sha256 = "37c38fda76fec1fbf310adcbafb7f0d96af13b5511bf8ea954c3aa8eec185734"
 format = "tar.gz"
 strip = 1
+digest = "sha256:2b24ba80a4cce374dd3ea4383f639083989cc0b89f17cffd513d6a845258d7b5"
 
 [[components]]
 name = "pioasm"
@@ -206,11 +214,13 @@ digest = "sha256:99de3fa086f595ef8bda72b690bb847da7f02b1e4ab4bb07ce2bdb7f1a6b2c3
 url = "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.3.1-0/pico-sdk-tools-2.3.1-mac.zip"
 sha256 = "7d4c8966f8f47b08c7b2aaf513648f321a15753fab6e8f30bd79d1e6c921aa2f"
 format = "zip"
+digest = "sha256:90094e3374d50905c19c7b02f3f1041770dfc41f36735a73dfb6c879cdc33d07"
 
 [components.sources.macos-x64]
 url = "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.3.1-0/pico-sdk-tools-2.3.1-mac.zip"
 sha256 = "7d4c8966f8f47b08c7b2aaf513648f321a15753fab6e8f30bd79d1e6c921aa2f"
 format = "zip"
+digest = "sha256:90094e3374d50905c19c7b02f3f1041770dfc41f36735a73dfb6c879cdc33d07"
 
 [[components]]
 name = "picotool"
@@ -233,11 +243,13 @@ digest = "sha256:dcce89837bccdcd0edd26ad61c9fc460c7b4efad05dbf302fe866958198cc1f
 url = "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.3.1-0/picotool-2.3.1-mac.zip"
 sha256 = "7bb3cea5d9f1b000fc758cf4b54774fda5c16a9899d342ef6b0c30138988793b"
 format = "zip"
+digest = "sha256:6c6ba3d4b4325826a65249f4647c875d0656bffddeae42c788736b2fdc0891a8"
 
 [components.sources.macos-x64]
 url = "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.3.1-0/picotool-2.3.1-mac.zip"
 sha256 = "7bb3cea5d9f1b000fc758cf4b54774fda5c16a9899d342ef6b0c30138988793b"
 format = "zip"
+digest = "sha256:6c6ba3d4b4325826a65249f4647c875d0656bffddeae42c788736b2fdc0891a8"
 
 [[components]]
 name = "pico-sdk"
@@ -252,10 +264,27 @@ digest = "sha256:b6f7eccbf2159b28801e0ffee13ba178656d5f649f5b280fe3420a0c66f2e92
 
 # Explicit Windows representation: regular files only, no Unix execute bits.
 # Can be prepared on Linux too; the existing any/Linux SDK stays unchanged.
-# Native Windows build/restore acceptance is still required before support is declared.
+# Native Windows build/restore has been confirmed with matching firmware hashes.
 [components.sources.windows-x64]
 git = "https://github.com/raspberrypi/pico-sdk.git"
 ref = "2.3.1"
 commit = "079c6f39023649b154152db30f1d781e884879bc"
 layout = "windows-v1"
 digest = "sha256:b703458527aae69f96c8ad1b162d4bc8d019641bd6eaa150a954a076c83271c2"
+
+# Runtime required by the official Intel GCC cc1/cc1plus binaries.
+# Formula checksum: https://formulae.brew.sh/api/formula/zstd.json
+# Only the packaged dylib is used; Homebrew is not installed or invoked.
+[[components]]
+name = "zstd"
+version = "1.5.7_1"
+platforms = ["macos-x64"]
+license = "BSD-3-Clause; BSD-2-Clause; MIT"
+[components.sources.macos-x64]
+url = "https://mirror.nju.edu.cn/homebrew-bottles/zstd-1.5.7_1.sequoia.bottle.tar.gz"
+mirrors = ["https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles/zstd-1.5.7_1.sequoia.bottle.tar.gz"]
+sha256 = "8b2443dfa62b9d28cf0321e0e670bb096b2680fe72739999228291f36018311f"
+format = "tar.gz"
+strip = 2
+digest = "sha256:a708bb97af79d5759a53f9b5060dcfd78c84375b19cf1024c137a26139667867"
+

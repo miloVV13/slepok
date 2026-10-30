@@ -205,6 +205,9 @@ func lockFor(dir string, cfg project.Config, prof *profile.Profile) (*project.Lo
 	}
 	for _, platform := range cfg.Platforms {
 		for _, c := range prof.Components {
+			if !c.Supports(platform) {
+				continue
+			}
 			if _, ok := existing[c.Name+"/"+platform]; ok {
 				continue
 			}
@@ -315,7 +318,7 @@ func loadEnv(ctx context.Context) (*project.Project, *runner.Env, error) {
 		return nil, nil, err
 	}
 	register(ctx, st, p.Dir)
-	env, err := runner.Resolve(prof, p.Lock, st, manifest.HostPlatform(), p.Config.Board)
+	env, err := runner.ResolveContext(ctx, prof, p.Lock, st, manifest.HostPlatform(), p.Config.Board)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -538,6 +541,9 @@ func snapshotPackages(p *project.Project, st *store.Store, prof *profile.Profile
 			available[pkg.Name] = true
 		}
 		for _, c := range prof.Components {
+			if !c.Supports(platform) {
+				continue
+			}
 			if !available[c.Name] {
 				return nil, fmt.Errorf("%s has no locked %s package for %s; run slepok init after adding the platform", project.LockName, c.Name, platform)
 			}

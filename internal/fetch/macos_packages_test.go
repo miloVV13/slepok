@@ -33,6 +33,9 @@ func TestDownloadMacOSArchives(t *testing.T) {
 	seen := map[string]bool{}
 	for _, platform := range []string{"macos-arm64", "macos-x64"} {
 		for _, c := range p.Components {
+			if !c.Supports(platform) {
+				continue
+			}
 			src, _, err := c.Source(platform)
 			requireOK(t, err)
 			if src.URL == "" || seen[src.SHA256] {
@@ -67,6 +70,7 @@ func TestPrepareMacOSPackages(t *testing.T) {
 		"arm-gcc": {"bin/arm-none-eabi-gcc", "bin/arm-none-eabi-g++", "bin/arm-none-eabi-objcopy", "bin/arm-none-eabi-objdump", "libexec/gcc/arm-none-eabi/14.2.1/cc1", "libexec/gcc/arm-none-eabi/14.2.1/cc1plus"},
 		"cmake":   {"CMake.app/Contents/bin/cmake"}, "ninja": {"ninja"}, "python": {"bin/python3"},
 		"pioasm": {"pioasm/pioasm"}, "picotool": {"picotool/picotool", "picotool/libusb-1.0.0.dylib"},
+		"zstd": {"lib/libzstd.1.dylib"},
 	}
 	results := map[string]string{}
 	for _, platform := range []string{"macos-arm64", "macos-x64"} {
@@ -75,6 +79,9 @@ func TestPrepareMacOSPackages(t *testing.T) {
 			cpu = macho.CpuAmd64
 		}
 		for _, c := range p.Components {
+			if !c.Supports(platform) {
+				continue
+			}
 			if c.Name == "pico-sdk" {
 				continue
 			} // existing any/Unix digest is retained
@@ -98,7 +105,11 @@ func TestPrepareMacOSPackages(t *testing.T) {
 					if !info.Mode().IsRegular() || (!strings.HasSuffix(rel, ".dylib") && info.Mode().Perm()&0111 == 0) {
 						t.Fatalf("%s: not an executable", rel)
 					}
-					checkMacOSBinary(t, file, cpu)
+					var runtime []string
+					if platform == "macos-x64" && c.Name == "arm-gcc" {
+						runtime = []string{"/usr/local/opt/zstd/lib/libzstd.1.dylib"}
+					}
+					checkMacOSBinary(t, file, cpu, runtime...)
 				}
 				results[platform+"/"+c.Name] = digest
 				t.Logf("%s/%s = %s", platform, c.Name, digest)
@@ -110,12 +121,21 @@ func TestPrepareMacOSPackages(t *testing.T) {
 	}
 }
 
-func checkMacOSBinary(t *testing.T, file string, cpu macho.Cpu) {
+func checkMacOSBinary(t *testing.T, file string, cpu macho.Cpu, runtimeLibraries ...string) {
 	t.Helper()
 	check := func(image *macho.File) {
 		libs, err := image.ImportedLibraries()
 		requireOK(t, err)
 		for _, lib := range libs {
+			allowedRuntime := false
+			for _, runtime := range runtimeLibraries {
+				if lib == runtime {
+					allowedRuntime = true
+				}
+			}
+			if allowedRuntime {
+				continue
+			}
 			if strings.HasPrefix(lib, "/") && !strings.HasPrefix(lib, "/usr/lib/") && !strings.HasPrefix(lib, "/System/Library/") {
 				t.Fatalf("%s: external library %s", file, lib)
 			}

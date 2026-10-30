@@ -105,7 +105,7 @@ func TestLockAddsHostWithoutChangingPinnedEnvironment(t *testing.T) {
 	if updated.SourceDateEpoch != 123456 || !reflect.DeepEqual(updated.Packages[:len(old)], old) {
 		t.Fatal("adding a host changed pinned Linux sources or build date")
 	}
-	if len(updated.PackagesFor("windows-x64")) != len(prof.Components) || len(updated.PackagesFor("linux-x64")) != len(old) {
+	if len(updated.PackagesFor("windows-x64")) != len(prof.ComponentsFor("windows-x64")) || len(updated.PackagesFor("linux-x64")) != len(old) {
 		t.Fatal("added host is incomplete")
 	}
 	must(t, project.WriteLock(dir, *updated))

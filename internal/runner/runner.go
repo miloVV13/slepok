@@ -41,6 +41,10 @@ type Env struct {
 // Resolve builds the environment of a project for platform. Every locked
 // package must already be in the store: resolving never downloads.
 func Resolve(prof *profile.Profile, lock *project.Lock, st *store.Store, platform, board string) (*Env, error) {
+	return ResolveContext(context.Background(), prof, lock, st, platform, board)
+}
+
+func ResolveContext(ctx context.Context, prof *profile.Profile, lock *project.Lock, st *store.Store, platform, board string) (*Env, error) {
 	if lock == nil {
 		return nil, fmt.Errorf("%s is missing; run slepok init", project.LockName)
 	}
@@ -58,6 +62,18 @@ func Resolve(prof *profile.Profile, lock *project.Lock, st *store.Store, platfor
 			return nil, err
 		}
 		vars[pkg.Name] = dir
+	}
+	for _, c := range prof.Components {
+		if c.Supports(platform) && vars[c.Name] == "" {
+			return nil, fmt.Errorf("%s has no package for %s on %s; run slepok init", project.LockName, c.Name, platform)
+		}
+	}
+	if platform == "macos-x64" && vars["arm-gcc"] != "" && vars["zstd"] != "" {
+		dir, err := gccRuntimeLaunchers(ctx, st, vars["arm-gcc"], filepath.Join(vars["zstd"], "lib"))
+		if err != nil {
+			return nil, err
+		}
+		vars["arm-gcc"] = dir
 	}
 
 	e := &Env{Vars: map[string]string{}, Outputs: prof.Outputs, StoreRoot: st.Root()}

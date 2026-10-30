@@ -34,23 +34,27 @@ type Item struct {
 
 // Packages returns the digests of the installed packages.
 func (s *Store) Packages() ([]string, error) {
-	entries, err := os.ReadDir(filepath.Join(s.root, "packages"))
-	if err != nil {
-		return nil, err
-	}
 	var digests []string
-	for _, e := range entries {
-		if _, err := hexOf("sha256:" + e.Name()); err == nil && e.IsDir() {
-			digests = append(digests, "sha256:"+e.Name())
+	seen := map[string]bool{}
+	for _, area := range []string{"packages", "containers"} {
+		entries, err := os.ReadDir(filepath.Join(s.root, area))
+		if errors.Is(err, fs.ErrNotExist) {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		for _, e := range entries {
+			d := "sha256:" + e.Name()
+			if _, err := hexOf(d); err == nil && e.IsDir() && !seen[d] {
+				digests = append(digests, d)
+				seen[d] = true
+			}
 		}
 	}
 	archives, err := os.ReadDir(filepath.Join(s.root, "archives"))
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
-	}
-	seen := map[string]bool{}
-	for _, d := range digests {
-		seen[d] = true
 	}
 	for _, e := range archives {
 		d := "sha256:" + e.Name()
@@ -65,7 +69,7 @@ func (s *Store) Packages() ([]string, error) {
 // Usage reports trees, retained archives, downloads, scratch data and logs.
 func (s *Store) Usage() (map[string]Usage, error) {
 	out := map[string]Usage{}
-	for _, area := range []string{"packages", "archives", "downloads", "tmp", "logs"} {
+	for _, area := range []string{"packages", "containers", "archives", "downloads", "tmp", "logs"} {
 		entries, err := os.ReadDir(filepath.Join(s.root, area))
 		if errors.Is(err, fs.ErrNotExist) {
 			continue
@@ -81,7 +85,14 @@ func (s *Store) Usage() (map[string]Usage, error) {
 			}
 			u.Bytes += n
 		}
-		out[area] = u
+		key := area
+		if key == "containers" {
+			key = "packages"
+		}
+		prev := out[key]
+		u.Count += prev.Count
+		u.Bytes += prev.Bytes
+		out[key] = u
 	}
 	return out, nil
 }
@@ -107,21 +118,26 @@ func (s *Store) PlanGC(keep, keepDownloads map[string]bool, now time.Time) ([]It
 		return nil
 	}
 
-	pkgDir := filepath.Join(s.root, "packages")
-	entries, err := os.ReadDir(pkgDir)
-	if err != nil {
-		return nil, err
-	}
-	for _, e := range entries {
-		p := filepath.Join(pkgDir, e.Name())
-		switch {
-		case strings.HasPrefix(e.Name(), ".install-"):
-			err = add("tmp", e.Name(), p, tmpGrace)
-		case !keep["sha256:"+e.Name()]:
-			err = add("package", "sha256:"+e.Name(), p, packageGrace)
+	for _, area := range []string{"packages", "containers"} {
+		pkgDir := filepath.Join(s.root, area)
+		entries, err := os.ReadDir(pkgDir)
+		if errors.Is(err, fs.ErrNotExist) {
+			continue
 		}
 		if err != nil {
 			return nil, err
+		}
+		for _, e := range entries {
+			p := filepath.Join(pkgDir, e.Name())
+			switch {
+			case strings.HasPrefix(e.Name(), ".install-"):
+				err = add("tmp", e.Name(), p, tmpGrace)
+			case !keep["sha256:"+e.Name()]:
+				err = add("package", "sha256:"+e.Name(), p, packageGrace)
+			}
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 

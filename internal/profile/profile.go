@@ -92,9 +92,11 @@ func (p *Profile) ForHost(platform string) *Profile {
 }
 
 type Component struct {
-	Name    string `toml:"name"`
-	Version string `toml:"version"`
-	License string `toml:"license"`
+	// Platforms restricts a host-specific runtime dependency; empty means all.
+	Platforms []string `toml:"platforms,omitempty"`
+	Name      string   `toml:"name"`
+	Version   string   `toml:"version"`
+	License   string   `toml:"license"`
 	// Sources maps a platform, or "any", to where the component comes from.
 	Sources map[string]Source `toml:"sources"`
 	// SourceCode is the corresponding source published by the vendor, for
@@ -103,6 +105,20 @@ type Component struct {
 	// Notice warns about license conditions beyond keeping notices, such
 	// as non-commercial terms. Shown by pack, unpack and inspect.
 	Notice string `toml:"notice,omitempty"`
+}
+
+func (c Component) Supports(platform string) bool {
+	return len(c.Platforms) == 0 || slices.Contains(c.Platforms, platform)
+}
+
+func (p *Profile) ComponentsFor(platform string) []Component {
+	var out []Component
+	for _, c := range p.Components {
+		if c.Supports(platform) {
+			out = append(out, c)
+		}
+	}
+	return out
 }
 
 // SourceArchive is a downloadable source archive.
@@ -177,6 +193,11 @@ func (p *Profile) validate() error {
 	}
 	names := map[string]bool{}
 	for _, c := range p.Components {
+		for _, platform := range c.Platforms {
+			if !hostRe.MatchString(platform) {
+				return fmt.Errorf("%s: invalid platform %q", c.Name, platform)
+			}
+		}
 		if c.Name == "" || names[c.Name] {
 			return fmt.Errorf("component name %q missing or duplicated", c.Name)
 		}

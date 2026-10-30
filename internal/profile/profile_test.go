@@ -15,8 +15,11 @@ func TestBuiltinProfilesLoad(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		for _, platform := range []string{"linux-x64", "windows-x64"} {
+		for _, platform := range []string{"linux-x64", "windows-x64", "macos-arm64", "macos-x64"} {
 			for _, c := range p.Components {
+				if !c.Supports(platform) {
+					continue
+				}
 				s, _, err := c.Source(platform)
 				if err != nil {
 					t.Errorf("%s: %v", id, err)
@@ -50,6 +53,24 @@ func TestHostOverridesDoNotMutateProfile(t *testing.T) {
 	win.Configure[0] = "changed"
 	if p.Path[0] != "{python}/bin" || p.Env["PICO_SDK_PATH"] != "{pico-sdk}" || p.Configure[0] != "-G" {
 		t.Fatal("effective host profile aliases shared data")
+	}
+}
+
+func TestIntelRuntimeIsHostSpecific(t *testing.T) {
+	p, err := Load("rp2040")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, host := range []string{"linux-x64", "windows-x64", "macos-arm64", "macos-x64"} {
+		found := false
+		for _, c := range p.ComponentsFor(host) {
+			if c.Name == "zstd" {
+				found = true
+			}
+		}
+		if found != (host == "macos-x64") {
+			t.Fatalf("unexpected zstd dependency for %s", host)
+		}
 	}
 }
 

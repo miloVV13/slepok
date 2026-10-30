@@ -132,6 +132,10 @@ func (s *Store) Path(digest string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	container := filepath.Join(s.root, "containers", h, "tree")
+	if info, err := os.Lstat(container); err == nil && info.IsDir() {
+		return container, nil
+	}
 	return filepath.Join(s.root, "packages", h), nil
 }
 
@@ -162,11 +166,20 @@ func (s *Store) Install(digest string, r io.Reader) error {
 
 // InstallContext is Install with cancellation while waiting for another installer.
 func (s *Store) InstallContext(ctx context.Context, digest string, r io.Reader) error {
-	final, err := s.Path(digest)
+	return s.installContext(ctx, digest, r, runtime.GOOS == "darwin")
+}
+
+func (s *Store) installContext(ctx context.Context, digest string, r io.Reader, container bool) error {
+	hash, err := hexOf(digest)
 	if err != nil {
 		return err
 	}
-	guard, err := s.lock(ctx, "package-"+filepath.Base(final), false)
+	area := "packages"
+	if container {
+		area = "containers"
+	}
+	final := filepath.Join(s.root, area, hash)
+	guard, err := s.lock(ctx, "package-"+hash, false)
 	if err != nil {
 		return err
 	}
@@ -183,14 +196,26 @@ func (s *Store) InstallContext(ctx context.Context, digest string, r io.Reader) 
 
 	staged := filepath.Join(filepath.Dir(final), ".install-"+rand.Text())
 	defer removeTree(staged)
+	if err := os.MkdirAll(filepath.Dir(final), 0755); err != nil {
+		return err
+	}
+	tree := staged
+	if container {
+		// Darwin needs write permission on a directory being renamed. Move
+		// a writable outer container while the complete payload stays sealed.
+		if err := os.Mkdir(staged, 0755); err != nil {
+			return err
+		}
+		tree = filepath.Join(staged, "tree")
+	}
 
-	if err := pkgtar.Extract(tee, staged); err != nil {
+	if err := pkgtar.Extract(tee, tree); err != nil {
 		return fmt.Errorf("package %s: %w", digest, err)
 	}
 	if err := checkDigest(digest, h.Sum(nil)); err != nil {
 		return err
 	}
-	if err := setWritable(staged, false); err != nil {
+	if err := setWritable(tree, false); err != nil {
 		return err
 	}
 	if err := os.Rename(staged, final); err != nil {
@@ -211,12 +236,14 @@ func checkDigest(want string, sum []byte) error {
 
 // Remove deletes an installed package.
 func (s *Store) Remove(digest string) error {
-	p, err := s.Path(digest)
+	hash, err := hexOf(digest)
 	if err != nil {
 		return err
 	}
-	if err := removeTree(p); err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return err
+	for _, area := range []string{"packages", "containers"} {
+		if err := removeTree(filepath.Join(s.root, area, hash)); err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return err
+		}
 	}
 	archive, err := s.ArchivePath(digest)
 	if err != nil {
