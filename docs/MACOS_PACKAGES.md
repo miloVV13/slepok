@@ -59,6 +59,12 @@ SLEPOK_MACOS_PACKAGES_OUT=/absolute/path/to/store \
 Отчёт сохраняется в `macos-digests.json`. Статическая инспекция на Linux
 не заменяет нативный `scripts/macos_smoke.sh` и чистого получателя без сети.
 
+Нативный smoke прошёл на Apple Silicon и Intel, macOS 15:
+[CI 055f328](https://github.com/miloVV13/slepok/actions/runs/41127020735).
+На каждой архитектуре UF2 до/после восстановления совпали;
+пути восстановленной базы компиляции относятся к новому хранилищу.
+Сетевой изоляции macOS в этом тесте нет.
+
 Источники: [checksum Arm, Apple Silicon](https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-darwin-arm64-arm-none-eabi.tar.xz.sha256asc),
 [checksum Arm, Intel](https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-darwin-x86_64-arm-none-eabi.tar.xz.sha256asc),
 [CMake](https://api.github.com/repos/Kitware/CMake/releases/tags/v4.3.6),

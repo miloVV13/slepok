@@ -24,7 +24,9 @@ Slepok automatically; no SDK installation or global `PATH` changes are needed.
 > RP2040 (Pico SDK 2.3.1, ARM GCC 14.2). The snapshot format may still
 > change before 1.0. Windows → Windows and Windows → Linux restore/build
 > have been checked on real machines with matching firmware SHA256.
-> macOS, STM32 and ESP32 are planned.
+> Experimental macOS 15 support (Apple Silicon and Intel) has passed native
+> RP2040 build/pack/restore tests with identical UF2 in CI. A clean offline
+> Mac receiver still needs manual acceptance. STM32 and ESP32 are planned.
 
 ## Why
 
@@ -53,7 +55,8 @@ Slepok makes the environment a pinned, verifiable, portable object:
 ## Install
 
 Requirements: Linux x86-64 with glibc 2.34 or newer (Ubuntu 22.04+,
-Debian 12+, Fedora 35+), or Windows 10/11 x64; `git` for `slepok init` only.
+Debian 12+, Fedora 35+), Windows 10/11 x64, or experimental macOS 15
+(Apple Silicon / Intel); `git` for `slepok init` only.
 
 Build from a checkout with Go 1.25+. `CGO_ENABLED=0` makes a static
 binary that runs on any Linux x86-64, so you can copy it to machines
@@ -116,6 +119,9 @@ other hosts still require native testing. Windows can prepare Linux packages
 as canonical tar archives, preserving Unix permissions and links without
 creating them on Windows. Combined snapshots can be prepared on either host;
 Windows → Windows and Windows → Linux migrations have been checked on real machines.
+The additional choices are `macos-arm64` and `macos-x64`; both Mac
+architectures can share one snapshot. Intel GCC's zstd runtime is bundled
+automatically; Homebrew is not required. See [macOS acceptance](docs/MACOS_ACCEPTANCE.md).
 
 - **`slepok.toml`** — written by you: profile, board, platforms.
 
@@ -231,7 +237,7 @@ Slepok's niche: one offline file, a proven restore, no Docker, any editor.
 
 ## Roadmap
 
-macOS hosts · STM32 and ESP32 profiles · Python packages for
+Clean offline macOS acceptance · STM32 and ESP32 profiles · Python packages for
 project scripts · snapshot signatures · release binaries.
 
 ## Development checks
