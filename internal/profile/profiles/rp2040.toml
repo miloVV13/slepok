@@ -29,6 +29,17 @@ outputs = ["*.uf2", "*.elf", "*.bin", "*.hex"]
 PICO_SDK_PATH = "{pico-sdk}"
 PYTHONDONTWRITEBYTECODE = "1"
 
+[hosts.windows-x64]
+path = ["{python}", "{arm-gcc}/bin", "{cmake}/bin", "{ninja}"]
+configure = [
+    "-DPython3_EXECUTABLE={python}/python.exe",
+    "-DCMAKE_MAKE_PROGRAM={ninja}/ninja.exe",
+]
+[hosts.windows-x64.env]
+PYTHONNOUSERSITE = "1"
+PYTHONUTF8 = "1"
+
+
 [[components]]
 name = "arm-gcc"
 version = "14.2.rel1"
@@ -49,6 +60,14 @@ format = "tar.xz"
 strip = 1
 digest = "sha256:97a1b0815f92b31c01e86d4aa42763474c5a16a997d17c5296fc1f2928f31085"
 
+[components.sources.windows-x64]
+layout = "windows-v1"
+url = "https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-mingw-w64-x86_64-arm-none-eabi.zip"
+mirrors = ["https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-mingw-w64-x86_64-arm-none-eabi.zip"]
+sha256 = "f074615953f76036e9a51b87f6577fdb4ed8e77d3322a6f68214e92e7859888f"
+format = "zip"
+digest = "sha256:74c858e2fcf05eac615bec8ab1b9f4cb32b14162f6bf888172d145e589fd7240"
+
 [[components]]
 name = "cmake"
 version = "4.3.6"
@@ -60,6 +79,14 @@ format = "tar.gz"
 strip = 1
 digest = "sha256:7fd0623a01208e3bcf8b4752e31995bfdd76f60035444602240311a389f5ce7e"
 
+[components.sources.windows-x64]
+layout = "windows-v1"
+url = "https://github.com/Kitware/CMake/releases/download/v4.3.6/cmake-4.3.6-windows-x86_64.zip"
+sha256 = "570a0d6e1f84fda24b8cb5bb96465b164726c7c066ba44cdadd136ebcb8bf7bd"
+format = "zip"
+strip = 1
+digest = "sha256:377792190fca0a904dfa1320a1bfcce3faef8de95aa88506e4fc898c7ae41dc4"
+
 [[components]]
 name = "ninja"
 version = "1.13.2"
@@ -69,6 +96,13 @@ url = "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-linu
 sha256 = "5749cbc4e668273514150a80e387a957f933c6ed3f5f11e03fb30955e2bbead6"
 format = "zip"
 digest = "sha256:d22916dcd743f8cad75f12cb8d8e5ba02115b654b2d90287cd101e6547f3166a"
+
+[components.sources.windows-x64]
+layout = "windows-v1"
+url = "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-win.zip"
+sha256 = "07fc8261b42b20e71d1720b39068c2e14ffcee6396b76fb7a795fb460b78dc65"
+format = "zip"
+digest = "sha256:6a366fc97b1287958c4371573dbaacd7a362a221e8ff0974ba82255c0556d717"
 
 [[components]]
 name = "python"
@@ -81,6 +115,14 @@ format = "tar.gz"
 strip = 1
 digest = "sha256:a7d41c384e4211540539ba314873faeab17b8b48bfc9c9980484a5a689cae4dc"
 
+[components.sources.windows-x64]
+layout = "windows-v1"
+url = "https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.12.16%2B20261026-x86_64-pc-windows-msvc-install_only_stripped.tar.gz"
+sha256 = "1f2ab53880fc67ea323398c6388e05af28addc99a8e389209f08a51fdff4b149"
+format = "tar.gz"
+strip = 1
+digest = "sha256:b5a68c7ea4578d0f4505b162fb8494af441b6dfdf213fef522c60a1daa81ebc4"
+
 [[components]]
 name = "pioasm"
 version = "2.3.1"
@@ -91,6 +133,13 @@ sha256 = "39758f147a8e615f8c77586ce3c85a25c6728910a86612eea184fc86eb606992"
 format = "tar.gz"
 digest = "sha256:f4615960feef3889508658223794a979801bfc3258a0e56751d2a05ab63b0362"
 
+[components.sources.windows-x64]
+layout = "windows-v1"
+url = "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.3.1-0/pico-sdk-tools-2.3.1-x64-win.zip"
+sha256 = "c5d18dae371eb088da61a038ccf56a23fbd19171a319461efebeae1646c06ade"
+format = "zip"
+digest = "sha256:99de3fa086f595ef8bda72b690bb847da7f02b1e4ab4bb07ce2bdb7f1a6b2c3c"
+
 [[components]]
 name = "picotool"
 version = "2.3.1"
@@ -100,6 +149,13 @@ url = "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.3.1-0/
 sha256 = "878a1a1e7d8336b8be60300c7218f366d9790c0d3a211b181d6d172e80b1248e"
 format = "tar.gz"
 digest = "sha256:f683feb537319b7b9e1661328ed319357d64628be26b76dcf8cb68d305dce85d"
+
+[components.sources.windows-x64]
+layout = "windows-v1"
+url = "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.3.1-0/picotool-2.3.1-x64-win.zip"
+sha256 = "68730be0813f8f35be2cca147cf7f1572662d5dcf0f5ba468e02a6dd9e85db2b"
+format = "zip"
+digest = "sha256:dcce89837bccdcd0edd26ad61c9fc460c7b4efad05dbf302fe866958198cc1f2"
 
 [[components]]
 name = "pico-sdk"
@@ -114,7 +170,7 @@ digest = "sha256:b6f7eccbf2159b28801e0ffee13ba178656d5f649f5b280fe3420a0c66f2e92
 
 # Explicit Windows representation: regular files only, no Unix execute bits.
 # Can be prepared on Linux too; the existing any/Linux SDK stays unchanged.
-# The remaining Windows tools are still required before this host is enabled.
+# Native Windows build/restore acceptance is still required before support is declared.
 [components.sources.windows-x64]
 git = "https://github.com/raspberrypi/pico-sdk.git"
 ref = "2.3.1"

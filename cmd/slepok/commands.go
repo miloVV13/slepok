@@ -156,30 +156,45 @@ func runInit(ctx context.Context, fs *flag.FlagSet, args []string) error {
 // lockFor returns the existing lock of the project, so that every machine
 // gets exactly the same packages, or a new one from the profile.
 func lockFor(dir string, cfg project.Config, prof *profile.Profile) (*project.Lock, error) {
+	lock := &project.Lock{Profile: prof.ID, ProfileVersion: prof.Version}
 	if p, err := project.Load(dir); err == nil && p.Lock != nil {
 		if p.Lock.Profile != cfg.Profile {
 			return nil, fmt.Errorf("%s is for profile %s, %s says %s", project.LockName, p.Lock.Profile, project.ConfigName, cfg.Profile)
 		}
 		if p.Lock.ProfileVersion != prof.Version {
-			fmt.Printf("note: %s was created with profile %s version %s, this slepok has version %s; keeping the locked packages\n",
-				project.LockName, prof.ID, p.Lock.ProfileVersion, prof.Version)
+			fmt.Printf("note: %s was created with profile %s version %s, this slepok has version %s; keeping the locked packages\n", project.LockName, prof.ID, p.Lock.ProfileVersion, prof.Version)
 		}
-		return p.Lock, nil
+		lock = p.Lock
 	}
-	lock := &project.Lock{Profile: prof.ID, ProfileVersion: prof.Version}
-	seen := map[string]bool{}
+	existing := map[string]project.LockedPackage{}
+	for _, pkg := range lock.Packages {
+		existing[pkg.Name+"/"+pkg.Platform] = pkg
+	}
 	for _, platform := range cfg.Platforms {
 		for _, c := range prof.Components {
+			if _, ok := existing[c.Name+"/"+platform]; ok {
+				continue
+			}
 			src, recorded, err := c.Source(platform)
 			if err != nil {
+				// An old lock remains authoritative even if this profile no longer
+				// publishes the shared source from which that package was pinned.
+				if _, ok := existing[c.Name+"/"+manifest.AnyPlatform]; ok {
+					continue
+				}
 				return nil, err
 			}
-			if key := c.Name + "/" + recorded; !seen[key] {
-				seen[key] = true
-				lock.Packages = append(lock.Packages, project.LockedPackage{
-					Name: c.Name, Version: c.Version, Platform: recorded, License: c.License, Source: src,
-				})
+			if _, ok := existing[c.Name+"/"+recorded]; ok {
+				continue
 			}
+			for _, pkg := range lock.Packages {
+				if pkg.Name == c.Name && pkg.Version != c.Version {
+					return nil, fmt.Errorf("cannot add %s package for %s: locked version is %s, current profile provides %s; use a matching profile rather than mixing versions", c.Name, platform, pkg.Version, c.Version)
+				}
+			}
+			pkg := project.LockedPackage{Name: c.Name, Version: c.Version, Platform: recorded, License: c.License, Source: src}
+			lock.Packages = append(lock.Packages, pkg)
+			existing[c.Name+"/"+recorded] = pkg
 		}
 	}
 	return lock, nil
@@ -471,6 +486,15 @@ func snapshotPackages(p *project.Project, st *store.Store, prof *profile.Profile
 		pkgs := p.Lock.PackagesFor(platform)
 		if len(pkgs) == 0 {
 			return nil, fmt.Errorf("%s has no packages for %s; run slepok init", project.LockName, platform)
+		}
+		available := map[string]bool{}
+		for _, pkg := range pkgs {
+			available[pkg.Name] = true
+		}
+		for _, c := range prof.Components {
+			if !available[c.Name] {
+				return nil, fmt.Errorf("%s has no locked %s package for %s; run slepok init after adding the platform", project.LockName, c.Name, platform)
+			}
 		}
 		for _, pkg := range pkgs {
 			if seen[pkg.Source.Digest] {

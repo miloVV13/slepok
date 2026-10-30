@@ -12,6 +12,7 @@ import (
 	"io/fs"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -43,6 +44,7 @@ func Resolve(prof *profile.Profile, lock *project.Lock, st *store.Store, platfor
 	if lock == nil {
 		return nil, fmt.Errorf("%s is missing; run slepok init", project.LockName)
 	}
+	prof = prof.ForHost(platform)
 	vars := map[string]string{"board": board}
 	for _, pkg := range lock.PackagesFor(platform) {
 		if pkg.Source.Digest == "" {
@@ -112,7 +114,8 @@ func (e *Env) LookPath(name string) (string, error) {
 }
 
 // buildEnviron is the complete environment of a build: nothing is
-// inherited from the host except TMPDIR.
+// inherited from the host except temporary-directory locations (and
+// SYSTEMROOT, which os/exec supplies on Windows).
 func (e *Env) buildEnviron() []string {
 	env := []string{
 		"PATH=" + strings.Join(e.Path, string(os.PathListSeparator)),
@@ -121,6 +124,11 @@ func (e *Env) buildEnviron() []string {
 	}
 	if tmp := os.Getenv("TMPDIR"); tmp != "" {
 		env = append(env, "TMPDIR="+tmp)
+	}
+	if runtime.GOOS == "windows" {
+		// Temporary files must remain usable with the rest of the host
+		// environment cleared. os/exec supplies SYSTEMROOT itself.
+		env = append(env, "TEMP="+os.TempDir(), "TMP="+os.TempDir())
 	}
 	for _, k := range slices.Sorted(mapKeys(e.Vars)) {
 		env = append(env, k+"="+e.Vars[k])
@@ -300,6 +308,19 @@ func Leaks(cache string, allowed []string) ([]string, error) {
 }
 
 func hostPath(v string, allowed []string) bool {
+	if windowsAbsolute(v) {
+		norm := func(p string) string { return strings.ToLower(path.Clean(strings.ReplaceAll(p, `\`, "/"))) }
+		value := norm(v)
+		for _, a := range allowed {
+			if windowsAbsolute(a) {
+				base := norm(a)
+				if value == base || strings.HasPrefix(value, strings.TrimSuffix(base, "/")+"/") {
+					return false
+				}
+			}
+		}
+		return true
+	}
 	if !strings.HasPrefix(v, "/") {
 		return false
 	}
@@ -314,6 +335,13 @@ func hostPath(v string, allowed []string) bool {
 		}
 	}
 	return false
+}
+
+func windowsAbsolute(p string) bool {
+	if strings.HasPrefix(p, `\\`) || strings.HasPrefix(p, "//") {
+		return true
+	}
+	return len(p) >= 3 && ((p[0] >= 'a' && p[0] <= 'z') || (p[0] >= 'A' && p[0] <= 'Z')) && p[1] == ':' && (p[2] == '/' || p[2] == '\\')
 }
 
 // Keep quoted paths and Ninja's escaped spaces together. This checks literal
@@ -403,6 +431,9 @@ func fileSHA256(ctx context.Context, p string) (string, error) {
 // work. A cmake wrapper adds the profile's configure arguments, so running
 // cmake by hand configures the project the same way slepok build does.
 func Shell(e *Env, dir string, st *store.Store, stdin io.Reader, stdout, stderr io.Writer) error {
+	if runtime.GOOS == "windows" {
+		return fmt.Errorf("slepok shell is not yet supported on Windows; run slepok build")
+	}
 	cmake, err := e.LookPath("cmake")
 	if err != nil {
 		return err

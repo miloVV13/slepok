@@ -94,16 +94,59 @@ flags = -I/usr/include -L/opt/vendor/lib --sysroot=/usr/sysroot
 	must(t, os.WriteFile(filepath.Join(dir, "CMakeFiles", "rules.ninja"), []byte(`command = "/usr/bin/python3" gen.py
 command = "/opt/my project/tool" '/store/bin/cc'
 command = /store/bin/cc -isystem/usr/local/include
+command = "C$:/Program$ Files/Python/python.exe" generate.py
+command = "C$:/Store With Spaces/bin/cmake.exe"
 `), 0o644))
-	leaks, err := NinjaLeaks(dir, []string{"/store", "/opt/my project", "/build"})
+	leaks, err := NinjaLeaks(dir, []string{"/store", "/opt/my project", "/build", `C:\Store With Spaces`})
 	must(t, err)
-	for _, want := range []string{"/usr/bin/python3", "/usr/include", "/opt/vendor/lib", "/usr/sysroot", "/usr/local/include"} {
+	for _, want := range []string{"/usr/bin/python3", "/usr/include", "/opt/vendor/lib", "/usr/sysroot", "/usr/local/include", "C:/Program Files/Python/python.exe"} {
 		if !strings.Contains(strings.Join(leaks, "\n"), want) {
 			t.Errorf("missing %s in %v", want, leaks)
 		}
 	}
-	if len(leaks) != 5 {
+	if len(leaks) != 6 {
 		t.Fatalf("unexpected Ninja leaks: %v", leaks)
+	}
+}
+
+func TestWindowsHostPaths(t *testing.T) {
+	allowed := []string{`C:\Users\User\Slepok\packages`, `D:\Project With Spaces`, `\\server\share\store`}
+	for _, tt := range []struct {
+		value string
+		leak  bool
+	}{
+		{`c:/users/user/slepok/packages/hash/bin/cmake.exe`, false},
+		{`D:\PROJECT WITH SPACES\build\app.elf`, false},
+		{`\\SERVER\share\store\hash\python.exe`, false},
+		{`C:\Program Files\Python\python.exe`, true},
+		{`C:/Users/User/Slepok/packages-other/python.exe`, true},
+		{`\\server\share\other\tool.exe`, true},
+	} {
+		if got := hostPath(tt.value, allowed); got != tt.leak {
+			t.Errorf("hostPath(%q) = %v", tt.value, got)
+		}
+	}
+}
+
+func TestResolveWindowsHostOverrides(t *testing.T) {
+	st, err := store.Open(t.TempDir())
+	must(t, err)
+	t.Cleanup(func() { store.RemoveTree(st.Root()) })
+	tools := t.TempDir()
+	must(t, os.WriteFile(filepath.Join(tools, "python.exe"), []byte("fixture"), 0o644))
+	digest, err := st.InstallDir(tools, "")
+	must(t, err)
+	prof := &profile.Profile{Path: []string{"{python}/bin"}, Env: map[string]string{"SHARED": "yes"}, Configure: []string{"-G", "Ninja"}, Hosts: map[string]profile.Host{"windows-x64": {Path: []string{"{python}"}, Configure: []string{"-DPython3_EXECUTABLE={python}/python.exe"}, Env: map[string]string{"PYTHONNOUSERSITE": "1"}}}}
+	lock := &project.Lock{Packages: []project.LockedPackage{{Name: "python", Platform: "windows-x64", Source: profile.Source{Digest: digest}}}}
+	env, err := Resolve(prof, lock, st, "windows-x64", "pico")
+	must(t, err)
+	dir, err := st.Path(digest)
+	must(t, err)
+	if len(env.Path) != 1 || env.Path[0] != dir || env.Vars["SHARED"] != "yes" || env.Vars["PYTHONNOUSERSITE"] != "1" {
+		t.Fatalf("host settings were not resolved: %+v", env)
+	}
+	if !strings.Contains(strings.Join(env.Configure, " "), "-DPython3_EXECUTABLE="+dir+"/python.exe") {
+		t.Fatalf("missing pinned Python argument: %v", env.Configure)
 	}
 }
 

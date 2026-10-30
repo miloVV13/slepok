@@ -16,6 +16,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -424,13 +425,13 @@ func (f *Fetcher) clone(name string, src profile.Source, dest string) error {
 		args := []string{"-c", "advice.detachedHead=false", "-c", "core.autocrlf=false", "-c", "core.eol=lf"}
 		args = append(args, "-c", "core.symlinks="+strconv.FormatBool(src.Layout != profile.LayoutWindows))
 		args = append(args, "clone", "--quiet", "--depth", "1", "--branch", src.Ref, src.Git, dest)
-		_, err := f.run(git, args...)
+		_, err := f.runGit(git, args...)
 		return err
 	})
 	if err != nil {
 		return err
 	}
-	head, err := f.run(git, "-C", dest, "rev-parse", "HEAD")
+	head, err := f.runGit(git, "-C", dest, "rev-parse", "HEAD")
 	if err != nil {
 		return err
 	}
@@ -455,7 +456,7 @@ func (f *Fetcher) submodules(git, dir string, windowsLayout bool) error {
 	if _, err := os.Stat(filepath.Join(dir, ".gitmodules")); err != nil {
 		return nil
 	}
-	paths, err := f.run(git, "-C", dir, "config", "--file", ".gitmodules", "--get-regexp", `^submodule\..*\.path$`)
+	paths, err := f.runGit(git, "-C", dir, "config", "--file", ".gitmodules", "--get-regexp", `^submodule\..*\.path$`)
 	if err != nil {
 		return err
 	}
@@ -468,11 +469,11 @@ func (f *Fetcher) submodules(git, dir string, windowsLayout bool) error {
 			return fmt.Errorf("submodule: %w", err)
 		}
 		name := strings.TrimSuffix(strings.TrimPrefix(key, "submodule."), ".path")
-		url, err := f.run(git, "-C", dir, "config", "--file", ".gitmodules", "submodule."+name+".url")
+		url, err := f.runGit(git, "-C", dir, "config", "--file", ".gitmodules", "submodule."+name+".url")
 		if err != nil {
 			return err
 		}
-		tree, err := f.run(git, "-C", dir, "ls-tree", "HEAD", "--", sub)
+		tree, err := f.runGit(git, "-C", dir, "ls-tree", "HEAD", "--", sub)
 		if err != nil {
 			return err
 		}
@@ -499,7 +500,7 @@ func (f *Fetcher) submodules(git, dir string, windowsLayout bool) error {
 				{"-C", subdir, "fetch", "--quiet", "--depth", "1", url, commit},
 				checkout,
 			} {
-				if _, err := f.run(git, args...); err != nil {
+				if _, err := f.runGit(git, args...); err != nil {
 					return err
 				}
 			}
@@ -508,7 +509,7 @@ func (f *Fetcher) submodules(git, dir string, windowsLayout bool) error {
 		if err != nil {
 			return err
 		}
-		if head, err := f.run(git, "-C", subdir, "rev-parse", "HEAD"); err != nil || head != commit {
+		if head, err := f.runGit(git, "-C", subdir, "rev-parse", "HEAD"); err != nil || head != commit {
 			return fmt.Errorf("submodule %s is at %s, expected %s (%v)", sub, head, commit, err)
 		}
 		if err := f.submodules(git, subdir, windowsLayout); err != nil {
@@ -518,7 +519,12 @@ func (f *Fetcher) submodules(git, dir string, windowsLayout bool) error {
 	return nil
 }
 
-func (f *Fetcher) run(name string, args ...string) (string, error) {
+// runGit enables long paths per invocation on Windows, without changing
+// the user's Git configuration. Store paths include a 64-character digest.
+func (f *Fetcher) runGit(name string, args ...string) (string, error) {
+	if runtime.GOOS == "windows" {
+		args = append([]string{"-c", "core.longpaths=true"}, args...)
+	}
 	var stdout, stderr bytes.Buffer
 	cmd := process.Command(f.ctx(), name, args...)
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr

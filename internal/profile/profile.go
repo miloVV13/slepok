@@ -5,6 +5,7 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
+	"maps"
 	"path"
 	"regexp"
 	"slices"
@@ -59,6 +60,35 @@ type Profile struct {
 	Configure  []string          `toml:"configure"`
 	Outputs    []string          `toml:"outputs"`
 	Components []Component       `toml:"components"`
+	Hosts      map[string]Host   `toml:"hosts,omitempty"`
+}
+
+// Host customizes invocation details without changing the shared profile or
+// its locked components. Configure adds flags; Path replaces the search path.
+type Host struct {
+	Path      []string          `toml:"path"`
+	Env       map[string]string `toml:"env"`
+	Configure []string          `toml:"configure"`
+}
+
+func (p *Profile) ForHost(platform string) *Profile {
+	h, ok := p.Hosts[platform]
+	if !ok {
+		return p
+	}
+	out := *p
+	if h.Path != nil {
+		out.Path = slices.Clone(h.Path)
+	}
+	out.Configure = append(slices.Clone(p.Configure), h.Configure...)
+	out.Env = maps.Clone(p.Env)
+	if out.Env == nil {
+		out.Env = map[string]string{}
+	}
+	for k, v := range h.Env {
+		out.Env[k] = v
+	}
+	return &out
 }
 
 type Component struct {
@@ -137,6 +167,7 @@ func Load(id string) (*Profile, error) {
 var (
 	sha256Re = regexp.MustCompile(`^[0-9a-f]{64}$`)
 	commitRe = regexp.MustCompile(`^[0-9a-f]{40}$`)
+	hostRe   = regexp.MustCompile(`^[a-z0-9]+-[a-z0-9]+$`)
 	formats  = []string{"tar.gz", "tar.xz", "zip"}
 )
 
@@ -183,6 +214,16 @@ func (p *Profile) validate() error {
 	for _, s := range slices.Concat(p.Path, p.Configure, slices.Collect(mapValues(p.Env))) {
 		if _, err := Expand(s, vars); err != nil {
 			return err
+		}
+	}
+	for platform, h := range p.Hosts {
+		if !hostRe.MatchString(platform) {
+			return fmt.Errorf("invalid host %q", platform)
+		}
+		for _, s := range slices.Concat(h.Path, h.Configure, slices.Collect(mapValues(h.Env))) {
+			if _, err := Expand(s, vars); err != nil {
+				return fmt.Errorf("host %s: %w", platform, err)
+			}
 		}
 	}
 	return nil

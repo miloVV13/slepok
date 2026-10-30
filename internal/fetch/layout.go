@@ -27,7 +27,7 @@ func (f *Fetcher) gitSymlinks(dir string) (map[string]string, error) {
 	links := map[string]string{}
 	var visit func(string, string) error
 	visit = func(repo, prefix string) error {
-		listing, err := f.run(git, "-C", repo, "ls-files", "--stage", "-z")
+		listing, err := f.runGit(git, "-C", repo, "ls-files", "--stage", "-z")
 		if err != nil {
 			return err
 		}

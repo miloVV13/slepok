@@ -15,11 +15,41 @@ func TestBuiltinProfilesLoad(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		for _, c := range p.Components {
-			if _, _, err := c.Source("linux-x64"); err != nil {
-				t.Errorf("%s: %v", id, err)
+		for _, platform := range []string{"linux-x64", "windows-x64"} {
+			for _, c := range p.Components {
+				s, _, err := c.Source(platform)
+				if err != nil {
+					t.Errorf("%s: %v", id, err)
+					continue
+				}
+				if len(s.Digest) != 71 || s.Digest[:7] != "sha256:" || !sha256Re.MatchString(s.Digest[7:]) {
+					t.Errorf("%s %s: package digest is not pinned", c.Name, platform)
+				}
 			}
 		}
+	}
+}
+
+func TestHostOverridesDoNotMutateProfile(t *testing.T) {
+	p, err := Load("rp2040")
+	if err != nil {
+		t.Fatal(err)
+	}
+	win := p.ForHost("windows-x64")
+	if win.Path[0] != "{python}" || p.Path[0] != "{python}/bin" {
+		t.Fatal("host PATH override changed Linux")
+	}
+	if !slices.Contains(win.Configure, "-DPython3_EXECUTABLE={python}/python.exe") || slices.Contains(p.Configure, "-DPython3_EXECUTABLE={python}/python.exe") {
+		t.Fatal("host configure flags are not isolated")
+	}
+	if win.Env["PICO_SDK_PATH"] != "{pico-sdk}" || win.Env["PYTHONNOUSERSITE"] != "1" {
+		t.Fatal("host environment did not merge with defaults")
+	}
+	win.Path[0] = "changed"
+	win.Env["PICO_SDK_PATH"] = "changed"
+	win.Configure[0] = "changed"
+	if p.Path[0] != "{python}/bin" || p.Env["PICO_SDK_PATH"] != "{pico-sdk}" || p.Configure[0] != "-G" {
+		t.Fatal("effective host profile aliases shared data")
 	}
 }
 
