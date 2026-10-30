@@ -39,6 +39,20 @@ configure = [
 PYTHONNOUSERSITE = "1"
 PYTHONUTF8 = "1"
 
+[hosts.macos-arm64]
+path = ["{python}/bin", "{arm-gcc}/bin", "{cmake}/CMake.app/Contents/bin", "{ninja}"]
+configure = ["-DPython3_EXECUTABLE={python}/bin/python3", "-DCMAKE_MAKE_PROGRAM={ninja}/ninja"]
+[hosts.macos-arm64.env]
+PYTHONNOUSERSITE = "1"
+PYTHONUTF8 = "1"
+
+[hosts.macos-x64]
+path = ["{python}/bin", "{arm-gcc}/bin", "{cmake}/CMake.app/Contents/bin", "{ninja}"]
+configure = ["-DPython3_EXECUTABLE={python}/bin/python3", "-DCMAKE_MAKE_PROGRAM={ninja}/ninja"]
+[hosts.macos-x64.env]
+PYTHONNOUSERSITE = "1"
+PYTHONUTF8 = "1"
+
 
 [[components]]
 name = "arm-gcc"
@@ -68,6 +82,20 @@ sha256 = "f074615953f76036e9a51b87f6577fdb4ed8e77d3322a6f68214e92e7859888f"
 format = "zip"
 digest = "sha256:74c858e2fcf05eac615bec8ab1b9f4cb32b14162f6bf888172d145e589fd7240"
 
+[components.sources.macos-arm64]
+url = "https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-darwin-arm64-arm-none-eabi.tar.xz"
+mirrors = ["https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-darwin-arm64-arm-none-eabi.tar.xz"]
+sha256 = "c7c78ffab9bebfce91d99d3c24da6bf4b81c01e16cf551eb2ff9f25b9e0a3818"
+format = "tar.xz"
+strip = 1
+
+[components.sources.macos-x64]
+url = "https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-darwin-x86_64-arm-none-eabi.tar.xz"
+mirrors = ["https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-darwin-x86_64-arm-none-eabi.tar.xz"]
+sha256 = "2d9e717dd4f7751d18936ae1365d25916534105ebcb7583039eff1092b824505"
+format = "tar.xz"
+strip = 1
+
 [[components]]
 name = "cmake"
 version = "4.3.6"
@@ -87,6 +115,18 @@ format = "zip"
 strip = 1
 digest = "sha256:377792190fca0a904dfa1320a1bfcce3faef8de95aa88506e4fc898c7ae41dc4"
 
+[components.sources.macos-arm64]
+url = "https://github.com/Kitware/CMake/releases/download/v4.3.6/cmake-4.3.6-macos-universal.tar.gz"
+sha256 = "b9864989cea0546f2482e0d645c92402a0fc5b254f1d745f06a823b8fb400aa0"
+format = "tar.gz"
+strip = 1
+
+[components.sources.macos-x64]
+url = "https://github.com/Kitware/CMake/releases/download/v4.3.6/cmake-4.3.6-macos-universal.tar.gz"
+sha256 = "b9864989cea0546f2482e0d645c92402a0fc5b254f1d745f06a823b8fb400aa0"
+format = "tar.gz"
+strip = 1
+
 [[components]]
 name = "ninja"
 version = "1.13.2"
@@ -103,6 +143,16 @@ url = "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-win.
 sha256 = "07fc8261b42b20e71d1720b39068c2e14ffcee6396b76fb7a795fb460b78dc65"
 format = "zip"
 digest = "sha256:6a366fc97b1287958c4371573dbaacd7a362a221e8ff0974ba82255c0556d717"
+
+[components.sources.macos-arm64]
+url = "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-mac.zip"
+sha256 = "c99048673aa765960a99cf10c6ddb9f1fad506099ff0a0e137ad8960a88f321b"
+format = "zip"
+
+[components.sources.macos-x64]
+url = "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-mac.zip"
+sha256 = "c99048673aa765960a99cf10c6ddb9f1fad506099ff0a0e137ad8960a88f321b"
+format = "zip"
 
 [[components]]
 name = "python"
@@ -123,6 +173,18 @@ format = "tar.gz"
 strip = 1
 digest = "sha256:b5a68c7ea4578d0f4505b162fb8494af441b6dfdf213fef522c60a1daa81ebc4"
 
+[components.sources.macos-arm64]
+url = "https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.12.16%2B20261026-aarch64-apple-darwin-install_only_stripped.tar.gz"
+sha256 = "353d5f1b4fd2715e7053f12f068435d5bbad16b91e057006b5d01e0925709a7e"
+format = "tar.gz"
+strip = 1
+
+[components.sources.macos-x64]
+url = "https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.12.16%2B20261026-x86_64-apple-darwin-install_only_stripped.tar.gz"
+sha256 = "37c38fda76fec1fbf310adcbafb7f0d96af13b5511bf8ea954c3aa8eec185734"
+format = "tar.gz"
+strip = 1
+
 [[components]]
 name = "pioasm"
 version = "2.3.1"
@@ -140,6 +202,16 @@ sha256 = "c5d18dae371eb088da61a038ccf56a23fbd19171a319461efebeae1646c06ade"
 format = "zip"
 digest = "sha256:99de3fa086f595ef8bda72b690bb847da7f02b1e4ab4bb07ce2bdb7f1a6b2c3c"
 
+[components.sources.macos-arm64]
+url = "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.3.1-0/pico-sdk-tools-2.3.1-mac.zip"
+sha256 = "7d4c8966f8f47b08c7b2aaf513648f321a15753fab6e8f30bd79d1e6c921aa2f"
+format = "zip"
+
+[components.sources.macos-x64]
+url = "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.3.1-0/pico-sdk-tools-2.3.1-mac.zip"
+sha256 = "7d4c8966f8f47b08c7b2aaf513648f321a15753fab6e8f30bd79d1e6c921aa2f"
+format = "zip"
+
 [[components]]
 name = "picotool"
 version = "2.3.1"
@@ -156,6 +228,16 @@ url = "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.3.1-0/
 sha256 = "68730be0813f8f35be2cca147cf7f1572662d5dcf0f5ba468e02a6dd9e85db2b"
 format = "zip"
 digest = "sha256:dcce89837bccdcd0edd26ad61c9fc460c7b4efad05dbf302fe866958198cc1f2"
+
+[components.sources.macos-arm64]
+url = "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.3.1-0/picotool-2.3.1-mac.zip"
+sha256 = "7bb3cea5d9f1b000fc758cf4b54774fda5c16a9899d342ef6b0c30138988793b"
+format = "zip"
+
+[components.sources.macos-x64]
+url = "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.3.1-0/picotool-2.3.1-mac.zip"
+sha256 = "7bb3cea5d9f1b000fc758cf4b54774fda5c16a9899d342ef6b0c30138988793b"
+format = "zip"
 
 [[components]]
 name = "pico-sdk"

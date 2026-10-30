@@ -25,6 +25,7 @@ func TestSelectedPlatforms(t *testing.T) {
 	}{
 		{"", []string{manifest.HostPlatform()}},
 		{"windows-x64", []string{"windows-x64"}},
+		{"macos-arm64,macos-x64", []string{"macos-arm64", "macos-x64"}},
 		{"linux-x64, windows-x64,linux-x64", []string{"linux-x64", "windows-x64"}},
 	} {
 		got, err := selectedPlatforms(tc.in)
@@ -32,7 +33,7 @@ func TestSelectedPlatforms(t *testing.T) {
 			t.Fatalf("%q: %v, %v", tc.in, got, err)
 		}
 	}
-	for _, in := range []string{"windows", "macos-arm64", "linux-x64,", " "} {
+	for _, in := range []string{"windows", "macos", "linux-x64,", " "} {
 		if _, err := selectedPlatforms(in); err == nil {
 			t.Fatalf("accepted %q", in)
 		}

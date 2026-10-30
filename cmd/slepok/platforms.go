@@ -15,8 +15,8 @@ func selectedPlatforms(value string) ([]string, error) {
 	var out []string
 	for _, part := range strings.Split(value, ",") {
 		p := strings.TrimSpace(part)
-		if p != "linux-x64" && p != "windows-x64" {
-			return nil, fmt.Errorf("unsupported platform %q (supported: linux-x64, windows-x64)", p)
+		if p != "linux-x64" && p != "windows-x64" && p != "macos-arm64" && p != "macos-x64" {
+			return nil, fmt.Errorf("unsupported platform %q (supported: linux-x64, windows-x64, macos-arm64, macos-x64)", p)
 		}
 		if !slices.Contains(out, p) {
 			out = append(out, p)

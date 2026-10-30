@@ -8,6 +8,37 @@ permissions:
   contents: read
 
 jobs:
+  macos-rp2040:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            platform: macos-arm64
+          - runner: macos-15-intel
+            platform: macos-x64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    env:
+      SLEPOK_MACOS_PACKAGES_OUT: ${{ runner.temp }}/macos-packages
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Verify native vendor packages and Mach-O dependencies
+        run: go test -v ./internal/fetch -run '^TestPrepareMacOSPackages/${{ matrix.platform }}/' -count=1 -timeout 45m
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: digests-${{ matrix.platform }}
+          path: ${{ runner.temp }}/macos-packages/macos-digests.json
+      - run: CGO_ENABLED=0 go build -trimpath -o "$RUNNER_TEMP/slepok" ./cmd/slepok
+      - name: Native RP2040 build, pack, restore and compare UF2
+        run: bash scripts/macos_smoke.sh "$RUNNER_TEMP/slepok"
+        env:
+          SLEPOK_SMOKE_DOWNLOADS: ${{ runner.temp }}/macos-packages/downloads
+
   macos-core:
     runs-on: macos-latest
     timeout-minutes: 15
