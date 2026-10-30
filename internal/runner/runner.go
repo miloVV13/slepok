@@ -114,11 +114,15 @@ func (e *Env) LookPath(name string) (string, error) {
 }
 
 // buildEnviron is the complete environment of a build: nothing is
-// inherited from the host except temporary-directory locations (and
-// SYSTEMROOT, which os/exec supplies on Windows).
+// inherited from the host except temporary-directory locations and Windows
+// OS command locations (System32, ComSpec and SYSTEMROOT).
 func (e *Env) buildEnviron() []string {
+	toolPath := e.Path
+	if runtime.GOOS == "windows" {
+		toolPath = windowsBuildPath(toolPath, os.Getenv("SystemRoot"))
+	}
 	env := []string{
-		"PATH=" + strings.Join(e.Path, string(os.PathListSeparator)),
+		"PATH=" + strings.Join(toolPath, string(os.PathListSeparator)),
 		"HOME=/nonexistent",
 		"LANG=C.UTF-8",
 	}
@@ -129,11 +133,23 @@ func (e *Env) buildEnviron() []string {
 		// Temporary files must remain usable with the rest of the host
 		// environment cleared. os/exec supplies SYSTEMROOT itself.
 		env = append(env, "TEMP="+os.TempDir(), "TMP="+os.TempDir())
+		if root := os.Getenv("SystemRoot"); root != "" {
+			env = append(env, "ComSpec="+filepath.Join(root, "System32", "cmd.exe"))
+		}
 	}
 	for _, k := range slices.Sorted(mapKeys(e.Vars)) {
 		env = append(env, k+"="+e.Vars[k])
 	}
 	return env
+}
+
+// Ninja/CMake use nested cmd.exe commands on Windows. Keep the pinned
+// tools first and admit only the OS command directory, never the host PATH.
+func windowsBuildPath(tools []string, systemRoot string) []string {
+	if systemRoot == "" {
+		return slices.Clone(tools)
+	}
+	return append(slices.Clone(tools), filepath.Join(systemRoot, "System32"))
 }
 
 func mapKeys(m map[string]string) func(func(string) bool) {

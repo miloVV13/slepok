@@ -65,6 +65,20 @@ func TestResolve(t *testing.T) {
 	}
 }
 
+func TestWindowsBuildPathKeepsPinnedToolsFirst(t *testing.T) {
+	t.Setenv("PATH", "untrusted-host-tools")
+	tools := []string{"pinned-cmake", "pinned-gcc"}
+	root := t.TempDir()
+	got := windowsBuildPath(tools, root)
+	if strings.Join(got, "|") != strings.Join([]string{"pinned-cmake", "pinned-gcc", filepath.Join(root, "System32")}, "|") {
+		t.Fatalf("build path = %v", got)
+	}
+	got[0] = "changed"
+	if tools[0] != "pinned-cmake" {
+		t.Fatal("mutated pinned paths")
+	}
+}
+
 func TestLeaks(t *testing.T) {
 	cache := filepath.Join(t.TempDir(), "CMakeCache.txt")
 	must(t, os.WriteFile(cache, []byte(`# comment
