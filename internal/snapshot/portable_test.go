@@ -63,7 +63,9 @@ func TestForeignArchiveSurvivesUnpackAndRepack(t *testing.T) {
 	must(t, err)
 	_, err = Validate(repacked)
 	must(t, err)
-	if runtime.GOOS != "windows" {
+	// Materialize the deliberately case-sensitive Linux names only on Linux.
+	// Windows/macOS receivers exercise retaining and repacking the opaque tar.
+	if runtime.GOOS == "linux" {
 		linux := openStore(t)
 		_, err = Unpack(repacked, filepath.Join(t.TempDir(), "linux-project"), linux, "linux-x64")
 		must(t, err)
