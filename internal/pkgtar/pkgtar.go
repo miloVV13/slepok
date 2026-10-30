@@ -211,9 +211,17 @@ func normMode(m int64) int64 {
 
 type rootSink struct{ root *os.Root }
 
-func (s rootSink) dir(name string) error { return s.root.Mkdir(name, dirMode) }
+func (s rootSink) dir(name string) error {
+	if err := safepath.CheckForHost(name); err != nil {
+		return err
+	}
+	return s.root.Mkdir(name, dirMode)
+}
 
 func (s rootSink) file(name string, mode fs.FileMode, r io.Reader) error {
+	if err := safepath.CheckForHost(name); err != nil {
+		return err
+	}
 	f, err := s.root.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_EXCL, mode)
 	if err != nil {
 		return err
@@ -229,8 +237,21 @@ func (s rootSink) file(name string, mode fs.FileMode, r io.Reader) error {
 	return s.root.Chmod(name, mode)
 }
 
-func (s rootSink) symlink(name, target string) error { return s.root.Symlink(target, name) }
-func (s rootSink) link(name, target string) error    { return s.root.Link(target, name) }
+func (s rootSink) symlink(name, target string) error {
+	if err := safepath.CheckForHost(name); err != nil {
+		return err
+	}
+	if err := safepath.CheckLinkTargetForHost(name, target); err != nil {
+		return err
+	}
+	return s.root.Symlink(target, name)
+}
+func (s rootSink) link(name, target string) error {
+	if err := safepath.CheckForHost(name); err != nil {
+		return err
+	}
+	return s.root.Link(target, name)
+}
 
 type discardSink struct{}
 

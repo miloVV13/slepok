@@ -1,4 +1,4 @@
-//go:build !linux
+//go:build !linux && !windows
 
 package filelock
 
@@ -8,5 +8,5 @@ import (
 )
 
 func try(*os.File, bool) (bool, error) {
-	return false, errors.New("process locking is currently supported only on Linux")
+	return false, errors.New("process locking is not implemented on this platform")
 }

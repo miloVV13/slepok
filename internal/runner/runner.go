@@ -14,6 +14,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"slices"
 	"strconv"
 	"strings"
@@ -97,9 +98,13 @@ func Resolve(prof *profile.Profile, lock *project.Lock, st *store.Store, platfor
 
 // LookPath finds a program in the environment only, never on the host.
 func (e *Env) LookPath(name string) (string, error) {
+	candidate := name
+	if runtime.GOOS == "windows" && !strings.HasSuffix(strings.ToLower(candidate), ".exe") {
+		candidate += ".exe"
+	}
 	for _, dir := range e.Path {
-		p := filepath.Join(dir, name)
-		if info, err := os.Stat(p); err == nil && info.Mode().IsRegular() && info.Mode().Perm()&0o111 != 0 {
+		p := filepath.Join(dir, candidate)
+		if info, err := os.Stat(p); err == nil && info.Mode().IsRegular() && (runtime.GOOS == "windows" || info.Mode().Perm()&0o111 != 0) {
 			return p, nil
 		}
 	}

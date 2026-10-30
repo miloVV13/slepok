@@ -137,7 +137,7 @@ func (c *Config) Validate() error {
 	if len(c.Platforms) == 0 {
 		return fmt.Errorf("platforms must list at least one platform, e.g. [%q]", manifest.HostPlatform())
 	}
-	if err := safepath.Check(c.BuildDir); err != nil {
+	if err := safepath.CheckForHost(c.BuildDir); err != nil {
 		return fmt.Errorf("build_dir: %w", err)
 	}
 	return nil

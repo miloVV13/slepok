@@ -30,7 +30,11 @@ func TestResolve(t *testing.T) {
 
 	tool := t.TempDir()
 	must(t, os.MkdirAll(filepath.Join(tool, "bin"), 0o755))
-	must(t, os.WriteFile(filepath.Join(tool, "bin", "cmake"), []byte("#!/bin/sh\n"), 0o755))
+	cmakeName := "cmake"
+	if runtime.GOOS == "windows" {
+		cmakeName += ".exe"
+	}
+	must(t, os.WriteFile(filepath.Join(tool, "bin", cmakeName), []byte("#!/bin/sh\n"), 0o755))
 	digest, err := st.InstallDir(tool, "")
 	must(t, err)
 
@@ -48,7 +52,7 @@ func TestResolve(t *testing.T) {
 	if e.Path[0] != filepath.Join(dir, "bin") || e.Vars["TC_ROOT"] != dir || e.Configure[0] != "-DBOARD=pico" {
 		t.Fatalf("Resolve = %+v", e)
 	}
-	if p, err := e.LookPath("cmake"); err != nil || p != filepath.Join(dir, "bin", "cmake") {
+	if p, err := e.LookPath("cmake"); err != nil || p != filepath.Join(dir, "bin", cmakeName) {
 		t.Fatalf("LookPath = %q, %v", p, err)
 	}
 	if _, err := e.LookPath("sh"); err == nil {

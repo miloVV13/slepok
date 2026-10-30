@@ -177,6 +177,9 @@ type writer struct {
 // parent creates the parent directories of name, refusing to go through a
 // symlink created by this archive.
 func (w *writer) parent(name string) error {
+	if err := safepath.CheckForHost(name); err != nil {
+		return err
+	}
 	if err := contextio.OrBackground(w.ctx).Err(); err != nil {
 		return err
 	}
@@ -222,7 +225,7 @@ func (w *writer) file(name string, mode fs.FileMode, r io.Reader) error {
 }
 
 func (w *writer) symlink(name, target string) error {
-	if err := safepath.CheckLinkTarget(name, target); err != nil {
+	if err := safepath.CheckLinkTargetForHost(name, target); err != nil {
 		return err
 	}
 	if err := w.parent(name); err != nil {

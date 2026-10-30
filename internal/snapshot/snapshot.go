@@ -571,6 +571,9 @@ func (u *unpacker) file(f manifest.File, r io.Reader) error {
 	if !ok {
 		return nil // reports are verified but not restored
 	}
+	if err := safepath.CheckForHost(rel); err != nil {
+		return err
+	}
 	if dir := path.Dir(rel); dir != "." {
 		if err := u.root.MkdirAll(dir, 0o755); err != nil {
 			return err

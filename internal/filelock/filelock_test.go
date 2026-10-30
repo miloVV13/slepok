@@ -1,3 +1,5 @@
+//go:build linux || windows
+
 package filelock
 
 import (
@@ -45,7 +47,7 @@ func TestSharedExclusiveAndSIGKILL(t *testing.T) {
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	shared, err := Acquire(ctx, path, true)
 	if err != nil {
