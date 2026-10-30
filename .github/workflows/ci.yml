@@ -19,8 +19,6 @@ jobs:
             platform: macos-x64
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
-    env:
-      SLEPOK_MACOS_PACKAGES_OUT: ${{ runner.temp }}/macos-packages
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -28,6 +26,8 @@ jobs:
           go-version-file: go.mod
       - name: Verify native vendor packages and Mach-O dependencies
         run: go test -v ./internal/fetch -run '^TestPrepareMacOSPackages/${{ matrix.platform }}/' -count=1 -timeout 45m
+        env:
+          SLEPOK_MACOS_PACKAGES_OUT: ${{ runner.temp }}/macos-packages
       - uses: actions/upload-artifact@v4
         if: always()
         with:
