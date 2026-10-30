@@ -49,7 +49,7 @@ func TestResolve(t *testing.T) {
 	e, err := Resolve(prof, lock, st, "linux-x64", "pico")
 	must(t, err)
 	dir, _ := st.Path(digest)
-	if e.Path[0] != filepath.Join(dir, "bin") || e.Vars["TC_ROOT"] != dir || e.Configure[0] != "-DBOARD=pico" {
+	if filepath.Clean(e.Path[0]) != filepath.Join(dir, "bin") || e.Vars["TC_ROOT"] != dir || e.Configure[0] != "-DBOARD=pico" {
 		t.Fatalf("Resolve = %+v", e)
 	}
 	if p, err := e.LookPath("cmake"); err != nil || p != filepath.Join(dir, "bin", cmakeName) {
