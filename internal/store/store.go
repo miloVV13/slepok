@@ -98,7 +98,7 @@ func (s *Store) InstallDirContext(ctx context.Context, dir, want string) (string
 		_, _, err := pkgtar.Write(contextio.Writer{Context: ctx, Writer: pw}, dir)
 		pw.CloseWithError(err)
 	}()
-	if err := s.Install(digest, pr); err != nil {
+	if err := s.InstallContext(ctx, digest, pr); err != nil {
 		pr.CloseWithError(err)
 		return "", err
 	}
@@ -132,12 +132,22 @@ func (s *Store) Has(digest string) bool {
 // digest. If the package is already installed, r is consumed and checked
 // but nothing is written.
 func (s *Store) Install(digest string, r io.Reader) error {
+	return s.InstallContext(context.Background(), digest, r)
+}
+
+// InstallContext is Install with cancellation while waiting for another installer.
+func (s *Store) InstallContext(ctx context.Context, digest string, r io.Reader) error {
 	final, err := s.Path(digest)
 	if err != nil {
 		return err
 	}
+	guard, err := s.lock(ctx, "package-"+filepath.Base(final), false)
+	if err != nil {
+		return err
+	}
+	defer guard.Close()
 	h := sha256.New()
-	tee := io.TeeReader(r, h)
+	tee := io.TeeReader(contextio.Reader{Context: ctx, Reader: r}, h)
 
 	if s.Has(digest) {
 		if _, err := io.Copy(io.Discard, tee); err != nil {

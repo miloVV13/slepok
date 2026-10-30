@@ -163,6 +163,11 @@ func (f *Fetcher) Download(name, url, sha256 string, mirrors ...string) (string,
 // It tries the URL and its mirrors in turn and keeps resuming as long as
 // attempts make progress, so a slow, flaky network still gets there.
 func (f *Fetcher) download(name string, src profile.Source) (string, error) {
+	guard, err := f.Store.LockDownload(f.ctx(), src.SHA256)
+	if err != nil {
+		return "", err
+	}
+	defer guard.Close()
 	dir := filepath.Join(f.Store.Root(), "downloads")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", err

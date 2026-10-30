@@ -19,8 +19,8 @@ import (
 
 // register records the project in the store's registry so that gc keeps
 // its packages. Failing to register must not fail the command itself.
-func register(st *store.Store, dir string) {
-	if err := st.Register(dir); err != nil {
+func register(ctx context.Context, st *store.Store, dir string) {
+	if err := st.RegisterContext(ctx, dir); err != nil {
 		fmt.Fprintf(os.Stderr, "warning: could not record the project in the store registry: %v\n", err)
 	}
 }
@@ -190,7 +190,7 @@ func runGC(ctx context.Context, _ *flag.FlagSet, args []string) error {
 	if err := st.Delete(items); err != nil {
 		return err
 	}
-	if err := st.Forget(stale...); err != nil {
+	if err := st.ForgetContext(ctx, stale...); err != nil {
 		return err
 	}
 	fmt.Printf("Removed %s.\n", humanSize(total))

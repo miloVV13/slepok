@@ -68,6 +68,15 @@ func runInit(ctx context.Context, fs *flag.FlagSet, args []string) error {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
+	st, err := openStore()
+	if err != nil {
+		return err
+	}
+	guard, err := st.LockProject(ctx, dir)
+	if err != nil {
+		return err
+	}
+	defer guard.Close()
 
 	explicit := map[string]bool{}
 	fs.Visit(func(f *flag.Flag) { explicit[f.Name] = true })
@@ -119,10 +128,6 @@ func runInit(ctx context.Context, fs *flag.FlagSet, args []string) error {
 	if err != nil {
 		return err
 	}
-	st, err := openStore()
-	if err != nil {
-		return err
-	}
 	f := fetch.New(st, os.Stdout)
 	f.Context = ctx
 	for i := range lock.Packages {
@@ -143,7 +148,7 @@ func runInit(ctx context.Context, fs *flag.FlagSet, args []string) error {
 	if err := project.WriteLock(dir, *lock); err != nil {
 		return err
 	}
-	register(st, dir)
+	register(ctx, st, dir)
 	fmt.Printf("\nEnvironment ready: %d packages, pinned in %s.\nNext: slepok build\n", len(lock.Packages), project.LockName)
 	return nil
 }
@@ -228,7 +233,7 @@ var buildCmd = &command{
 		if err := maxArgs(args, 0); err != nil {
 			return err
 		}
-		p, env, err := loadEnv()
+		p, env, err := loadEnv(ctx)
 		if err != nil {
 			return err
 		}
@@ -248,7 +253,7 @@ var buildCmd = &command{
 	},
 }
 
-func loadEnv() (*project.Project, *runner.Env, error) {
+func loadEnv(ctx context.Context) (*project.Project, *runner.Env, error) {
 	p, err := project.Find(".")
 	if err != nil {
 		return nil, nil, err
@@ -261,7 +266,7 @@ func loadEnv() (*project.Project, *runner.Env, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	register(st, p.Dir)
+	register(ctx, st, p.Dir)
 	env, err := runner.Resolve(prof, p.Lock, st, manifest.HostPlatform(), p.Config.Board)
 	if err != nil {
 		return nil, nil, err
@@ -300,7 +305,7 @@ var shellCmd = &command{
 		if err := maxArgs(args, 0); err != nil {
 			return err
 		}
-		p, env, err := loadEnv()
+		p, env, err := loadEnv(ctx)
 		if err != nil {
 			return err
 		}
@@ -352,7 +357,7 @@ func runPack(ctx context.Context, _ *flag.FlagSet, args []string) error {
 	if err := maxArgs(args, 0); err != nil {
 		return err
 	}
-	p, env, err := loadEnv()
+	p, env, err := loadEnv(ctx)
 	if err != nil {
 		return err
 	}
@@ -577,7 +582,7 @@ var unpackCmd = &command{
 		if err != nil {
 			return err
 		}
-		register(st, dest)
+		register(ctx, st, dest)
 		fmt.Printf("Restored %s (%s profile, %d packages).\n", dest, m.Profile.ID, len(m.Packages))
 		printNotices(os.Stdout, m, hasSources(m))
 		fmt.Printf("Next: cd %s && slepok build\n", dest)

@@ -118,6 +118,11 @@ are planned.
   project Slepok knows about (any project you ran a Slepok command in).
   Packages younger than an hour are always kept, so a running `init` is
   safe.
+- Concurrent commands share a process lock on the store; `gc` waits for
+  exclusive access before scanning and deleting. Downloads of the same
+  checksum, package installation and registry updates are serialized.
+  Locks are released by the OS even after SIGKILL. Lock files under
+  `.locks/` remain in place and must not be removed while Slepok is running.
 
 The full specification, including design decisions and measurements, is in
 [Slepok_Project_Specification.md](Slepok_Project_Specification.md)

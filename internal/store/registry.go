@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io/fs"
@@ -39,8 +40,15 @@ func (s *Store) Projects() ([]Project, error) {
 }
 
 // Register records that the project at dir was used now.
-func (s *Store) Register(dir string) error {
-	dir, err := filepath.Abs(dir)
+func (s *Store) Register(dir string) error { return s.RegisterContext(context.Background(), dir) }
+
+func (s *Store) RegisterContext(ctx context.Context, dir string) error {
+	guard, err := s.lock(ctx, "registry", false)
+	if err != nil {
+		return err
+	}
+	defer guard.Close()
+	dir, err = filepath.Abs(dir)
 	if err != nil {
 		return err
 	}
@@ -54,7 +62,14 @@ func (s *Store) Register(dir string) error {
 }
 
 // Forget removes projects from the registry.
-func (s *Store) Forget(dirs ...string) error {
+func (s *Store) Forget(dirs ...string) error { return s.ForgetContext(context.Background(), dirs...) }
+
+func (s *Store) ForgetContext(ctx context.Context, dirs ...string) error {
+	guard, err := s.lock(ctx, "registry", false)
+	if err != nil {
+		return err
+	}
+	defer guard.Close()
 	projects, err := s.Projects()
 	if err != nil {
 		return err

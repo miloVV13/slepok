@@ -536,7 +536,7 @@ func UnpackContext(ctx context.Context, src, dest string, st *store.Store, platf
 		}
 		return nil
 	}
-	m, err := read(ctx, src, checkPlatform, &unpacker{root: root, store: st, platform: platform})
+	m, err := read(ctx, src, checkPlatform, &unpacker{ctx: ctx, root: root, store: st, platform: platform})
 	if err != nil {
 		return nil, err
 	}
@@ -560,6 +560,7 @@ func UnpackContext(ctx context.Context, src, dest string, st *store.Store, platf
 }
 
 type unpacker struct {
+	ctx      context.Context
 	root     *os.Root
 	store    *store.Store
 	platform string
@@ -594,7 +595,7 @@ func (u *unpacker) pkg(p manifest.Package, r io.Reader) error {
 	if p.Platform != u.platform && p.Platform != manifest.AnyPlatform {
 		return verifier{}.pkg(p, r)
 	}
-	if err := u.store.Install(p.Digest, r); err != nil {
+	if err := u.store.InstallContext(u.ctx, p.Digest, r); err != nil {
 		return fmt.Errorf("package %s: %w", p.Name, err)
 	}
 	return nil

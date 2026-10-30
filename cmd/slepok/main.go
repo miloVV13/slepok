@@ -77,6 +77,20 @@ func executeContext(ctx context.Context, args []string) error {
 			}
 			return &usageError{err.Error()}
 		}
+		// Hold the store lock through package use, project lock publication
+		// and registration. GC must plan and delete without concurrent users.
+		switch c.name {
+		case "init", "build", "shell", "pack", "unpack", "list", "gc":
+			st, err := openStore()
+			if err != nil {
+				return err
+			}
+			guard, err := st.Acquire(ctx, c.name == "gc")
+			if err != nil {
+				return fmt.Errorf("%s: waiting for store: %w", c.name, err)
+			}
+			defer guard.Close()
+		}
 		if err := c.run(ctx, fs, fs.Args()); err != nil {
 			return fmt.Errorf("%s: %w", c.name, err)
 		}

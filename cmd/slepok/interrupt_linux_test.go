@@ -2,10 +2,12 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"testing"
@@ -19,7 +21,7 @@ import (
 
 // Exercise main's signal handler and actual pack cleanup in a subprocess.
 func TestSignalDuringPack(t *testing.T) {
-	for _, sig := range []os.Signal{os.Interrupt, syscall.SIGTERM} {
+	for _, sig := range []os.Signal{os.Interrupt, syscall.SIGTERM, syscall.SIGKILL} {
 		t.Run(sig.String(), func(t *testing.T) {
 			dir := t.TempDir()
 			t.Cleanup(func() { store.RemoveTree(dir) })
@@ -45,10 +47,19 @@ func TestSignalDuringPack(t *testing.T) {
 				}
 			}
 			must(t, cmd.Process.Signal(sig))
+			if sig == syscall.SIGKILL {
+				// SIGKILL cannot invoke Slepok cleanup. Stop the stand-in build from
+				// the test harness so it does not outlive this test.
+				pidData, err := os.ReadFile(filepath.Join(dir, "ready"))
+				must(t, err)
+				pid, err := strconv.Atoi(strings.TrimSpace(string(pidData)))
+				must(t, err)
+				syscall.Kill(-pid, syscall.SIGKILL)
+			}
 			select {
 			case err := <-done:
 				var exit *exec.ExitError
-				if !errors.As(err, &exit) || exit.ExitCode() != 130 {
+				if !errors.As(err, &exit) || (sig != syscall.SIGKILL && exit.ExitCode() != 130) {
 					t.Fatalf("exit = %v\n%s", err, &log)
 				}
 			case <-time.After(5 * time.Second):
@@ -56,6 +67,21 @@ func TestSignalDuringPack(t *testing.T) {
 			}
 			entries, err := os.ReadDir(filepath.Join(dir, "store", "tmp"))
 			must(t, err)
+			if sig == syscall.SIGKILL {
+				if len(entries) != 1 {
+					t.Fatalf("want one abandoned pack directory, got %v", entries)
+				}
+				old := time.Now().Add(-2 * time.Hour)
+				for _, entry := range entries {
+					must(t, os.Chtimes(filepath.Join(dir, "store", "tmp", entry.Name()), old, old))
+				}
+				t.Setenv("SLEPOK_HOME", filepath.Join(dir, "store"))
+				ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+				defer cancel()
+				must(t, executeContext(ctx, []string{"gc", "-y"}))
+				entries, err = os.ReadDir(filepath.Join(dir, "store", "tmp"))
+				must(t, err)
+			}
 			if len(entries) != 0 {
 				t.Fatalf("pack left scratch files: %v", entries)
 			}
@@ -66,6 +92,11 @@ func TestSignalDuringPack(t *testing.T) {
 			must(t, err)
 			if string(data) != "original source" {
 				t.Fatal("pack modified source")
+			}
+			if sig == syscall.SIGKILL {
+				fakeProfile(t, "http://unused.invalid", nil, nil, "file:///unused", strings.Repeat("a", 40))
+				t.Chdir(filepath.Join(dir, "project"))
+				must(t, execute([]string{"pack", "-o", filepath.Join(dir, "snapshot.slepok")}))
 			}
 		})
 	}
@@ -82,7 +113,12 @@ func TestSignalPackHelper(t *testing.T) {
 	tool := filepath.Join(dir, "tool")
 	must(t, os.MkdirAll(filepath.Join(tool, "bin"), 0o755))
 	// Configure stays alive until the parent sends a signal.
-	script := "#!/bin/sh\necho ready > " + ("'" + strings.ReplaceAll(filepath.Join(dir, "ready"), "'", "'\"'\"'") + "'") + "\nexec /bin/sleep 60\n"
+	ready := "'" + strings.ReplaceAll(filepath.Join(dir, "ready"), "'", "'\"'\"'") + "'"
+	script := "#!/bin/sh\nif [ ! -f " + ready + " ]; then echo $$ > " + ready + "; exec /bin/sleep 60; fi\n" +
+		`if [ "$1" = "--build" ]; then echo firmware > "$2/app.uf2"; exit; fi
+/bin/mkdir -p "$4"
+: > "$4/CMakeCache.txt"
+`
 	must(t, os.WriteFile(filepath.Join(tool, "bin", "cmake"), []byte(script), 0o755))
 	digest, err := st.InstallDir(tool, "")
 	must(t, err)

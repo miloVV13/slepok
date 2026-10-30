@@ -135,6 +135,20 @@ func (s *Store) PlanGC(keep, keepDownloads map[string]bool, now time.Time) ([]It
 			}
 		}
 	}
+	// A killed registry update can leave its temporary file at the root.
+	// Keep lock files permanently: removing a locked inode could let a new
+	// process acquire a different inode under the same name.
+	rootEntries, err := os.ReadDir(s.root)
+	if err != nil {
+		return nil, err
+	}
+	for _, entry := range rootEntries {
+		if strings.HasPrefix(entry.Name(), ".projects.json.tmp-") {
+			if err := add("tmp", entry.Name(), filepath.Join(s.root, entry.Name()), tmpGrace); err != nil {
+				return nil, err
+			}
+		}
+	}
 	return items, nil
 }
 
