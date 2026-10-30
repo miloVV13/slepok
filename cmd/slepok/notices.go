@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/url"
@@ -21,8 +22,9 @@ const noticeEntry = "reports/NOTICE.txt"
 
 // sourceExtras downloads the published source code of the packages that
 // have it, for bundling under sources/.
-func sourceExtras(st *store.Store, prof *profile.Profile, packages []snapshot.PackageSource) ([]snapshot.Extra, error) {
+func sourceExtras(ctx context.Context, st *store.Store, prof *profile.Profile, packages []snapshot.PackageSource) ([]snapshot.Extra, error) {
 	f := fetch.New(st, os.Stdout)
+	f.Context = ctx
 	seen := map[string]bool{}
 	var extras []snapshot.Extra
 	for _, pkg := range packages {

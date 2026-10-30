@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/miloVV13/slepok/internal/contextio"
 	"github.com/miloVV13/slepok/internal/fetch"
 	"github.com/miloVV13/slepok/internal/manifest"
 	"github.com/miloVV13/slepok/internal/profile"
@@ -51,7 +53,7 @@ var initCmd = &command{
 	run: runInit,
 }
 
-func runInit(fs *flag.FlagSet, args []string) error {
+func runInit(ctx context.Context, fs *flag.FlagSet, args []string) error {
 	if err := maxArgs(args, 1); err != nil {
 		return err
 	}
@@ -122,6 +124,7 @@ func runInit(fs *flag.FlagSet, args []string) error {
 		return err
 	}
 	f := fetch.New(st, os.Stdout)
+	f.Context = ctx
 	for i := range lock.Packages {
 		pkg := &lock.Packages[i]
 		fmt.Printf("%s %s (%s)\n", pkg.Name, pkg.Version, pkg.Platform)
@@ -130,6 +133,9 @@ func runInit(fs *flag.FlagSet, args []string) error {
 			return err
 		}
 		pkg.Source.Digest = digest
+	}
+	if err := ctx.Err(); err != nil {
+		return err
 	}
 	if lock.SourceDateEpoch == 0 {
 		lock.SourceDateEpoch = time.Now().Unix()
@@ -218,7 +224,7 @@ var buildCmd = &command{
 	name:    "build",
 	args:    "",
 	summary: "build the project in its environment, without network access",
-	run: func(_ *flag.FlagSet, args []string) error {
+	run: func(ctx context.Context, _ *flag.FlagSet, args []string) error {
 		if err := maxArgs(args, 0); err != nil {
 			return err
 		}
@@ -227,6 +233,7 @@ var buildCmd = &command{
 			return err
 		}
 		res, err := runner.Build(env, p.Dir, p.BuildDir(), runner.Options{
+			Context: ctx,
 			Isolate: true, Stdout: os.Stdout, Stderr: os.Stderr, Warn: os.Stderr,
 		})
 		if err != nil {
@@ -289,7 +296,7 @@ var shellCmd = &command{
 	name:    "shell",
 	args:    "",
 	summary: "open a shell with the project environment",
-	run: func(_ *flag.FlagSet, args []string) error {
+	run: func(ctx context.Context, _ *flag.FlagSet, args []string) error {
 		if err := maxArgs(args, 0); err != nil {
 			return err
 		}
@@ -341,7 +348,7 @@ type report struct {
 	Outputs         []runner.Output `json:"outputs"`
 }
 
-func runPack(_ *flag.FlagSet, args []string) error {
+func runPack(ctx context.Context, _ *flag.FlagSet, args []string) error {
 	if err := maxArgs(args, 0); err != nil {
 		return err
 	}
@@ -376,7 +383,7 @@ func runPack(_ *flag.FlagSet, args []string) error {
 	}
 	var sources []snapshot.Extra
 	if *packFlags.withSources {
-		if sources, err = sourceExtras(st, prof, packages); err != nil {
+		if sources, err = sourceExtras(ctx, st, prof, packages); err != nil {
 			return err
 		}
 	}
@@ -388,7 +395,7 @@ func runPack(_ *flag.FlagSet, args []string) error {
 	}
 	defer store.RemoveTree(work)
 	copyDir := filepath.Join(work, filepath.Base(p.Dir))
-	if err := copyFiles(p.Dir, copyDir, sel.Files); err != nil {
+	if err := copyFilesContext(ctx, p.Dir, copyDir, sel.Files); err != nil {
 		return err
 	}
 
@@ -400,6 +407,7 @@ func runPack(_ *flag.FlagSet, args []string) error {
 	fmt.Printf("Verifying: offline build of a clean copy (%d files)...\n", len(sel.Files))
 	start := time.Now()
 	res, err := runner.Build(env, copyDir, filepath.Join(work, "build"), runner.Options{
+		Context: ctx,
 		Isolate: true, Stdout: logFile, Stderr: logFile, Warn: os.Stderr,
 	})
 	if err != nil {
@@ -423,6 +431,7 @@ func runPack(_ *flag.FlagSet, args []string) error {
 	fmt.Printf("Verified in %s. Writing %s...\n", time.Since(start).Round(time.Second), out)
 
 	m, err := snapshot.Pack(out, snapshot.Options{
+		Context:      ctx,
 		CreatedBy:    "slepok " + version,
 		Profile:      manifest.Profile{ID: p.Config.Profile, Version: p.Lock.ProfileVersion},
 		Platforms:    p.Config.Platforms,
@@ -485,7 +494,7 @@ func snapshotPackages(p *project.Project, st *store.Store, prof *profile.Profile
 	return out, nil
 }
 
-func copyFiles(src, dst string, files []string) error {
+func copyFilesContext(ctx context.Context, src, dst string, files []string) error {
 	for _, rel := range files {
 		from := filepath.Join(src, filepath.FromSlash(rel))
 		to := filepath.Join(dst, filepath.FromSlash(rel))
@@ -496,14 +505,14 @@ func copyFiles(src, dst string, files []string) error {
 		if err := os.MkdirAll(filepath.Dir(to), 0o755); err != nil {
 			return err
 		}
-		if err := copyFile(from, to, info.Mode().Perm()); err != nil {
+		if err := copyFileContext(ctx, from, to, info.Mode().Perm()); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func copyFile(from, to string, perm os.FileMode) error {
+func copyFileContext(ctx context.Context, from, to string, perm os.FileMode) error {
 	in, err := os.Open(from)
 	if err != nil {
 		return err
@@ -513,7 +522,7 @@ func copyFile(from, to string, perm os.FileMode) error {
 	if err != nil {
 		return err
 	}
-	if _, err := io.Copy(out, in); err != nil {
+	if _, err := io.Copy(out, contextio.Reader{Context: ctx, Reader: in}); err != nil {
 		out.Close()
 		return err
 	}
@@ -548,7 +557,7 @@ var unpackCmd = &command{
 	name:    "unpack",
 	args:    "<file.slepok> [dir]",
 	summary: "restore a snapshot into a new project directory (no network needed)",
-	run: func(_ *flag.FlagSet, args []string) error {
+	run: func(ctx context.Context, _ *flag.FlagSet, args []string) error {
 		if len(args) < 1 {
 			return fmt.Errorf("missing snapshot file")
 		}
@@ -564,7 +573,7 @@ var unpackCmd = &command{
 			return err
 		}
 		fmt.Printf("Verifying and restoring %s...\n", args[0])
-		m, err := snapshot.Unpack(args[0], dest, st, manifest.HostPlatform())
+		m, err := snapshot.UnpackContext(ctx, args[0], dest, st, manifest.HostPlatform())
 		if err != nil {
 			return err
 		}
@@ -580,11 +589,11 @@ var validateCmd = &command{
 	name:    "validate",
 	args:    "<file.slepok>",
 	summary: "check the structure and checksums of a snapshot without extracting it",
-	run: func(_ *flag.FlagSet, args []string) error {
+	run: func(ctx context.Context, _ *flag.FlagSet, args []string) error {
 		if len(args) != 1 {
 			return fmt.Errorf("expected one snapshot file")
 		}
-		m, err := snapshot.Validate(args[0])
+		m, err := snapshot.ValidateContext(ctx, args[0])
 		if err != nil {
 			return err
 		}
@@ -597,7 +606,7 @@ var inspectCmd = &command{
 	name:    "inspect",
 	args:    "<file.slepok>",
 	summary: "show what a snapshot contains, reading only its manifest",
-	run: func(_ *flag.FlagSet, args []string) error {
+	run: func(ctx context.Context, _ *flag.FlagSet, args []string) error {
 		if len(args) != 1 {
 			return fmt.Errorf("expected one snapshot file")
 		}
@@ -634,7 +643,7 @@ var inspectCmd = &command{
 var versionCmd = &command{
 	name:    "version",
 	summary: "print the slepok version",
-	run: func(*flag.FlagSet, []string) error {
+	run: func(context.Context, *flag.FlagSet, []string) error {
 		isolation := "available"
 		if !runner.IsolationAvailable() {
 			isolation = "not available: builds can reach the network"

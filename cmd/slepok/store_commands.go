@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -34,7 +35,7 @@ func projectExists(dir string) bool {
 var listCmd = &command{
 	name:    "list",
 	summary: "show known projects and how much space the store uses",
-	run: func(_ *flag.FlagSet, args []string) error {
+	run: func(ctx context.Context, _ *flag.FlagSet, args []string) error {
 		if err := maxArgs(args, 0); err != nil {
 			return err
 		}
@@ -108,7 +109,7 @@ var gcCmd = &command{
 	run: runGC,
 }
 
-func runGC(_ *flag.FlagSet, args []string) error {
+func runGC(ctx context.Context, _ *flag.FlagSet, args []string) error {
 	if err := maxArgs(args, 0); err != nil {
 		return err
 	}

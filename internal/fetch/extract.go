@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"archive/zip"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"io"
 	"io/fs"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/ulikunitz/xz"
 
+	"github.com/miloVV13/slepok/internal/contextio"
 	"github.com/miloVV13/slepok/internal/safepath"
 )
 
@@ -21,6 +23,13 @@ import (
 // the canonical package rules (spec 9.2), but the same safety rules apply:
 // no paths outside dest, no links escaping it, no writes through links.
 func extract(archive, format string, strip int, dest string) error {
+	return extractContext(context.Background(), archive, format, strip, dest)
+}
+
+func extractContext(ctx context.Context, archive, format string, strip int, dest string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	if err := os.Mkdir(dest, 0o755); err != nil {
 		return err
 	}
@@ -29,7 +38,7 @@ func extract(archive, format string, strip int, dest string) error {
 		return err
 	}
 	defer root.Close()
-	w := &writer{root: root, symlinks: map[string]bool{}, files: map[string]bool{}}
+	w := &writer{ctx: ctx, root: root, symlinks: map[string]bool{}, files: map[string]bool{}}
 
 	if format == "zip" {
 		return extractZip(archive, strip, w)
@@ -57,7 +66,7 @@ func extract(archive, format string, strip int, dest string) error {
 	default:
 		return fmt.Errorf("unsupported archive format %q", format)
 	}
-	return extractTar(r, strip, w)
+	return extractTar(contextio.Reader{Context: ctx, Reader: r}, strip, w)
 }
 
 func extractTar(r io.Reader, strip int, w *writer) error {
@@ -159,6 +168,7 @@ func stripPath(name string, n int) (string, bool, error) {
 }
 
 type writer struct {
+	ctx      context.Context
 	root     *os.Root
 	symlinks map[string]bool
 	files    map[string]bool
@@ -167,6 +177,9 @@ type writer struct {
 // parent creates the parent directories of name, refusing to go through a
 // symlink created by this archive.
 func (w *writer) parent(name string) error {
+	if err := contextio.OrBackground(w.ctx).Err(); err != nil {
+		return err
+	}
 	for d := path.Dir(name); d != "."; d = path.Dir(d) {
 		if w.symlinks[d] {
 			return fmt.Errorf("%s: path goes through symlink %s", name, d)
@@ -200,7 +213,7 @@ func (w *writer) file(name string, mode fs.FileMode, r io.Reader) error {
 	if err != nil {
 		return err
 	}
-	if _, err := io.Copy(f, r); err != nil {
+	if _, err := io.Copy(f, contextio.Reader{Context: w.ctx, Reader: r}); err != nil {
 		f.Close()
 		return err
 	}

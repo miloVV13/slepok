@@ -5,8 +5,10 @@ import (
 	"archive/zip"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -391,5 +393,44 @@ func TestDownloadFailureExplainsManualDownload(t *testing.T) {
 		if !strings.Contains(err.Error(), s) {
 			t.Errorf("error does not mention %q:\n%v", s, err)
 		}
+	}
+}
+
+func TestCancelStalledDownload(t *testing.T) {
+	started := make(chan struct{})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("partial download"))
+		w.(http.Flusher).Flush()
+		close(started)
+		<-r.Context().Done()
+	}))
+	defer srv.Close()
+	st, err := store.Open(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	f := New(st, nil)
+	f.Context = ctx
+	f.RetryDelay = time.Hour
+	done := make(chan error, 1)
+	go func() { _, err := f.Download("test", srv.URL, strings.Repeat("a", 64)); done <- err }()
+	select {
+	case <-started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("download did not start")
+	}
+	cancel()
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("download = %v", err)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("cancelled download stuck in request or retry delay")
+	}
+	if _, err := os.Stat(filepath.Join(st.Root(), "downloads", strings.Repeat("a", 64))); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("cancelled download published cache entry: %v", err)
 	}
 }

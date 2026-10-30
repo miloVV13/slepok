@@ -3,6 +3,7 @@ package runner
 
 import (
 	"bufio"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -16,6 +17,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/miloVV13/slepok/internal/contextio"
+	"github.com/miloVV13/slepok/internal/process"
 	"github.com/miloVV13/slepok/internal/profile"
 	"github.com/miloVV13/slepok/internal/project"
 	"github.com/miloVV13/slepok/internal/store"
@@ -130,6 +133,7 @@ func mapKeys(m map[string]string) func(func(string) bool) {
 }
 
 type Options struct {
+	Context context.Context
 	// Isolate runs the build without network access where the host allows
 	// it.
 	Isolate bool
@@ -172,7 +176,7 @@ func Build(e *Env, src, build string, o Options) (*Result, error) {
 		return nil, fmt.Errorf("build failed: %w", err)
 	}
 	res.Isolated = r.isolate
-	res.Outputs, err = outputs(build, e.Outputs)
+	res.Outputs, err = outputs(o.Context, build, e.Outputs)
 	return res, err
 }
 
@@ -213,7 +217,7 @@ func (r *runner) run(name string, args ...string) error {
 			return r.command(name, args...).Run()
 		}
 		cmd := r.command(name, args...)
-		cmd.SysProcAttr = attr
+		process.SetIsolation(cmd, attr)
 		err := cmd.Start()
 		if err == nil {
 			return cmd.Wait()
@@ -234,7 +238,7 @@ func (r *runner) noIsolation(reason error) {
 }
 
 func (r *runner) command(name string, args ...string) *exec.Cmd {
-	cmd := exec.Command(name, args...)
+	cmd := process.Command(r.o.Context, name, args...)
 	cmd.Env, cmd.Dir = r.env, r.dir
 	cmd.Stdout, cmd.Stderr = r.o.Stdout, r.o.Stderr
 	return cmd
@@ -300,7 +304,7 @@ func hostPath(v string, allowed []string) bool {
 	return false
 }
 
-func outputs(build string, patterns []string) ([]Output, error) {
+func outputs(ctx context.Context, build string, patterns []string) ([]Output, error) {
 	var out []Output
 	for _, pattern := range patterns {
 		matches, err := filepath.Glob(filepath.Join(build, pattern))
@@ -308,7 +312,7 @@ func outputs(build string, patterns []string) ([]Output, error) {
 			return nil, err
 		}
 		for _, m := range matches {
-			sum, err := fileSHA256(m)
+			sum, err := fileSHA256(ctx, m)
 			if err != nil {
 				return nil, err
 			}
@@ -318,14 +322,14 @@ func outputs(build string, patterns []string) ([]Output, error) {
 	return out, nil
 }
 
-func fileSHA256(p string) (string, error) {
+func fileSHA256(ctx context.Context, p string) (string, error) {
 	f, err := os.Open(p)
 	if err != nil {
 		return "", err
 	}
 	defer f.Close()
 	h := sha256.New()
-	if _, err := io.Copy(h, f); err != nil {
+	if _, err := io.Copy(h, contextio.Reader{Context: ctx, Reader: f}); err != nil {
 		return "", err
 	}
 	return hex.EncodeToString(h.Sum(nil)), nil

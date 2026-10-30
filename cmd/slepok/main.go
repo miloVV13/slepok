@@ -3,10 +3,13 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
 // version is set at build time with -ldflags "-X main.version=...".
@@ -16,7 +19,7 @@ type command struct {
 	name    string
 	args    string
 	summary string
-	run     func(fs *flag.FlagSet, args []string) error
+	run     func(ctx context.Context, fs *flag.FlagSet, args []string) error
 	flags   func(fs *flag.FlagSet)
 }
 
@@ -39,7 +42,12 @@ type usageError struct{ msg string }
 func (e *usageError) Error() string { return e.msg }
 
 // execute runs one slepok invocation; args excludes the program name.
-func execute(args []string) error {
+func execute(args []string) error { return executeContext(context.Background(), args) }
+
+func executeContext(ctx context.Context, args []string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	if len(args) == 0 {
 		usage()
 		return &usageError{"no command given"}
@@ -69,7 +77,7 @@ func execute(args []string) error {
 			}
 			return &usageError{err.Error()}
 		}
-		if err := c.run(fs, fs.Args()); err != nil {
+		if err := c.run(ctx, fs, fs.Args()); err != nil {
 			return fmt.Errorf("%s: %w", c.name, err)
 		}
 		return nil
@@ -79,7 +87,19 @@ func execute(args []string) error {
 }
 
 func main() {
-	err := execute(os.Args[1:])
+	ctx := context.Background()
+	stop := func() {}
+	// Only long-running commands with cancellable work intercept signals.
+	if len(os.Args) >= 2 && (os.Args[1] == "init" || os.Args[1] == "build" || os.Args[1] == "pack" || os.Args[1] == "unpack" || os.Args[1] == "validate") {
+		ctx, stop = signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
+	}
+	err := executeContext(ctx, os.Args[1:])
+	interrupted := ctx.Err() != nil
+	stop()
+	if interrupted {
+		fmt.Fprintln(os.Stderr, "slepok: interrupted (verified packages and partial downloads kept for reuse)")
+		os.Exit(130)
+	}
 	if err == nil {
 		return
 	}

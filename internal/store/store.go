@@ -11,6 +11,7 @@
 package store
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"errors"
@@ -22,6 +23,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/miloVV13/slepok/internal/contextio"
 	"github.com/miloVV13/slepok/internal/pkgtar"
 )
 
@@ -79,7 +81,11 @@ func (s *Store) TempDir(pattern string) (string, error) {
 // InstallDir stores the tree at dir as a package and returns its digest.
 // If want is not empty, the tree must have exactly that digest.
 func (s *Store) InstallDir(dir, want string) (string, error) {
-	digest, _, err := pkgtar.Write(io.Discard, dir)
+	return s.InstallDirContext(context.Background(), dir, want)
+}
+
+func (s *Store) InstallDirContext(ctx context.Context, dir, want string) (string, error) {
+	digest, _, err := pkgtar.Write(contextio.Writer{Context: ctx, Writer: io.Discard}, dir)
 	if err != nil {
 		return "", err
 	}
@@ -87,8 +93,9 @@ func (s *Store) InstallDir(dir, want string) (string, error) {
 		return "", fmt.Errorf("package digest mismatch: got %s, want %s", digest, want)
 	}
 	pr, pw := io.Pipe()
+	defer pr.Close()
 	go func() {
-		_, _, err := pkgtar.Write(pw, dir)
+		_, _, err := pkgtar.Write(contextio.Writer{Context: ctx, Writer: pw}, dir)
 		pw.CloseWithError(err)
 	}()
 	if err := s.Install(digest, pr); err != nil {

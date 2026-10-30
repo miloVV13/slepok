@@ -9,6 +9,7 @@ package snapshot
 import (
 	"archive/tar"
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"errors"
 	"fmt"
@@ -23,6 +24,7 @@ import (
 
 	"github.com/klauspost/compress/zstd"
 
+	"github.com/miloVV13/slepok/internal/contextio"
 	"github.com/miloVV13/slepok/internal/manifest"
 	"github.com/miloVV13/slepok/internal/pkgtar"
 	"github.com/miloVV13/slepok/internal/safepath"
@@ -62,6 +64,7 @@ func (e Extra) open() (io.ReadCloser, error) {
 }
 
 type Options struct {
+	Context   context.Context
 	CreatedBy string
 	Profile   manifest.Profile
 	Platforms []string
@@ -79,6 +82,9 @@ type Options struct {
 // under a temporary name, validated, and only then given its final name.
 func Pack(dst string, opt Options) (*manifest.Manifest, error) {
 	if err := mustNotExist(dst); err != nil {
+		return nil, err
+	}
+	if err := contextio.OrBackground(opt.Context).Err(); err != nil {
 		return nil, err
 	}
 	m, err := plan(opt)
@@ -107,11 +113,14 @@ func Pack(dst string, opt Options) (*manifest.Manifest, error) {
 	if err := tmp.Close(); err != nil {
 		return nil, err
 	}
-	if _, err := Validate(tmp.Name()); err != nil {
+	if _, err := ValidateContext(opt.Context, tmp.Name()); err != nil {
 		return nil, fmt.Errorf("written snapshot failed validation: %w", err)
 	}
 	// CreateTemp makes the file private; a snapshot is meant to be shared.
 	if err := os.Chmod(tmp.Name(), 0o644); err != nil {
+		return nil, err
+	}
+	if err := contextio.OrBackground(opt.Context).Err(); err != nil {
 		return nil, err
 	}
 	// Link fails if dst appeared in the meantime, unlike Rename.
@@ -133,7 +142,7 @@ func plan(opt Options) (*manifest.Manifest, error) {
 	files := slices.Clone(opt.ProjectFiles)
 	slices.Sort(files)
 	for _, rel := range files {
-		f, err := projectFile(opt.ProjectDir, rel)
+		f, err := projectFileContext(opt.Context, opt.ProjectDir, rel)
 		if err != nil {
 			return nil, err
 		}
@@ -147,14 +156,14 @@ func plan(opt Options) (*manifest.Manifest, error) {
 		})
 	}
 	for _, e := range opt.Extras {
-		f, err := extraFile(e)
+		f, err := extraFileContext(opt.Context, e)
 		if err != nil {
 			return nil, err
 		}
 		m.Files = append(m.Files, f)
 	}
 	for _, p := range opt.Packages {
-		digest, size, err := pkgtar.Write(io.Discard, p.Dir)
+		digest, size, err := pkgtar.Write(contextio.Writer{Context: opt.Context, Writer: io.Discard}, p.Dir)
 		if err != nil {
 			return nil, fmt.Errorf("package %s: %w", p.Name, err)
 		}
@@ -166,21 +175,21 @@ func plan(opt Options) (*manifest.Manifest, error) {
 	return m, nil
 }
 
-func extraFile(e Extra) (manifest.File, error) {
+func extraFileContext(ctx context.Context, e Extra) (manifest.File, error) {
 	r, err := e.open()
 	if err != nil {
 		return manifest.File{}, err
 	}
 	defer r.Close()
 	h := sha256.New()
-	n, err := io.Copy(h, r)
+	n, err := io.Copy(h, contextio.Reader{Context: ctx, Reader: r})
 	if err != nil {
 		return manifest.File{}, err
 	}
 	return manifest.File{Path: e.Name, Size: n, Digest: pkgtar.Digest(h.Sum(nil))}, nil
 }
 
-func projectFile(dir, rel string) (manifest.File, error) {
+func projectFileContext(ctx context.Context, dir, rel string) (manifest.File, error) {
 	if err := safepath.Check(rel); err != nil {
 		return manifest.File{}, fmt.Errorf("project file: %w", err)
 	}
@@ -198,7 +207,7 @@ func projectFile(dir, rel string) (manifest.File, error) {
 	}
 	defer f.Close()
 	h := sha256.New()
-	n, err := io.Copy(h, f)
+	n, err := io.Copy(h, contextio.Reader{Context: ctx, Reader: f})
 	if err != nil {
 		return manifest.File{}, err
 	}
@@ -211,10 +220,11 @@ func projectFile(dir, rel string) (manifest.File, error) {
 }
 
 func write(w io.Writer, m *manifest.Manifest, data []byte, opt Options) error {
-	zw, err := zstd.NewWriter(w, zstd.WithEncoderLevel(zstd.SpeedBetterCompression))
+	zw, err := zstd.NewWriter(contextio.Writer{Context: opt.Context, Writer: w}, zstd.WithEncoderLevel(zstd.SpeedBetterCompression))
 	if err != nil {
 		return err
 	}
+	defer zw.Close()
 	tw := tar.NewWriter(zw)
 
 	if err := addEntry(tw, manifest.EntryName, 0o644, int64(len(data)), digestOf(data), bytes.NewReader(data)); err != nil {
@@ -230,7 +240,7 @@ func write(w io.Writer, m *manifest.Manifest, data []byte, opt Options) error {
 		if err := tw.WriteHeader(hdr); err != nil {
 			return err
 		}
-		digest, size, err := pkgtar.Write(tw, opt.Packages[i].Dir)
+		digest, size, err := pkgtar.Write(contextio.Writer{Context: opt.Context, Writer: tw}, opt.Packages[i].Dir)
 		if err != nil {
 			return fmt.Errorf("package %s: %w", p.Name, err)
 		}
@@ -259,7 +269,7 @@ func addFile(tw *tar.Writer, f manifest.File, opt Options) error {
 				return err
 			}
 			defer r.Close()
-			return addEntry(tw, f.Path, mode, f.Size, f.Digest, r)
+			return addEntry(tw, f.Path, mode, f.Size, f.Digest, contextio.Reader{Context: opt.Context, Reader: r})
 		}
 	}
 	rel := strings.TrimPrefix(f.Path, "project/")
@@ -268,7 +278,7 @@ func addFile(tw *tar.Writer, f manifest.File, opt Options) error {
 		return err
 	}
 	defer src.Close()
-	return addEntry(tw, f.Path, mode, f.Size, f.Digest, src)
+	return addEntry(tw, f.Path, mode, f.Size, f.Digest, contextio.Reader{Context: opt.Context, Reader: src})
 }
 
 // addEntry writes a regular file entry and checks that the content still
@@ -285,6 +295,13 @@ func addEntry(tw *tar.Writer, name string, mode, size int64, digest string, r io
 	}
 	if n != size || pkgtar.Digest(h.Sum(nil)) != digest {
 		return fmt.Errorf("%s changed while packing", name)
+	}
+	// A growing input can keep the same prefix and digest. Check EOF too.
+	var extra [1]byte
+	if n, err := io.ReadFull(r, extra[:]); n != 0 {
+		return fmt.Errorf("%s changed while packing: expected end of file", name)
+	} else if err != io.EOF {
+		return fmt.Errorf("read %s: %w", name, err)
 	}
 	return nil
 }
@@ -305,7 +322,11 @@ type handler interface {
 // structure, the manifest, every size and digest, and the safety rules of
 // every package.
 func Validate(src string) (*manifest.Manifest, error) {
-	return read(src, nil, verifier{})
+	return ValidateContext(context.Background(), src)
+}
+
+func ValidateContext(ctx context.Context, src string) (*manifest.Manifest, error) {
+	return read(ctx, src, nil, verifier{})
 }
 
 // ReadManifest returns the manifest of the snapshot without reading the
@@ -361,13 +382,17 @@ func (e expectation) digest() string {
 	return e.pkg.Digest
 }
 
-func read(src string, check func(*manifest.Manifest) error, h handler) (*manifest.Manifest, error) {
+func read(ctx context.Context, src string, check func(*manifest.Manifest) error, h handler) (*manifest.Manifest, error) {
+	ctx = contextio.OrBackground(ctx)
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	f, err := os.Open(src)
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
-	zr, err := zstd.NewReader(f)
+	zr, err := zstd.NewReader(contextio.Reader{Context: ctx, Reader: f})
 	if err != nil {
 		return nil, err
 	}
@@ -410,7 +435,7 @@ func read(src string, check func(*manifest.Manifest) error, h handler) (*manifes
 		}
 
 		hs := sha256.New()
-		r := io.TeeReader(tr, hs)
+		r := io.TeeReader(contextio.Reader{Context: ctx, Reader: tr}, hs)
 		if e.file != nil {
 			err = h.file(*e.file, r)
 		} else {
@@ -438,6 +463,9 @@ func read(src string, check func(*manifest.Manifest) error, h handler) (*manifes
 	}
 	// Reading to the end also checks the zstd frame checksum.
 	if err := expectZeros(zr); err != nil {
+		return nil, err
+	}
+	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
 	return m, nil
@@ -475,6 +503,13 @@ func (verifier) pkg(p manifest.Package, r io.Reader) error {
 // verified. Packages installed before a failure stay in the store: they
 // were verified individually and are addressed by content.
 func Unpack(src, dest string, st *store.Store, platform string) (*manifest.Manifest, error) {
+	return UnpackContext(context.Background(), src, dest, st, platform)
+}
+
+func UnpackContext(ctx context.Context, src, dest string, st *store.Store, platform string) (*manifest.Manifest, error) {
+	if err := contextio.OrBackground(ctx).Err(); err != nil {
+		return nil, err
+	}
 	if err := mustNotExist(dest); err != nil {
 		return nil, err
 	}
@@ -501,11 +536,14 @@ func Unpack(src, dest string, st *store.Store, platform string) (*manifest.Manif
 		}
 		return nil
 	}
-	m, err := read(src, checkPlatform, &unpacker{root: root, store: st, platform: platform})
+	m, err := read(ctx, src, checkPlatform, &unpacker{root: root, store: st, platform: platform})
 	if err != nil {
 		return nil, err
 	}
 	if err := root.Close(); err != nil {
+		return nil, err
+	}
+	if err := contextio.OrBackground(ctx).Err(); err != nil {
 		return nil, err
 	}
 	if err := os.Chmod(staging, 0o755); err != nil {

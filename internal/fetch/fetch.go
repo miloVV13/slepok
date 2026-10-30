@@ -20,14 +20,17 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/miloVV13/slepok/internal/contextio"
+	"github.com/miloVV13/slepok/internal/process"
 	"github.com/miloVV13/slepok/internal/profile"
 	"github.com/miloVV13/slepok/internal/store"
 )
 
 type Fetcher struct {
-	Store  *store.Store
-	Log    io.Writer
-	Client *http.Client
+	Context context.Context
+	Store   *store.Store
+	Log     io.Writer
+	Client  *http.Client
 	// Retries is how many attempts in a row may fail without progress.
 	Retries    int
 	RetryDelay time.Duration
@@ -55,6 +58,9 @@ func New(st *store.Store, log io.Writer) *Fetcher {
 // Install makes the component available in the store and returns its
 // package digest. If src.Digest is set, the package must match it.
 func (f *Fetcher) Install(name string, src profile.Source) (string, error) {
+	if err := f.ctx().Err(); err != nil {
+		return "", err
+	}
 	if src.Digest != "" && f.Store.Has(src.Digest) {
 		return src.Digest, nil
 	}
@@ -71,7 +77,7 @@ func (f *Fetcher) Install(name string, src profile.Source) (string, error) {
 		var archive string
 		if archive, err = f.download(name, src); err == nil {
 			f.logf("  extracting %s\n", name)
-			err = extract(archive, src.Format, src.Strip, tree)
+			err = extractContext(f.ctx(), archive, src.Format, src.Strip, tree)
 		}
 	}
 	if err != nil {
@@ -80,7 +86,7 @@ func (f *Fetcher) Install(name string, src profile.Source) (string, error) {
 	if err := clean(tree); err != nil {
 		return "", err
 	}
-	digest, err := f.Store.InstallDir(tree, src.Digest)
+	digest, err := f.Store.InstallDirContext(f.ctx(), tree, src.Digest)
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", name, err)
 	}
@@ -117,12 +123,17 @@ func (f *Fetcher) logf(format string, args ...any) {
 func (f *Fetcher) retry(what string, op func() error) error {
 	var err error
 	for attempt := 1; attempt <= f.Retries; attempt++ {
+		if err := f.ctx().Err(); err != nil {
+			return err
+		}
 		if err = op(); err == nil {
 			return nil
 		}
 		if attempt < f.Retries {
 			f.logf("  %s: %s; retrying (%d/%d)\n", what, reason(err), attempt, f.Retries-1)
-			time.Sleep(f.RetryDelay)
+			if err := f.pause(); err != nil {
+				return err
+			}
 		}
 	}
 	return err
@@ -157,7 +168,7 @@ func (f *Fetcher) download(name string, src profile.Source) (string, error) {
 		return "", err
 	}
 	final := filepath.Join(dir, src.SHA256)
-	if sum, err := fileSHA256(final); err == nil && sum == src.SHA256 {
+	if sum, err := fileSHA256Context(f.ctx(), final); err == nil && sum == src.SHA256 {
 		return final, nil
 	}
 	urls := append([]string{src.URL}, src.Mirrors...)
@@ -171,10 +182,20 @@ func (f *Fetcher) download(name string, src profile.Source) (string, error) {
 		if dead[url] {
 			continue
 		}
+		if err := f.ctx().Err(); err != nil {
+			return "", err
+		}
 		before := fileSize(part)
 		lastErr = f.downloadOnce(name, url, part)
 		if lastErr == nil {
 			break
+		}
+		if err := f.ctx().Err(); err != nil {
+			return "", err
+		}
+		var pathErr *os.PathError
+		if errors.As(lastErr, &pathErr) && pathErr.Op != "dial" {
+			return "", lastErr
 		}
 		var status *statusError
 		if errors.As(lastErr, &status) && status.permanent() {
@@ -186,18 +207,23 @@ func (f *Fetcher) download(name string, src profile.Source) (string, error) {
 			stuck++
 		}
 		f.logf("  download %s: %s; retrying\n", name, reason(lastErr))
-		time.Sleep(f.RetryDelay)
+		if err := f.pause(); err != nil {
+			return "", err
+		}
 	}
 	if lastErr != nil {
 		return "", fmt.Errorf("%w\n%s", lastErr, manualDownload(urls, src.SHA256, final))
 	}
-	sum, err := fileSHA256(part)
+	sum, err := fileSHA256Context(f.ctx(), part)
 	if err != nil {
 		return "", err
 	}
 	if sum != src.SHA256 {
 		os.Remove(part)
 		return "", fmt.Errorf("checksum mismatch for %s: got %s, want %s", src.URL, sum, src.SHA256)
+	}
+	if err := f.ctx().Err(); err != nil {
+		return "", err
 	}
 	return final, os.Rename(part, final)
 }
@@ -251,7 +277,7 @@ func (f *Fetcher) downloadOnce(name, url, part string) error {
 		return err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(f.ctx())
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
@@ -349,14 +375,16 @@ func (p *progressWriter) Write(b []byte) (int, error) {
 
 func mib(n int64) float64 { return float64(n) / (1 << 20) }
 
-func fileSHA256(p string) (string, error) {
+func fileSHA256(p string) (string, error) { return fileSHA256Context(context.Background(), p) }
+
+func fileSHA256Context(ctx context.Context, p string) (string, error) {
 	f, err := os.Open(p)
 	if err != nil {
 		return "", err
 	}
 	defer f.Close()
 	h := sha256.New()
-	if _, err := io.Copy(h, f); err != nil {
+	if _, err := io.Copy(h, contextio.Reader{Context: ctx, Reader: f}); err != nil {
 		return "", err
 	}
 	return hex.EncodeToString(h.Sum(nil)), nil
@@ -374,13 +402,13 @@ func (f *Fetcher) clone(name string, src profile.Source, dest string) error {
 		if err := os.RemoveAll(dest); err != nil {
 			return err
 		}
-		_, err := run(git, "-c", "advice.detachedHead=false", "-c", "core.autocrlf=false", "-c", "core.eol=lf", "clone", "--quiet", "--depth", "1", "--branch", src.Ref, src.Git, dest)
+		_, err := f.run(git, "-c", "advice.detachedHead=false", "-c", "core.autocrlf=false", "-c", "core.eol=lf", "clone", "--quiet", "--depth", "1", "--branch", src.Ref, src.Git, dest)
 		return err
 	})
 	if err != nil {
 		return err
 	}
-	head, err := run(git, "-C", dest, "rev-parse", "HEAD")
+	head, err := f.run(git, "-C", dest, "rev-parse", "HEAD")
 	if err != nil {
 		return err
 	}
@@ -400,7 +428,7 @@ func (f *Fetcher) submodules(git, dir string) error {
 	if _, err := os.Stat(filepath.Join(dir, ".gitmodules")); err != nil {
 		return nil
 	}
-	paths, err := run(git, "-C", dir, "config", "--file", ".gitmodules", "--get-regexp", `^submodule\..*\.path$`)
+	paths, err := f.run(git, "-C", dir, "config", "--file", ".gitmodules", "--get-regexp", `^submodule\..*\.path$`)
 	if err != nil {
 		return err
 	}
@@ -410,11 +438,11 @@ func (f *Fetcher) submodules(git, dir string) error {
 			continue
 		}
 		name := strings.TrimSuffix(strings.TrimPrefix(key, "submodule."), ".path")
-		url, err := run(git, "-C", dir, "config", "--file", ".gitmodules", "submodule."+name+".url")
+		url, err := f.run(git, "-C", dir, "config", "--file", ".gitmodules", "submodule."+name+".url")
 		if err != nil {
 			return err
 		}
-		tree, err := run(git, "-C", dir, "ls-tree", "HEAD", sub)
+		tree, err := f.run(git, "-C", dir, "ls-tree", "HEAD", sub)
 		if err != nil {
 			return err
 		}
@@ -438,7 +466,7 @@ func (f *Fetcher) submodules(git, dir string) error {
 				{"-C", subdir, "fetch", "--quiet", "--depth", "1", url, commit},
 				{"-C", subdir, "-c", "advice.detachedHead=false", "-c", "core.autocrlf=false", "-c", "core.eol=lf", "checkout", "--quiet", "FETCH_HEAD"},
 			} {
-				if _, err := run(git, args...); err != nil {
+				if _, err := f.run(git, args...); err != nil {
 					return err
 				}
 			}
@@ -447,7 +475,7 @@ func (f *Fetcher) submodules(git, dir string) error {
 		if err != nil {
 			return err
 		}
-		if head, err := run(git, "-C", subdir, "rev-parse", "HEAD"); err != nil || head != commit {
+		if head, err := f.run(git, "-C", subdir, "rev-parse", "HEAD"); err != nil || head != commit {
 			return fmt.Errorf("submodule %s is at %s, expected %s (%v)", sub, head, commit, err)
 		}
 		if err := f.submodules(git, subdir); err != nil {
@@ -457,11 +485,14 @@ func (f *Fetcher) submodules(git, dir string) error {
 	return nil
 }
 
-func run(name string, args ...string) (string, error) {
+func (f *Fetcher) run(name string, args ...string) (string, error) {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command(name, args...)
+	cmd := process.Command(f.ctx(), name, args...)
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	if err := cmd.Run(); err != nil {
+		if f.ctx().Err() != nil {
+			return "", f.ctx().Err()
+		}
 		msg := strings.TrimSpace(stderr.String())
 		if i := strings.LastIndexByte(msg, '\n'); i >= 0 {
 			msg = msg[i+1:]
@@ -474,4 +505,16 @@ func run(name string, args ...string) (string, error) {
 		return "", fmt.Errorf("%s: %w", cmdline, err)
 	}
 	return strings.TrimSpace(stdout.String()), nil
+}
+
+func (f *Fetcher) ctx() context.Context { return contextio.OrBackground(f.Context) }
+func (f *Fetcher) pause() error {
+	timer := time.NewTimer(f.RetryDelay)
+	defer timer.Stop()
+	select {
+	case <-f.ctx().Done():
+		return f.ctx().Err()
+	case <-timer.C:
+		return nil
+	}
 }

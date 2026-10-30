@@ -147,6 +147,12 @@ The full specification, including design decisions and measurements, is in
 - Checksums detect corruption, not tampering: whoever can change a
   snapshot can change its manifest. Signatures are planned.
 
+Ctrl+C or SIGTERM cancels `init`, `build`, `pack`, `unpack` and `validate`.
+On Linux, cancellation stops the build/git process group and cleans up
+operation scratch data. Verified packages and partial downloads are kept
+for reuse. Interrupted commands exit with status 130. SIGKILL or a power
+loss cannot run cleanup; `gc` removes old scratch data inside the store.
+
 ## Licenses
 
 Slepok is MIT licensed. The binary includes Go modules under BSD and MIT
@@ -183,3 +189,22 @@ Slepok's niche: one offline file, a proven restore, no Docker, any editor.
 
 Windows and macOS hosts · STM32 and ESP32 profiles · Python packages for
 project scripts · snapshot signatures · release binaries.
+
+## Development checks
+
+Run `go test -race ./...` and `go vet ./...`. Tests use local HTTP servers;
+they do not download the RP2040 environment.
+
+On Linux, tests also fill a disposable 1 MiB tmpfs to check write failures
+and preservation of existing data. This requires user/mount namespaces
+and util-linux `unshare`; the test skips when they are unavailable.
+Set `SLEPOK_REQUIRE_FILESYSTEM_TESTS=1` to require it (as CI does).
+
+For a real Linux RP2040 round trip, build the binary and run
+`bash scripts/offline_smoke.sh /absolute/path/to/slepok`. This downloads
+the pinned environment into a temporary store, builds and packs blink,
+then validates, restores and builds it in a second empty store inside
+a network namespace. It also compares the UF2 files. The script requires
+`git`, util-linux `unshare` and enabled unprivileged user namespaces;
+it fails if network isolation is unavailable. Temporary data is removed
+on exit. Both checks run in GitHub Actions.

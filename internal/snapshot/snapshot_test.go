@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -184,8 +185,12 @@ func TestExtras(t *testing.T) {
 	}
 
 	opt.Extras = []Extra{{Name: "etc/passwd", Data: []byte("x")}}
-	if _, err := Pack(filepath.Join(t.TempDir(), "bad.slepok"), opt); err == nil {
+	failedOutput := t.TempDir()
+	if _, err := Pack(filepath.Join(failedOutput, "bad.slepok"), opt); err == nil {
 		t.Fatal("Pack accepted an extra outside reports/ and sources/")
+	}
+	if got := listDir(t, failedOutput); len(got) != 0 {
+		t.Fatalf("failed validation left output or temporary files: %v", got)
 	}
 }
 
@@ -430,5 +435,32 @@ func TestUnpackPlatformMismatch(t *testing.T) {
 	}
 	if got := listDir(t, parent); len(got) != 0 {
 		t.Fatalf("Unpack left %v behind", got)
+	}
+}
+
+func TestAddEntryRejectsChangedInput(t *testing.T) {
+	for _, content := range []string{"abc-extra", "ab", "xyz"} {
+		t.Run(content, func(t *testing.T) {
+			tw := tar.NewWriter(io.Discard)
+			err := addEntry(tw, "project/a", 0o644, 3, digestOfBytes([]byte("abc")), strings.NewReader(content))
+			if err == nil || !strings.Contains(err.Error(), "changed while packing") {
+				t.Fatalf("changed input accepted: %v", err)
+			}
+		})
+	}
+}
+
+type fullDiskWriter struct{}
+
+func (fullDiskWriter) Write([]byte) (int, error) { return 0, syscall.ENOSPC }
+
+func TestWritePropagatesDiskFull(t *testing.T) {
+	opt := options(t)
+	m, err := plan(opt)
+	must(t, err)
+	data, err := m.Marshal()
+	must(t, err)
+	if err := write(fullDiskWriter{}, m, data, opt); !errors.Is(err, syscall.ENOSPC) {
+		t.Fatalf("write = %v, want disk-full error", err)
 	}
 }
