@@ -199,11 +199,17 @@ func Build(e *Env, src, build string, o Options) (*Result, error) {
 	}
 	res := &Result{}
 	allowed := []string{e.StoreRoot, src, build}
-	res.Leaks, err = Leaks(filepath.Join(build, "CMakeCache.txt"), allowed)
+	var systemFiles []string
+	if runtime.GOOS == "windows" {
+		if root := os.Getenv("SystemRoot"); root != "" {
+			systemFiles = []string{filepath.Join(root, "System32", "cmd.exe")}
+		}
+	}
+	res.Leaks, err = Leaks(filepath.Join(build, "CMakeCache.txt"), allowed, systemFiles...)
 	if err != nil {
 		return nil, err
 	}
-	ninjaLeaks, err := NinjaLeaks(build, allowed)
+	ninjaLeaks, err := NinjaLeaks(build, allowed, systemFiles...)
 	if err != nil {
 		return nil, err
 	}
@@ -291,7 +297,7 @@ var ignoredCacheKeys = []string{"CMAKE_INSTALL_PREFIX", "CMAKE_UNAME"}
 
 // Leaks reports CMake cache entries that point into the host system rather
 // than into the allowed directories (spec 17, stage 1 finding 1).
-func Leaks(cache string, allowed []string) ([]string, error) {
+func Leaks(cache string, allowed []string, systemFiles ...string) ([]string, error) {
 	f, err := os.Open(cache)
 	if err != nil {
 		return nil, err
@@ -314,7 +320,7 @@ func Leaks(cache string, allowed []string) ([]string, error) {
 			continue
 		}
 		for _, v := range strings.Split(value, ";") {
-			if hostPath(v, allowed) {
+			if hostPath(v, allowed, systemFiles...) {
 				leaks = append(leaks, key+"="+v)
 				break
 			}
@@ -323,10 +329,17 @@ func Leaks(cache string, allowed []string) ([]string, error) {
 	return leaks, s.Err()
 }
 
-func hostPath(v string, allowed []string) bool {
+func hostPath(v string, allowed []string, systemFiles ...string) bool {
 	if windowsAbsolute(v) {
 		norm := func(p string) string { return strings.ToLower(path.Clean(strings.ReplaceAll(p, `\`, "/"))) }
 		value := norm(v)
+		// OS command interpreters are runtime dependencies, like /bin/sh on
+		// Linux. Exempt the exact selected file, never its containing directory.
+		for _, file := range systemFiles {
+			if windowsAbsolute(file) && value == norm(file) {
+				return false
+			}
+		}
 		for _, a := range allowed {
 			if windowsAbsolute(a) {
 				base := norm(a)
@@ -367,7 +380,7 @@ var ninjaUnescape = strings.NewReplacer("$ ", " ", "$:", ":", "$$", "$")
 
 // NinjaLeaks checks the generated graph and included rule files, where custom
 // commands can refer to host tools without adding anything to CMakeCache.txt.
-func NinjaLeaks(build string, allowed []string) ([]string, error) {
+func NinjaLeaks(build string, allowed []string, systemFiles ...string) ([]string, error) {
 	var leaks []string
 	err := filepath.WalkDir(build, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -399,7 +412,7 @@ func NinjaLeaks(build string, allowed []string) ([]string, error) {
 					for _, prefix := range []string{"-isystem", "-I", "-L"} {
 						value = strings.TrimPrefix(value, prefix)
 					}
-					if hostPath(value, allowed) && !seen[value] {
+					if hostPath(value, allowed, systemFiles...) && !seen[value] {
 						seen[value] = true
 						leaks = append(leaks, fmt.Sprintf("%s:%d: %s", filepath.ToSlash(rel), line, value))
 					}

@@ -142,6 +142,29 @@ func TestWindowsHostPaths(t *testing.T) {
 	}
 }
 
+func TestWindowsSystemCommandIsAnExactException(t *testing.T) {
+	dir := t.TempDir()
+	cmd := `C:\Windows\System32\cmd.exe`
+	cache := filepath.Join(dir, "CMakeCache.txt")
+	must(t, os.WriteFile(cache, []byte("SHELL:FILEPATH=C:/WINDOWS/System32/cmd.exe\nPYTHON:FILEPATH=C:/Windows/System32/python.exe\n"), 0644))
+	must(t, os.WriteFile(filepath.Join(dir, "build.ninja"), []byte("command = C:\\windows\\System32\\cmd.exe /C pinned-tool\ncommand = C:\\Windows\\System32\\python.exe generate.py\ncommand = D:\\Windows\\System32\\cmd.exe /C other\n"), 0644))
+	leaks, err := Leaks(cache, nil, cmd)
+	must(t, err)
+	if len(leaks) != 1 || !strings.Contains(leaks[0], "python.exe") {
+		t.Fatalf("cache leaks: %v", leaks)
+	}
+	leaks, err = NinjaLeaks(dir, nil, cmd)
+	must(t, err)
+	if len(leaks) != 2 || !strings.Contains(strings.Join(leaks, "\n"), "python.exe") || !strings.Contains(strings.Join(leaks, "\n"), `D:\Windows\System32\cmd.exe`) {
+		t.Fatalf("Ninja leaks: %v", leaks)
+	}
+	for _, name := range []string{`C:\Windows\System32\cmd.exe.extra`, `C:\Windows\System32\cmd.exe\tool`, `C:\Windows\System32-other\cmd.exe`} {
+		if !hostPath(name, nil, cmd) {
+			t.Fatalf("overbroad exception: %s", name)
+		}
+	}
+}
+
 func TestResolveWindowsHostOverrides(t *testing.T) {
 	st, err := store.Open(t.TempDir())
 	must(t, err)
