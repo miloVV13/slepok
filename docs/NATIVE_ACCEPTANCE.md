@@ -124,30 +124,18 @@ exit
 ```bash
 chmod +x ./slepok
 ./slepok version
-./slepok init dual-blink
+./slepok init --platform linux-x64,windows-x64 dual-blink
 cd dual-blink
-```
-
-В `slepok.toml` замените строку `platforms` на:
-
-```toml
-platforms = ["linux-x64", "windows-x64"]
-```
-
-Затем:
-
-```bash
-../slepok init
 ../slepok build
 sha256sum build/*.uf2
-../slepok pack -o ../dual.slepok
+../slepok pack --platform linux-x64,windows-x64 -o ../dual.slepok
 cd ..
 ./slepok validate dual.slepok
 ./slepok inspect dual.slepok
 sha256sum dual.slepok
 ```
 
-Повторный `init` загружает обе платформы и дополняет lock. `inspect`
+`init --platform` загружает обе платформы и записывает lock. `inspect`
 должен показать обе платформы и оба варианта SDK. Сохраните архив,
 вывод, исходники и lock. Если Linux сообщает, что сетевая изоляция
 недоступна, запишите это: такой `pack` сам по себе ещё не доказывает
@@ -212,10 +200,10 @@ test -s build/compile_commands.json && echo 'compile_commands: OK'
 1. Из `win-blink` первого сценария скопируйте на Linux в новый каталог
    `main.c`, `CMakeLists.txt`, `slepok.toml`, `slepok.lock` и `.gitignore`.
    Если добавляли `.slepokignore`, перенесите его тоже. `build` не копируйте.
-2. На Linux добавьте `linux-x64` в `platforms`, сохранив `windows-x64`.
-   Не удаляйте Windows lock и не изменяйте исходники.
-3. В этом каталоге выполните Linux-бинарником `slepok init`,
-   `slepok build`, `slepok pack -o ../from-windows-dual.slepok`.
+2. Не удаляйте Windows lock и не изменяйте исходники.
+3. В этом каталоге выполните Linux-бинарником
+   `slepok init --platform linux-x64,windows-x64`, `slepok build`,
+   `slepok pack --platform linux-x64,windows-x64 -o ../from-windows-dual.slepok`.
    Здесь сеть нужна для получения Linux-пакетов.
 4. Проверьте новый общий архив на чистых Linux и Windows без сети
    командами из раздела 2, заменив имя архива. Windows UF2 сравните

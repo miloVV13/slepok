@@ -87,6 +87,28 @@ are planned.
 
 ## Files in your project
 
+Select snapshot host platforms with `--platform` (these are the computers
+running the build, not the target MCU). With no flag, `pack` includes only
+the current host, even when the project has several platforms configured.
+For example, on Linux:
+
+```sh
+slepok init --platform linux-x64,windows-x64 blinky
+cd blinky
+slepok pack --platform linux-x64,windows-x64
+# Or include only the already prepared Windows environment:
+slepok pack --platform windows-x64 -o windows.slepok
+```
+
+`init --platform` saves the selection plus the current host for verification
+builds. On an existing project, `init` without the flag keeps its configured
+platforms and ensures the current host is included. `pack --platform` changes
+only the archive selection and its restored config, leaving the source
+project config unchanged. It does not download missing packages: run
+`init --platform` first. Verification executes only on the producer host;
+other hosts still require native testing. Preparing Linux packages on
+Windows remains unsupported; prepare combined snapshots on Linux.
+
 - **`slepok.toml`** — written by you: profile, board, platforms.
 
   ```toml

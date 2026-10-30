@@ -40,7 +40,7 @@ func maxArgs(args []string, n int) error {
 
 // --- init -------------------------------------------------------------
 
-var initFlags struct{ profile, board *string }
+var initFlags struct{ profile, board, platform *string }
 
 var initCmd = &command{
 	name:    "init",
@@ -49,6 +49,7 @@ var initCmd = &command{
 	flags: func(fs *flag.FlagSet) {
 		initFlags.profile = fs.String("profile", "rp2040", "platform profile ("+strings.Join(profile.IDs(), ", ")+")")
 		initFlags.board = fs.String("board", "", "board (default: the profile's first board)")
+		initFlags.platform = fs.String("platform", "", "prepare host platforms, comma-separated (default: existing config or current host)")
 	},
 	run: runInit,
 }
@@ -57,11 +58,15 @@ func runInit(ctx context.Context, fs *flag.FlagSet, args []string) error {
 	if err := maxArgs(args, 1); err != nil {
 		return err
 	}
+	targets, err := selectedPlatforms(*initFlags.platform)
+	if err != nil {
+		return err
+	}
 	dir := "."
 	if len(args) == 1 {
 		dir = args[0]
 	}
-	dir, err := filepath.Abs(dir)
+	dir, err = filepath.Abs(dir)
 	if err != nil {
 		return err
 	}
@@ -84,6 +89,9 @@ func runInit(ctx context.Context, fs *flag.FlagSet, args []string) error {
 	var cfg project.Config
 	if p, err := project.Load(dir); err == nil {
 		cfg = p.Config
+		if explicit["platform"] {
+			cfg.Platforms = withBuildHost(targets)
+		}
 		if (explicit["profile"] && *initFlags.profile != cfg.Profile) || (explicit["board"] && *initFlags.board != cfg.Board) {
 			return fmt.Errorf("%s already sets profile %s, board %s; edit it to change them", project.ConfigName, cfg.Profile, cfg.Board)
 		}
@@ -99,8 +107,11 @@ func runInit(ctx context.Context, fs *flag.FlagSet, args []string) error {
 		if board == "" {
 			board = prof.Boards[0]
 		}
-		cfg = project.Config{Profile: prof.ID, Board: board, Platforms: []string{manifest.HostPlatform()}, BuildDir: "build"}
+		cfg = project.Config{Profile: prof.ID, Board: board, Platforms: withBuildHost(targets), BuildDir: "build"}
 		if err := cfg.Validate(); err != nil {
+			return err
+		}
+		if err := checkPreparationHost(manifest.HostPlatform(), cfg.Platforms); err != nil {
 			return err
 		}
 		empty, err := isEmpty(dir)
@@ -124,14 +135,30 @@ func runInit(ctx context.Context, fs *flag.FlagSet, args []string) error {
 	if err != nil {
 		return err
 	}
+	cfg.Platforms = withBuildHost(cfg.Platforms)
+	if err := checkPreparationHost(manifest.HostPlatform(), cfg.Platforms); err != nil {
+		return err
+	}
 	lock, err := lockFor(dir, cfg, prof)
 	if err != nil {
 		return err
 	}
+	if err := project.WriteConfig(dir, cfg); err != nil {
+		return err
+	}
 	f := fetch.New(st, os.Stdout)
 	f.Context = ctx
+	needed := map[string]bool{}
+	for _, platform := range cfg.Platforms {
+		for _, pkg := range lock.PackagesFor(platform) {
+			needed[pkg.Name+"/"+pkg.Platform] = true
+		}
+	}
 	for i := range lock.Packages {
 		pkg := &lock.Packages[i]
+		if !needed[pkg.Name+"/"+pkg.Platform] {
+			continue
+		}
 		fmt.Printf("%s %s (%s)\n", pkg.Name, pkg.Version, pkg.Platform)
 		digest, err := f.Install(pkg.Name, pkg.Source)
 		if err != nil {
@@ -340,6 +367,7 @@ var shellCmd = &command{
 
 var packFlags struct {
 	output         *string
+	platform       *string
 	allowSensitive *bool
 	withSources    *bool
 }
@@ -350,6 +378,7 @@ var packCmd = &command{
 	summary: "build the project offline from a clean copy and write a snapshot",
 	flags: func(fs *flag.FlagSet) {
 		packFlags.output = fs.String("o", "", "snapshot file (default: <project>.slepok in the current directory)")
+		packFlags.platform = fs.String("platform", "", "snapshot host platforms, comma-separated (default: current host)")
 		packFlags.allowSensitive = fs.Bool("allow-sensitive", false, "include files that look like secrets")
 		packFlags.withSources = fs.Bool("with-sources", false, "bundle the source code of GPL components (downloads it; needed to publish snapshots)")
 	},
@@ -372,10 +401,17 @@ func runPack(ctx context.Context, _ *flag.FlagSet, args []string) error {
 	if err := maxArgs(args, 0); err != nil {
 		return err
 	}
+	targets, err := selectedPlatforms(*packFlags.platform)
+	if err != nil {
+		return err
+	}
 	p, env, err := loadEnv(ctx)
 	if err != nil {
 		return err
 	}
+	// The verification environment stays on the producer host. Only the
+	// snapshot's package selection and restored config use the targets.
+	p.Config.Platforms = targets
 	st, err := openStore()
 	if err != nil {
 		return err
@@ -399,8 +435,9 @@ func runPack(ctx context.Context, _ *flag.FlagSet, args []string) error {
 	}
 	packages, err := snapshotPackages(p, st, prof)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w; prepare the requested platforms first: slepok init --platform %s", err, strings.Join(targets, ","))
 	}
+	fmt.Printf("Snapshot platforms: %s; verification build: %s.\n", strings.Join(targets, ", "), manifest.HostPlatform())
 	var sources []snapshot.Extra
 	if *packFlags.withSources {
 		if sources, err = sourceExtras(ctx, st, prof, packages); err != nil {
@@ -416,6 +453,9 @@ func runPack(ctx context.Context, _ *flag.FlagSet, args []string) error {
 	defer store.RemoveTree(work)
 	copyDir := filepath.Join(work, filepath.Base(p.Dir))
 	if err := copyFilesContext(ctx, p.Dir, copyDir, sel.Files); err != nil {
+		return err
+	}
+	if err := project.WriteConfig(copyDir, p.Config); err != nil {
 		return err
 	}
 
