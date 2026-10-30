@@ -67,5 +67,6 @@ SLEPOK_WINDOWS_PACKAGES_OUT=/tmp/slepok-windows-packages \
 
 Для мультиплатформенной подготовки сейчас следует использовать Linux:
 на Windows Unix-метаданные Linux-пакетов пока не воспроизводятся.
-Windows → Windows использует только `windows-v1`, но нативная приёмка,
-shell и отмена дерева процессов ещё не завершены.
+Windows → Windows использует только `windows-v1`. Shell и отмена
+дерева процессов реализованы; их нативная приёмка ещё не пройдена.
+Порядок проверки: [Windows → Windows и Linux ↔ Windows](NATIVE_ACCEPTANCE.md).
