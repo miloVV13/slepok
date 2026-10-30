@@ -162,7 +162,7 @@ func runInit(ctx context.Context, fs *flag.FlagSet, args []string) error {
 		fmt.Printf("[%d/%d] %s %s (%s)\n", prepared, len(needed), pkg.Name, pkg.Version, pkg.Platform)
 		var digest string
 		var err error
-		if manifest.HostPlatform() == "windows-x64" && !native[pkg.Name+"/"+pkg.Platform] {
+		if !native[pkg.Name+"/"+pkg.Platform] && pkg.Source.Layout == "" {
 			digest, err = f.InstallPortable(pkg.Name, pkg.Source)
 		} else {
 			digest, err = f.Install(pkg.Name, pkg.Source)
@@ -526,7 +526,7 @@ func snapshotPackages(p *project.Project, st *store.Store, prof *profile.Profile
 	for _, c := range prof.Components {
 		components[c.Name] = c
 	}
-	seen := map[string]bool{}
+	seen := map[string]int{}
 	var out []snapshot.PackageSource
 	for _, platform := range p.Config.Platforms {
 		pkgs := p.Lock.PackagesFor(platform)
@@ -543,10 +543,16 @@ func snapshotPackages(p *project.Project, st *store.Store, prof *profile.Profile
 			}
 		}
 		for _, pkg := range pkgs {
-			if seen[pkg.Source.Digest] {
+			if index, ok := seen[pkg.Source.Digest]; ok {
+				// One payload can serve multiple host architectures (for example
+				// a universal Mach-O). Publish it as the common fallback; distinct
+				// native packages retain their specific-platform precedence.
+				if out[index].Platform != pkg.Platform {
+					out[index].Platform = manifest.AnyPlatform
+				}
 				continue
 			}
-			seen[pkg.Source.Digest] = true
+			seen[pkg.Source.Digest] = len(out)
 			if !st.Has(pkg.Source.Digest) {
 				return nil, fmt.Errorf("package %s %s (%s) is not in the local store; run slepok init", pkg.Name, pkg.Version, pkg.Platform)
 			}

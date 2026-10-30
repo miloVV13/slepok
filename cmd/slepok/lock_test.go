@@ -2,16 +2,69 @@ package main
 
 import (
 	"bytes"
+	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/miloVV13/slepok/internal/manifest"
 	"github.com/miloVV13/slepok/internal/pkgtar"
 	"github.com/miloVV13/slepok/internal/profile"
 	"github.com/miloVV13/slepok/internal/project"
+	"github.com/miloVV13/slepok/internal/snapshot"
 	"github.com/miloVV13/slepok/internal/store"
 )
+
+func TestUniversalPackageRestoresOnBothMacArchitectures(t *testing.T) {
+	st, err := store.Open(t.TempDir())
+	must(t, err)
+	t.Cleanup(func() { _ = store.RemoveTree(st.Root()) })
+	archive := func(content string) string {
+		tree := pkgtar.NewTree(t.TempDir())
+		must(t, tree.File(t.Context(), "bin/tool", 0755, strings.NewReader(content)))
+		var buf bytes.Buffer
+		digest, _, err := tree.Write(t.Context(), &buf)
+		must(t, err)
+		must(t, st.InstallArchiveContext(t.Context(), digest, bytes.NewReader(buf.Bytes())))
+		return digest
+	}
+	linux, universal := archive("ELF fixture"), archive("universal Mach-O fixture")
+	platforms := []string{"linux-x64", "macos-arm64", "macos-x64"}
+	p := &project.Project{Config: project.Config{Platforms: platforms}, Lock: &project.Lock{}}
+	for _, platform := range platforms {
+		digest := universal
+		if platform == "linux-x64" {
+			digest = linux
+		}
+		p.Lock.Packages = append(p.Lock.Packages, project.LockedPackage{Name: "tools", Version: "1", Platform: platform, Source: profile.Source{Digest: digest}})
+	}
+	prof := &profile.Profile{Components: []profile.Component{{Name: "tools", Version: "1"}}}
+	packages, err := snapshotPackages(p, st, prof)
+	must(t, err)
+	if len(packages) != 2 || packages[0].Platform != "linux-x64" || packages[1].Platform != manifest.AnyPlatform {
+		t.Fatalf("wrong shared payload metadata: %+v", packages)
+	}
+	dir := t.TempDir()
+	must(t, os.WriteFile(filepath.Join(dir, "main.c"), []byte("int main(void){}"), 0644))
+	file := filepath.Join(t.TempDir(), "all.slepok")
+	_, err = snapshot.Pack(file, snapshot.Options{Context: t.Context(), Profile: manifest.Profile{ID: "rp2040", Version: "1"}, Platforms: platforms, ProjectDir: dir, ProjectFiles: []string{"main.c"}, Packages: packages})
+	must(t, err)
+	for _, platform := range platforms {
+		receiver, err := store.Open(t.TempDir())
+		must(t, err)
+		t.Cleanup(func() { _ = store.RemoveTree(receiver.Root()) })
+		_, err = snapshot.Unpack(file, filepath.Join(t.TempDir(), "project"), receiver, platform)
+		must(t, err)
+		want, other := universal, linux
+		if platform == "linux-x64" {
+			want, other = linux, universal
+		}
+		if !receiver.HasTree(want) || receiver.HasTree(other) {
+			t.Fatalf("%s selected wrong package", platform)
+		}
+	}
+}
 
 func TestSnapshotPackagesUsesForeignArchive(t *testing.T) {
 	st, err := store.Open(t.TempDir())
