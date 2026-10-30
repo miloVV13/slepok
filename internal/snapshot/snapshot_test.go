@@ -458,7 +458,7 @@ func TestUnpackPrefersSpecificPackage(t *testing.T) {
 		must(t, err)
 		pkgs, err := st.Packages()
 		must(t, err)
-		if len(pkgs) != 1 || pkgs[0] != m.Packages[tt.selected].Digest {
+		if len(pkgs) != 2 || !st.HasTree(m.Packages[tt.selected].Digest) || st.HasTree(m.Packages[1-tt.selected].Digest) {
 			t.Fatalf("%s installed the wrong SDKs: %v", tt.platform, pkgs)
 		}
 	}

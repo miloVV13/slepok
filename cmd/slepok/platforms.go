@@ -32,10 +32,3 @@ func withBuildHost(targets []string) []string {
 	}
 	return out
 }
-
-func checkPreparationHost(host string, targets []string) error {
-	if host == "windows-x64" && slices.Contains(targets, "linux-x64") {
-		return fmt.Errorf("preparing Linux packages on Windows is not supported yet; prepare a Linux/Windows snapshot on Linux")
-	}
-	return nil
-}

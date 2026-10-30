@@ -50,7 +50,7 @@ func Resolve(prof *profile.Profile, lock *project.Lock, st *store.Store, platfor
 		if pkg.Source.Digest == "" {
 			return nil, fmt.Errorf("%s has no digest for %s; run slepok init", project.LockName, pkg.Name)
 		}
-		if !st.Has(pkg.Source.Digest) {
+		if !st.HasTree(pkg.Source.Digest) {
 			return nil, fmt.Errorf("package %s %s is not in the local store; run slepok init (needs network) or unpack a snapshot that contains it", pkg.Name, pkg.Version)
 		}
 		dir, err := st.Path(pkg.Source.Digest)

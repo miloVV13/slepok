@@ -63,7 +63,7 @@ var listCmd = &command{
 		}
 		fmt.Printf("\nStore %s:\n", st.Root())
 		var total int64
-		for _, area := range []string{"packages", "downloads", "tmp", "logs"} {
+		for _, area := range []string{"packages", "archives", "downloads", "tmp", "logs"} {
 			u := usage[area]
 			total += u.Bytes
 			fmt.Printf("  %-10s %4d  %10s\n", area, u.Count, humanSize(u.Bytes))
@@ -87,7 +87,7 @@ func projectStatus(st *store.Store, dir string) (status, prof, board string) {
 		return "no-lock", prof, board
 	}
 	for _, pkg := range p.Lock.PackagesFor(manifest.HostPlatform()) {
-		if !st.Has(pkg.Source.Digest) {
+		if !st.HasTree(pkg.Source.Digest) {
 			return "incomplete", prof, board
 		}
 	}

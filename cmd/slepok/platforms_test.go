@@ -37,12 +37,6 @@ func TestSelectedPlatforms(t *testing.T) {
 			t.Fatalf("accepted %q", in)
 		}
 	}
-	if err := checkPreparationHost("windows-x64", []string{"linux-x64"}); err == nil {
-		t.Fatal("allowed unsupported preparation")
-	}
-	if err := checkPreparationHost("linux-x64", []string{"windows-x64"}); err != nil {
-		t.Fatal(err)
-	}
 }
 
 func TestPlatformSnapshotSelection(t *testing.T) {

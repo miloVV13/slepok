@@ -48,13 +48,24 @@ func extractLayout(ctx context.Context, archive, format string, strip int, dest 
 		links = map[string]string{}
 	}
 	w := &writer{links: links, ctx: ctx, root: root, symlinks: map[string]bool{}, files: map[string]bool{}}
+	return links, extractArchive(ctx, archive, format, strip, w)
+}
 
+type archiveSink interface {
+	dir(string) error
+	file(string, fs.FileMode, io.Reader) error
+	symlink(string, string) error
+	link(string, string) error
+	zipSymlink(string, *zip.File) error
+}
+
+func extractArchive(ctx context.Context, archive, format string, strip int, w archiveSink) error {
 	if format == "zip" {
-		return links, extractZip(archive, strip, w)
+		return extractZip(archive, strip, w)
 	}
 	f, err := os.Open(archive)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer f.Close()
 	var r io.Reader
@@ -62,23 +73,23 @@ func extractLayout(ctx context.Context, archive, format string, strip int, dest 
 	case "tar.gz":
 		gz, err := gzip.NewReader(f)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		defer gz.Close()
 		r = gz
 	case "tar.xz":
 		xr, err := xz.NewReader(f)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		r = xr
 	default:
-		return nil, fmt.Errorf("unsupported archive format %q", format)
+		return fmt.Errorf("unsupported archive format %q", format)
 	}
-	return links, extractTar(contextio.Reader{Context: ctx, Reader: r}, strip, w)
+	return extractTar(contextio.Reader{Context: ctx, Reader: r}, strip, w)
 }
 
-func extractTar(r io.Reader, strip int, w *writer) error {
+func extractTar(r io.Reader, strip int, w archiveSink) error {
 	tr := tar.NewReader(r)
 	for {
 		hdr, err := tr.Next()
@@ -119,7 +130,7 @@ func extractTar(r io.Reader, strip int, w *writer) error {
 	}
 }
 
-func extractZip(archive string, strip int, w *writer) error {
+func extractZip(archive string, strip int, w archiveSink) error {
 	zr, err := zip.OpenReader(archive)
 	if err != nil {
 		return err

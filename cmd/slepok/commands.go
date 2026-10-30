@@ -111,9 +111,6 @@ func runInit(ctx context.Context, fs *flag.FlagSet, args []string) error {
 		if err := cfg.Validate(); err != nil {
 			return err
 		}
-		if err := checkPreparationHost(manifest.HostPlatform(), cfg.Platforms); err != nil {
-			return err
-		}
 		empty, err := isEmpty(dir)
 		if err != nil {
 			return err
@@ -136,9 +133,6 @@ func runInit(ctx context.Context, fs *flag.FlagSet, args []string) error {
 		return err
 	}
 	cfg.Platforms = withBuildHost(cfg.Platforms)
-	if err := checkPreparationHost(manifest.HostPlatform(), cfg.Platforms); err != nil {
-		return err
-	}
 	lock, err := lockFor(dir, cfg, prof)
 	if err != nil {
 		return err
@@ -149,6 +143,10 @@ func runInit(ctx context.Context, fs *flag.FlagSet, args []string) error {
 	f := fetch.New(st, os.Stdout)
 	f.Context = ctx
 	needed := map[string]bool{}
+	native := map[string]bool{}
+	for _, pkg := range lock.PackagesFor(manifest.HostPlatform()) {
+		native[pkg.Name+"/"+pkg.Platform] = true
+	}
 	for _, platform := range cfg.Platforms {
 		for _, pkg := range lock.PackagesFor(platform) {
 			needed[pkg.Name+"/"+pkg.Platform] = true
@@ -160,7 +158,13 @@ func runInit(ctx context.Context, fs *flag.FlagSet, args []string) error {
 			continue
 		}
 		fmt.Printf("%s %s (%s)\n", pkg.Name, pkg.Version, pkg.Platform)
-		digest, err := f.Install(pkg.Name, pkg.Source)
+		var digest string
+		var err error
+		if manifest.HostPlatform() == "windows-x64" && !native[pkg.Name+"/"+pkg.Platform] {
+			digest, err = f.InstallPortable(pkg.Name, pkg.Source)
+		} else {
+			digest, err = f.Install(pkg.Name, pkg.Source)
+		}
 		if err != nil {
 			return err
 		}
@@ -549,7 +553,14 @@ func snapshotPackages(p *project.Project, st *store.Store, prof *profile.Profile
 				return nil, err
 			}
 			ps := snapshot.PackageSource{
-				Name: pkg.Name, Version: pkg.Version, Platform: pkg.Platform, License: pkg.License, Dir: dir,
+				Name: pkg.Name, Version: pkg.Version, Platform: pkg.Platform, License: pkg.License, Dir: dir, ExpectedDigest: pkg.Source.Digest,
+			}
+			if !st.HasTree(pkg.Source.Digest) {
+				ps.Dir = ""
+				ps.Archive, err = st.ArchivePath(pkg.Source.Digest)
+				if err != nil {
+					return nil, err
+				}
 			}
 			if c, ok := components[pkg.Name]; ok && c.Version == pkg.Version {
 				ps.Notice = c.Notice

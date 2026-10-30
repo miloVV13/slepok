@@ -67,7 +67,22 @@ func (f *Fetcher) Install(name string, src profile.Source) (string, error) {
 	if src.Layout != "" && src.Layout != profile.LayoutWindows {
 		return "", fmt.Errorf("unknown package layout %q", src.Layout)
 	}
+	if src.Digest != "" && f.Store.HasTree(src.Digest) {
+		return src.Digest, nil
+	}
 	if src.Digest != "" && f.Store.Has(src.Digest) {
+		p, err := f.Store.ArchivePath(src.Digest)
+		if err != nil {
+			return "", err
+		}
+		r, err := os.Open(p)
+		if err != nil {
+			return "", err
+		}
+		defer r.Close()
+		if err := f.Store.InstallContext(f.ctx(), src.Digest, r); err != nil {
+			return "", err
+		}
 		return src.Digest, nil
 	}
 	work, err := f.Store.TempDir("fetch-")
@@ -413,6 +428,10 @@ func fileSHA256Context(ctx context.Context, p string) (string, error) {
 // clone checks out src.Ref with all submodules and verifies that it is the
 // pinned commit. It uses the system git, which only init needs.
 func (f *Fetcher) clone(name string, src profile.Source, dest string) error {
+	return f.cloneMode(name, src, dest, src.Layout == profile.LayoutWindows)
+}
+
+func (f *Fetcher) cloneMode(name string, src profile.Source, dest string, placeholders bool) error {
 	git, err := exec.LookPath("git")
 	if err != nil {
 		return fmt.Errorf("git is required to download %s; install git and retry", name)
@@ -423,7 +442,7 @@ func (f *Fetcher) clone(name string, src profile.Source, dest string) error {
 			return err
 		}
 		args := []string{"-c", "advice.detachedHead=false", "-c", "core.autocrlf=false", "-c", "core.eol=lf"}
-		args = append(args, "-c", "core.symlinks="+strconv.FormatBool(src.Layout != profile.LayoutWindows))
+		args = append(args, "-c", "core.symlinks="+strconv.FormatBool(!placeholders))
 		args = append(args, "clone", "--quiet", "--depth", "1", "--branch", src.Ref, src.Git, dest)
 		_, err := f.runGit(git, args...)
 		return err
@@ -438,7 +457,7 @@ func (f *Fetcher) clone(name string, src profile.Source, dest string) error {
 	if head != src.Commit {
 		return fmt.Errorf("%s %s is commit %s, expected %s; the upstream tag may have moved", src.Git, src.Ref, head, src.Commit)
 	}
-	return f.submodules(git, dest, src.Layout == profile.LayoutWindows)
+	return f.submodules(git, dest, placeholders)
 }
 
 // submodules checks out every submodule of the repository at dir at the

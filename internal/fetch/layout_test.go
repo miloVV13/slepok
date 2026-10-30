@@ -212,6 +212,19 @@ func TestWindowsGitLayoutIncludesSubmoduleLinks(t *testing.T) {
 			t.Fatalf("%s lost symlink target bytes", p)
 		}
 	}
+	// The same repository can be prepared as a Unix tar even with only
+	// placeholder links on disk. Native Unix preparation pins the reference.
+	src.Layout = ""
+	if runtime.GOOS != "windows" {
+		src.Digest, err = newFetcher(t).Install("sdk", src)
+		requireOK(t, err)
+	}
+	portable := newFetcher(t)
+	digest, err = portable.InstallPortable("sdk", src)
+	requireOK(t, err)
+	if !portable.Store.Has(digest) || portable.Store.HasTree(digest) {
+		t.Fatal("portable Git package must be archived without extraction")
+	}
 }
 
 func TestSubmodulePathCannotEscapePreparation(t *testing.T) {

@@ -90,7 +90,7 @@ are planned.
 Select snapshot host platforms with `--platform` (these are the computers
 running the build, not the target MCU). With no flag, `pack` includes only
 the current host, even when the project has several platforms configured.
-For example, on Linux:
+For example:
 
 ```sh
 slepok init --platform linux-x64,windows-x64 blinky
@@ -106,8 +106,10 @@ platforms and ensures the current host is included. `pack --platform` changes
 only the archive selection and its restored config, leaving the source
 project config unchanged. It does not download missing packages: run
 `init --platform` first. Verification executes only on the producer host;
-other hosts still require native testing. Preparing Linux packages on
-Windows remains unsupported; prepare combined snapshots on Linux.
+other hosts still require native testing. Windows can prepare Linux packages
+as canonical tar archives, preserving Unix permissions and links without
+creating them on Windows. Combined snapshots can be prepared on either host;
+native Windows acceptance is still pending.
 
 - **`slepok.toml`** — written by you: profile, board, platforms.
 

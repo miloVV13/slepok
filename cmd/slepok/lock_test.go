@@ -1,15 +1,36 @@
 package main
 
 import (
+	"bytes"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/miloVV13/slepok/internal/pkgtar"
 	"github.com/miloVV13/slepok/internal/profile"
 	"github.com/miloVV13/slepok/internal/project"
 	"github.com/miloVV13/slepok/internal/store"
 )
+
+func TestSnapshotPackagesUsesForeignArchive(t *testing.T) {
+	st, err := store.Open(t.TempDir())
+	must(t, err)
+	t.Cleanup(func() { _ = store.RemoveTree(st.Root()) })
+	tree := pkgtar.NewTree(t.TempDir())
+	must(t, tree.File(t.Context(), "bin/tool", 0755, strings.NewReader("tool")))
+	var buf bytes.Buffer
+	digest, _, err := tree.Write(t.Context(), &buf)
+	must(t, err)
+	must(t, st.InstallArchiveContext(t.Context(), digest, bytes.NewReader(buf.Bytes())))
+	prof := &profile.Profile{Components: []profile.Component{{Name: "tools", Version: "1"}}}
+	p := &project.Project{Config: project.Config{Platforms: []string{"linux-x64"}}, Lock: &project.Lock{Packages: []project.LockedPackage{{Name: "tools", Version: "1", Platform: "linux-x64", Source: profile.Source{Digest: digest}}}}}
+	pkgs, err := snapshotPackages(p, st, prof)
+	must(t, err)
+	if len(pkgs) != 1 || pkgs[0].Archive == "" || pkgs[0].Dir != "" || pkgs[0].ExpectedDigest != digest {
+		t.Fatalf("wrong source: %+v", pkgs)
+	}
+}
 
 func TestLockAddsHostWithoutChangingPinnedEnvironment(t *testing.T) {
 	dir := t.TempDir()

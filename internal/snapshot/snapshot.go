@@ -35,7 +35,7 @@ const reportEntry = "reports/verify.json"
 
 var epoch = time.Unix(0, 0).UTC()
 
-// PackageSource is an environment package to include, read from Dir.
+// PackageSource is an environment package read from Dir or a canonical Archive.
 type PackageSource struct {
 	Name     string
 	Version  string
@@ -45,6 +45,24 @@ type PackageSource struct {
 	SourceCode string
 	Notice     string
 	Dir        string
+	// Archive is an already canonical package tar, used instead of Dir.
+	Archive string
+	// ExpectedDigest, when set, pins the source to the project's lock.
+	ExpectedDigest string
+}
+
+func (p PackageSource) write(ctx context.Context, w io.Writer) (string, int64, error) {
+	if p.Archive == "" {
+		return pkgtar.Write(contextio.Writer{Context: ctx, Writer: w}, p.Dir)
+	}
+	f, err := os.Open(p.Archive)
+	if err != nil {
+		return "", 0, err
+	}
+	defer f.Close()
+	h := sha256.New()
+	n, err := io.Copy(io.MultiWriter(w, h), contextio.Reader{Context: ctx, Reader: f})
+	return pkgtar.Digest(h.Sum(nil)), n, err
 }
 
 // Extra is an additional file stored outside project/, such as a NOTICE
@@ -163,9 +181,12 @@ func plan(opt Options) (*manifest.Manifest, error) {
 		m.Files = append(m.Files, f)
 	}
 	for _, p := range opt.Packages {
-		digest, size, err := pkgtar.Write(contextio.Writer{Context: opt.Context, Writer: io.Discard}, p.Dir)
+		digest, size, err := p.write(opt.Context, io.Discard)
 		if err != nil {
 			return nil, fmt.Errorf("package %s: %w", p.Name, err)
+		}
+		if p.ExpectedDigest != "" && digest != p.ExpectedDigest {
+			return nil, fmt.Errorf("package %s: digest mismatch: got %s, want %s", p.Name, digest, p.ExpectedDigest)
 		}
 		m.Packages = append(m.Packages, manifest.Package{
 			Name: p.Name, Version: p.Version, Platform: p.Platform, License: p.License,
@@ -240,7 +261,7 @@ func write(w io.Writer, m *manifest.Manifest, data []byte, opt Options) error {
 		if err := tw.WriteHeader(hdr); err != nil {
 			return err
 		}
-		digest, size, err := pkgtar.Write(contextio.Writer{Context: opt.Context, Writer: tw}, opt.Packages[i].Dir)
+		digest, size, err := opt.Packages[i].write(opt.Context, tw)
 		if err != nil {
 			return fmt.Errorf("package %s: %w", p.Name, err)
 		}
@@ -603,7 +624,7 @@ func (u *unpacker) file(f manifest.File, r io.Reader) error {
 
 func (u *unpacker) pkg(p manifest.Package, r io.Reader) error {
 	if p.Platform != u.platform && (p.Platform != manifest.AnyPlatform || u.specific[p.Name]) {
-		return verifier{}.pkg(p, r)
+		return u.store.InstallArchiveContext(u.ctx, p.Digest, r)
 	}
 	if err := u.store.InstallContext(u.ctx, p.Digest, r); err != nil {
 		return fmt.Errorf("package %s: %w", p.Name, err)

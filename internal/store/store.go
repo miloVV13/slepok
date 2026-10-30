@@ -4,6 +4,7 @@
 //
 //	packages/<hex>/         extracted, read-only package trees
 //	packages/.install-*/    in-progress installs
+//	archives/<hex>         canonical tar packages retained without extraction
 //
 // Installs are staged next to their final location: moving a directory to
 // another parent needs write permission on the directory itself, which a
@@ -127,14 +128,21 @@ func (s *Store) Path(digest string) (string, error) {
 	return filepath.Join(s.root, "packages", h), nil
 }
 
-// Has reports whether the package is installed.
+// Has reports whether a package is available as a tree or canonical archive.
 func (s *Store) Has(digest string) bool {
 	p, err := s.Path(digest)
 	if err != nil {
 		return false
 	}
-	_, err = os.Lstat(p)
-	return err == nil
+	if info, err := os.Lstat(p); err == nil && info.IsDir() {
+		return true
+	}
+	p, err = s.ArchivePath(digest)
+	if err != nil {
+		return false
+	}
+	info, err := os.Lstat(p)
+	return err == nil && info.Mode().IsRegular()
 }
 
 // Install extracts the package tar read from r and makes it available
@@ -159,7 +167,7 @@ func (s *Store) InstallContext(ctx context.Context, digest string, r io.Reader) 
 	h := sha256.New()
 	tee := io.TeeReader(contextio.Reader{Context: ctx, Reader: r}, h)
 
-	if s.Has(digest) {
+	if s.HasTree(digest) {
 		if _, err := io.Copy(io.Discard, tee); err != nil {
 			return err
 		}
@@ -179,7 +187,7 @@ func (s *Store) InstallContext(ctx context.Context, digest string, r io.Reader) 
 		return err
 	}
 	if err := os.Rename(staged, final); err != nil {
-		if s.Has(digest) {
+		if s.HasTree(digest) {
 			return nil // installed concurrently
 		}
 		return err
@@ -200,7 +208,17 @@ func (s *Store) Remove(digest string) error {
 	if err != nil {
 		return err
 	}
-	return removeTree(p)
+	if err := removeTree(p); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+	archive, err := s.ArchivePath(digest)
+	if err != nil {
+		return err
+	}
+	if err := removeTree(archive); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+	return nil
 }
 
 // removeTree deletes a tree that may contain read-only entries.

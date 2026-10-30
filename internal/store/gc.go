@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
@@ -43,13 +44,28 @@ func (s *Store) Packages() ([]string, error) {
 			digests = append(digests, "sha256:"+e.Name())
 		}
 	}
+	archives, err := os.ReadDir(filepath.Join(s.root, "archives"))
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return nil, err
+	}
+	seen := map[string]bool{}
+	for _, d := range digests {
+		seen[d] = true
+	}
+	for _, e := range archives {
+		d := "sha256:" + e.Name()
+		if _, err := hexOf(d); err == nil && e.Type().IsRegular() && !seen[d] {
+			digests = append(digests, d)
+		}
+	}
+	sort.Strings(digests)
 	return digests, nil
 }
 
-// Usage reports the size of each area: packages, downloads, tmp and logs.
+// Usage reports trees, retained archives, downloads, scratch data and logs.
 func (s *Store) Usage() (map[string]Usage, error) {
 	out := map[string]Usage{}
-	for _, area := range []string{"packages", "downloads", "tmp", "logs"} {
+	for _, area := range []string{"packages", "archives", "downloads", "tmp", "logs"} {
 		entries, err := os.ReadDir(filepath.Join(s.root, area))
 		if errors.Is(err, fs.ErrNotExist) {
 			continue
@@ -114,6 +130,7 @@ func (s *Store) PlanGC(keep, keepDownloads map[string]bool, now time.Time) ([]It
 		minAge    time.Duration
 		include   func(name string) bool
 	}{
+		{"archives", "package", packageGrace, func(n string) bool { return !keep["sha256:"+n] && !strings.HasPrefix(n, ".install-") }},
 		{"downloads", "download", 0, func(n string) bool { return !keepDownloads[strings.TrimSuffix(n, ".part")] }},
 		{"tmp", "tmp", tmpGrace, func(string) bool { return true }},
 		{"logs", "log", logRetention, func(string) bool { return true }},
@@ -127,6 +144,12 @@ func (s *Store) PlanGC(keep, keepDownloads map[string]bool, now time.Time) ([]It
 			return nil, err
 		}
 		for _, e := range entries {
+			if area.dir == "archives" && strings.HasPrefix(e.Name(), ".install-") {
+				if err := add("tmp", e.Name(), filepath.Join(dir, e.Name()), tmpGrace); err != nil {
+					return nil, err
+				}
+				continue
+			}
 			if !area.include(e.Name()) {
 				continue
 			}

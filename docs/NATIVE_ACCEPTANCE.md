@@ -181,7 +181,77 @@ test -s build/compile_commands.json && echo 'compile_commands: OK'
 этого же архива. Это проверяет, что включение Windows-пакетов не
 повредило Linux-вариант.
 
-## 3. Windows → Linux: текущие границы и обратный перенос
+## 3. Windows → Linux: подготовка на Windows
+
+Используйте обновлённые бинарники с поддержкой переносимых Unix-пакетов.
+На Windows-отправителе, с сетью и установленным Git, в новом каталоге
+рядом с `slepok.exe`:
+
+```powershell
+.\slepok.exe init --platform linux-x64,windows-x64 .\win-dual
+cd .\win-dual
+..\slepok.exe build
+Get-ChildItem .\build\*.uf2 | Get-FileHash -Algorithm SHA256
+..\slepok.exe pack --platform linux-x64,windows-x64 -o ..\from-windows-dual.slepok
+cd ..
+.\slepok.exe validate .\from-windows-dual.slepok
+.\slepok.exe inspect .\from-windows-dual.slepok
+Get-FileHash .\from-windows-dual.slepok -Algorithm SHA256
+```
+
+Ожидается успешная подготовка обеих ОС без WSL, администратора и
+привилегий создания Unix-симлинков. Linux-пакеты остаются каноническими
+tar внутри хранилища; Windows выполняет проверочную сборку своими
+инструментами. На этом шаге Linux-компилятор не запускается.
+
+Перенесите архив и Linux-бинарник на чистого Linux-получателя,
+отключите сеть и выполните:
+
+```bash
+chmod +x ./slepok
+sha256sum from-windows-dual.slepok
+./slepok validate from-windows-dual.slepok
+./slepok unpack from-windows-dual.slepok from-windows
+cd from-windows
+../slepok build
+sha256sum build/*.uf2
+test -s build/compile_commands.json && echo 'compile_commands: OK'
+```
+
+Ожидается успех без сети. Это проверяет восстановление Linux execute-bit,
+symlink и hardlink из пакетов, подготовленных на Windows. Тот же архив
+проверьте на чистом Windows-получателе командами раздела 1; Windows UF2
+должен совпасть с Windows-отправителем этого архива.
+
+Для слепка только под Linux на подготовленном Windows-отправителе
+можно выполнить `pack --platform linux-x64 -o ../linux-only.slepok`.
+Такой архив должен восстановиться на Linux и отклоняться на Windows.
+
+## 4. Linux → Windows → Linux: переупаковка без сети
+
+После получения `dual.slepok` из раздела 2 на чистой Windows,
+не включая сеть, распакуйте его в новый каталог `for-repack` рядом
+с бинарником. Дополнительный shell-build из раздела 1 здесь не нужен.
+
+```powershell
+.\slepok.exe unpack .\dual.slepok .\for-repack
+cd .\for-repack
+..\slepok.exe build
+..\slepok.exe pack --platform linux-x64,windows-x64 -o ..\repacked-on-windows.slepok
+cd ..
+.\slepok.exe validate .\repacked-on-windows.slepok
+.\slepok.exe inspect .\repacked-on-windows.slepok
+```
+
+`init` выполнять не нужно: чужие Linux-пакеты сохранены при `unpack`.
+Перенесите новый архив на чистый Linux без сети и повторите команды
+получателя из раздела 3, заменив имя архива и каталог назначения.
+Linux UF2 должен совпасть с Linux-отправителем исходного `dual.slepok`.
+В `inspect` digest пакетов до и после переупаковки должны совпадать.
+SHA256 всего `.slepok` сравнивать на равенство не нужно: отчёт
+проверочной сборки меняется при новой упаковке.
+
+## 5. Ожидаемый отказ при отсутствии платформы
 
 Прямое восстановление `win-only.slepok` на Linux сейчас **не
 поддерживается**: архив не содержит Linux-инструментов. На Linux:
@@ -194,27 +264,6 @@ test -s build/compile_commands.json && echo 'compile_commands: OK'
 Ожидается успешный `validate`, затем отказ `unpack` с указанием
 несовместимой платформы; готовый каталог `should-not-appear` не
 должен появиться. Это ожидаемый отказ, а не дефект.
-
-Для проекта, начатого на Windows, пока используйте такой маршрут:
-
-1. Из `win-blink` первого сценария скопируйте на Linux в новый каталог
-   `main.c`, `CMakeLists.txt`, `slepok.toml`, `slepok.lock` и `.gitignore`.
-   Если добавляли `.slepokignore`, перенесите его тоже. `build` не копируйте.
-2. Не удаляйте Windows lock и не изменяйте исходники.
-3. В этом каталоге выполните Linux-бинарником
-   `slepok init --platform linux-x64,windows-x64`, `slepok build`,
-   `slepok pack --platform linux-x64,windows-x64 -o ../from-windows-dual.slepok`.
-   Здесь сеть нужна для получения Linux-пакетов.
-4. Проверьте новый общий архив на чистых Linux и Windows без сети
-   командами из раздела 2, заменив имя архива. Windows UF2 сравните
-   с Windows UF2 исходного `win-blink`; Linux UF2 — с Linux-сборкой
-   шага 3.
-
-Таким образом проверяется перенос проекта в обе стороны. Создание
-Linux-пакетов непосредственно на Windows и обратный `pack` общего
-архива на Windows пока не заявлены: Unix-метаданные там ещё не
-воспроизводятся, а при `unpack` устанавливаются пакеты текущего хоста.
-Не запускайте `init` общего проекта на Windows ради этой приёмки.
 
 ## Что прислать после проверки
 
