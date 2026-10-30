@@ -529,14 +529,20 @@ func UnpackContext(ctx context.Context, src, dest string, st *store.Store, platf
 	}
 	defer root.Close()
 
+	u := &unpacker{ctx: ctx, root: root, store: st, platform: platform, specific: map[string]bool{}}
 	checkPlatform := func(m *manifest.Manifest) error {
 		if !slices.Contains(m.Platforms, platform) {
 			return fmt.Errorf("snapshot contains packages for %s, this machine is %s",
 				strings.Join(m.Platforms, ", "), platform)
 		}
+		for _, p := range m.Packages {
+			if p.Platform == platform {
+				u.specific[p.Name] = true
+			}
+		}
 		return nil
 	}
-	m, err := read(ctx, src, checkPlatform, &unpacker{ctx: ctx, root: root, store: st, platform: platform})
+	m, err := read(ctx, src, checkPlatform, u)
 	if err != nil {
 		return nil, err
 	}
@@ -564,6 +570,7 @@ type unpacker struct {
 	root     *os.Root
 	store    *store.Store
 	platform string
+	specific map[string]bool
 }
 
 func (u *unpacker) file(f manifest.File, r io.Reader) error {
@@ -595,7 +602,7 @@ func (u *unpacker) file(f manifest.File, r io.Reader) error {
 }
 
 func (u *unpacker) pkg(p manifest.Package, r io.Reader) error {
-	if p.Platform != u.platform && p.Platform != manifest.AnyPlatform {
+	if p.Platform != u.platform && (p.Platform != manifest.AnyPlatform || u.specific[p.Name]) {
 		return verifier{}.pkg(p, r)
 	}
 	if err := u.store.InstallContext(u.ctx, p.Digest, r); err != nil {

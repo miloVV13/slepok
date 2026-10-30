@@ -231,7 +231,7 @@ func TestInstallRejectsBadChecksum(t *testing.T) {
 func gitCmd(t *testing.T, dir string, args ...string) string {
 	t.Helper()
 	cmd := exec.Command("git", append([]string{"-C", dir}, args...)...)
-	cmd.Env = append(os.Environ(), "GIT_AUTHOR_NAME=t", "GIT_AUTHOR_EMAIL=t@t", "GIT_COMMITTER_NAME=t", "GIT_COMMITTER_EMAIL=t@t", "GIT_CONFIG_GLOBAL=/dev/null")
+	cmd.Env = append(os.Environ(), "GIT_AUTHOR_NAME=t", "GIT_AUTHOR_EMAIL=t@t", "GIT_COMMITTER_NAME=t", "GIT_COMMITTER_EMAIL=t@t", "GIT_CONFIG_GLOBAL="+os.DevNull)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("git %v: %v\n%s", args, err, out)
@@ -258,7 +258,7 @@ func TestCloneSubmodules(t *testing.T) {
 
 	super := filepath.Join(base, "super")
 	gitCmd(t, base, "init", "-q", super)
-	os.WriteFile(filepath.Join(super, ".gitmodules"), []byte("[submodule \"lib/sub\"]\n\tpath = lib/sub\n\turl = file://"+sub+"\n"), 0o644)
+	os.WriteFile(filepath.Join(super, ".gitmodules"), []byte("[submodule \"lib/sub\"]\n\tpath = lib/sub\n\turl = "+fileURL(sub)+"\n"), 0o644)
 	gitCmd(t, super, "add", ".gitmodules")
 	gitCmd(t, super, "update-index", "--add", "--cacheinfo", "160000,"+pinned+",lib/sub")
 	gitCmd(t, super, "commit", "-q", "-m", "super")
@@ -267,7 +267,7 @@ func TestCloneSubmodules(t *testing.T) {
 
 	f := newFetcher(t)
 	dest := filepath.Join(t.TempDir(), "sdk")
-	if err := f.clone("sdk", profile.Source{Git: "file://" + super, Ref: "v1.0", Commit: commit}, dest); err != nil {
+	if err := f.clone("sdk", profile.Source{Git: fileURL(super), Ref: "v1.0", Commit: commit}, dest); err != nil {
 		t.Fatal(err)
 	}
 	if data, err := os.ReadFile(filepath.Join(dest, "lib", "sub", "a.txt")); err != nil || string(data) != "v1" {
@@ -275,7 +275,7 @@ func TestCloneSubmodules(t *testing.T) {
 	}
 
 	wrong := strings.Repeat("0", 40)
-	if err := f.clone("sdk", profile.Source{Git: "file://" + super, Ref: "v1.0", Commit: wrong}, filepath.Join(t.TempDir(), "x")); err == nil || !strings.Contains(err.Error(), "moved") {
+	if err := f.clone("sdk", profile.Source{Git: fileURL(super), Ref: "v1.0", Commit: wrong}, filepath.Join(t.TempDir(), "x")); err == nil || !strings.Contains(err.Error(), "moved") {
 		t.Fatalf("clone with wrong pinned commit: err = %v", err)
 	}
 }

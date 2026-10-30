@@ -16,6 +16,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -23,6 +24,7 @@ import (
 	"github.com/miloVV13/slepok/internal/contextio"
 	"github.com/miloVV13/slepok/internal/process"
 	"github.com/miloVV13/slepok/internal/profile"
+	"github.com/miloVV13/slepok/internal/safepath"
 	"github.com/miloVV13/slepok/internal/store"
 )
 
@@ -61,6 +63,9 @@ func (f *Fetcher) Install(name string, src profile.Source) (string, error) {
 	if err := f.ctx().Err(); err != nil {
 		return "", err
 	}
+	if src.Layout != "" && src.Layout != profile.LayoutWindows {
+		return "", fmt.Errorf("unknown package layout %q", src.Layout)
+	}
 	if src.Digest != "" && f.Store.Has(src.Digest) {
 		return src.Digest, nil
 	}
@@ -71,13 +76,17 @@ func (f *Fetcher) Install(name string, src profile.Source) (string, error) {
 	defer store.RemoveTree(work)
 
 	tree := filepath.Join(work, "tree")
+	var links map[string]string
 	if src.Git != "" {
 		err = f.clone(name, src, tree)
+		if err == nil && src.Layout == profile.LayoutWindows {
+			links, err = f.gitSymlinks(tree)
+		}
 	} else {
 		var archive string
 		if archive, err = f.download(name, src); err == nil {
 			f.logf("  extracting %s\n", name)
-			err = extractContext(f.ctx(), archive, src.Format, src.Strip, tree)
+			links, err = extractLayout(f.ctx(), archive, src.Format, src.Strip, tree, src.Layout == profile.LayoutWindows)
 		}
 	}
 	if err != nil {
@@ -85,6 +94,11 @@ func (f *Fetcher) Install(name string, src profile.Source) (string, error) {
 	}
 	if err := clean(tree); err != nil {
 		return "", err
+	}
+	if src.Layout == profile.LayoutWindows {
+		if err := windowsTree(f.ctx(), tree, links); err != nil {
+			return "", fmt.Errorf("%s: Windows layout: %w", name, err)
+		}
 	}
 	digest, err := f.Store.InstallDirContext(f.ctx(), tree, src.Digest)
 	if err != nil {
@@ -407,7 +421,10 @@ func (f *Fetcher) clone(name string, src profile.Source, dest string) error {
 		if err := os.RemoveAll(dest); err != nil {
 			return err
 		}
-		_, err := f.run(git, "-c", "advice.detachedHead=false", "-c", "core.autocrlf=false", "-c", "core.eol=lf", "clone", "--quiet", "--depth", "1", "--branch", src.Ref, src.Git, dest)
+		args := []string{"-c", "advice.detachedHead=false", "-c", "core.autocrlf=false", "-c", "core.eol=lf"}
+		args = append(args, "-c", "core.symlinks="+strconv.FormatBool(src.Layout != profile.LayoutWindows))
+		args = append(args, "clone", "--quiet", "--depth", "1", "--branch", src.Ref, src.Git, dest)
+		_, err := f.run(git, args...)
 		return err
 	})
 	if err != nil {
@@ -420,7 +437,7 @@ func (f *Fetcher) clone(name string, src profile.Source, dest string) error {
 	if head != src.Commit {
 		return fmt.Errorf("%s %s is commit %s, expected %s; the upstream tag may have moved", src.Git, src.Ref, head, src.Commit)
 	}
-	return f.submodules(git, dest)
+	return f.submodules(git, dest, src.Layout == profile.LayoutWindows)
 }
 
 // submodules checks out every submodule of the repository at dir at the
@@ -429,7 +446,12 @@ func (f *Fetcher) clone(name string, src profile.Source, dest string) error {
 // default branch and then fetches the wanted commit, this fetches exactly
 // that commit in one request and retries each submodule on its own, so a
 // flaky network does not restart the whole checkout.
-func (f *Fetcher) submodules(git, dir string) error {
+func (f *Fetcher) submodules(git, dir string, windowsLayout bool) error {
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		return err
+	}
+	defer root.Close()
 	if _, err := os.Stat(filepath.Join(dir, ".gitmodules")); err != nil {
 		return nil
 	}
@@ -442,12 +464,15 @@ func (f *Fetcher) submodules(git, dir string) error {
 		if !ok {
 			continue
 		}
+		if err := safepath.CheckForHost(sub); err != nil {
+			return fmt.Errorf("submodule: %w", err)
+		}
 		name := strings.TrimSuffix(strings.TrimPrefix(key, "submodule."), ".path")
 		url, err := f.run(git, "-C", dir, "config", "--file", ".gitmodules", "submodule."+name+".url")
 		if err != nil {
 			return err
 		}
-		tree, err := f.run(git, "-C", dir, "ls-tree", "HEAD", sub)
+		tree, err := f.run(git, "-C", dir, "ls-tree", "HEAD", "--", sub)
 		if err != nil {
 			return err
 		}
@@ -460,16 +485,19 @@ func (f *Fetcher) submodules(git, dir string) error {
 
 		f.logf("  fetching submodule %s\n", sub)
 		err = f.retry("submodule "+sub, func() error {
-			if err := os.RemoveAll(subdir); err != nil {
+			if err := root.RemoveAll(sub); err != nil {
 				return err
 			}
-			if err := os.MkdirAll(subdir, 0o755); err != nil {
+			if err := root.MkdirAll(sub, 0o755); err != nil {
 				return err
 			}
+			checkout := []string{"-C", subdir, "-c", "advice.detachedHead=false", "-c", "core.autocrlf=false", "-c", "core.eol=lf"}
+			checkout = append(checkout, "-c", "core.symlinks="+strconv.FormatBool(!windowsLayout))
+			checkout = append(checkout, "checkout", "--quiet", "FETCH_HEAD")
 			for _, args := range [][]string{
 				{"-C", subdir, "init", "--quiet"},
 				{"-C", subdir, "fetch", "--quiet", "--depth", "1", url, commit},
-				{"-C", subdir, "-c", "advice.detachedHead=false", "-c", "core.autocrlf=false", "-c", "core.eol=lf", "checkout", "--quiet", "FETCH_HEAD"},
+				checkout,
 			} {
 				if _, err := f.run(git, args...); err != nil {
 					return err
@@ -483,7 +511,7 @@ func (f *Fetcher) submodules(git, dir string) error {
 		if head, err := f.run(git, "-C", subdir, "rev-parse", "HEAD"); err != nil || head != commit {
 			return fmt.Errorf("submodule %s is at %s, expected %s (%v)", sub, head, commit, err)
 		}
-		if err := f.submodules(git, subdir); err != nil {
+		if err := f.submodules(git, subdir, windowsLayout); err != nil {
 			return err
 		}
 	}

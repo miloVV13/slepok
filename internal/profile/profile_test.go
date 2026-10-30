@@ -29,6 +29,21 @@ func TestLoadUnknown(t *testing.T) {
 	}
 }
 
+func TestLayoutValidation(t *testing.T) {
+	for _, tt := range []struct {
+		platform, layout string
+		valid            bool
+	}{
+		{"linux-x64", "", true}, {"windows-x64", LayoutWindows, true},
+		{"any", LayoutWindows, false}, {"linux-x64", LayoutWindows, false}, {"windows-x64", "typo", false},
+	} {
+		p := Profile{ID: "test", Version: "1", Boards: []string{"board"}, Components: []Component{{Name: "sdk", Sources: map[string]Source{tt.platform: {URL: "https://example.invalid/sdk.zip", SHA256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", Format: "zip", Layout: tt.layout}}}}}
+		if err := p.validate(); (err == nil) != tt.valid {
+			t.Errorf("layout %q on %s: %v", tt.layout, tt.platform, err)
+		}
+	}
+}
+
 func TestExpand(t *testing.T) {
 	vars := map[string]string{"arm-gcc": "/s/abc", "board": "pico"}
 	got, err := Expand("-DPICO_TOOLCHAIN_PATH={arm-gcc} -DPICO_BOARD={board}", vars)

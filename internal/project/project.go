@@ -150,9 +150,15 @@ func (p *Project) BuildDir() string {
 
 // PackagesFor returns the locked packages usable on platform.
 func (l *Lock) PackagesFor(platform string) []LockedPackage {
+	specific := map[string]bool{}
+	for _, pkg := range l.Packages {
+		if pkg.Platform == platform {
+			specific[pkg.Name] = true
+		}
+	}
 	var out []LockedPackage
 	for _, pkg := range l.Packages {
-		if pkg.Platform == platform || pkg.Platform == manifest.AnyPlatform {
+		if pkg.Platform == platform || (pkg.Platform == manifest.AnyPlatform && !specific[pkg.Name]) {
 			out = append(out, pkg)
 		}
 	}

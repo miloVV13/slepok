@@ -26,6 +26,33 @@ func write(t *testing.T, dir, rel, content string) {
 
 var cfg = Config{Profile: "rp2040", Board: "pico", Platforms: []string{"linux-x64"}, BuildDir: "build"}
 
+func TestPackagesForPrefersPlatformSpecific(t *testing.T) {
+	any := LockedPackage{Name: "sdk", Platform: "any", Version: "shared"}
+	win := LockedPackage{Name: "sdk", Platform: "windows-x64", Version: "windows"}
+	for _, pkgs := range [][]LockedPackage{{any, win}, {win, any}} {
+		l := Lock{Packages: pkgs}
+		got := l.PackagesFor("windows-x64")
+		if len(got) != 1 || got[0].Version != "windows" {
+			t.Fatalf("Windows SDK override = %v", got)
+		}
+		got = l.PackagesFor("linux-x64")
+		if len(got) != 1 || got[0].Version != "shared" {
+			t.Fatalf("Linux SDK changed: %v", got)
+		}
+	}
+}
+
+func TestLockPreservesPackageLayout(t *testing.T) {
+	dir := t.TempDir()
+	lock := Lock{Profile: "rp2040", ProfileVersion: "1", Packages: []LockedPackage{{Name: "sdk", Platform: "windows-x64", Source: profile.Source{Layout: profile.LayoutWindows}}}}
+	must(t, WriteLock(dir, lock))
+	read, err := ReadLock(dir)
+	must(t, err)
+	if read.Packages[0].Source.Layout != profile.LayoutWindows {
+		t.Fatal("lock lost the pinned package layout")
+	}
+}
+
 func TestConfigAndLockRoundTrip(t *testing.T) {
 	dir := t.TempDir()
 	must(t, WriteConfig(dir, cfg))

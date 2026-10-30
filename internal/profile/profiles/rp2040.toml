@@ -111,3 +111,13 @@ git = "https://github.com/raspberrypi/pico-sdk.git"
 ref = "2.3.1"
 commit = "079c6f39023649b154152db30f1d781e884879bc"
 digest = "sha256:b6f7eccbf2159b28801e0ffee13ba178656d5f649f5b280fe3420a0c66f2e92c"
+
+# Explicit Windows representation: regular files only, no Unix execute bits.
+# Can be prepared on Linux too; the existing any/Linux SDK stays unchanged.
+# The remaining Windows tools are still required before this host is enabled.
+[components.sources.windows-x64]
+git = "https://github.com/raspberrypi/pico-sdk.git"
+ref = "2.3.1"
+commit = "079c6f39023649b154152db30f1d781e884879bc"
+layout = "windows-v1"
+digest = "sha256:b703458527aae69f96c8ad1b162d4bc8d019641bd6eaa150a954a076c83271c2"

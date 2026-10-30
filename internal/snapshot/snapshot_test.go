@@ -438,6 +438,46 @@ func TestUnpackPlatformMismatch(t *testing.T) {
 	}
 }
 
+func TestUnpackPrefersSpecificPackage(t *testing.T) {
+	opt := options(t)
+	opt.Platforms = []string{"linux-x64", "windows-x64"}
+	opt.Packages[0].Name = "sdk"
+	opt.Packages[0].Platform = "any"
+	win := t.TempDir()
+	must(t, os.WriteFile(filepath.Join(win, "version.txt"), []byte("Windows SDK"), 0o644))
+	opt.Packages = append(opt.Packages, PackageSource{Name: "sdk", Version: "1", Platform: "windows-x64", Dir: win})
+	archive := filepath.Join(t.TempDir(), "both.slepok")
+	m, err := Pack(archive, opt)
+	must(t, err)
+	for _, tt := range []struct {
+		platform string
+		selected int
+	}{{"linux-x64", 0}, {"windows-x64", 1}} {
+		st := openStore(t)
+		_, err := Unpack(archive, filepath.Join(t.TempDir(), "project"), st, tt.platform)
+		must(t, err)
+		pkgs, err := st.Packages()
+		must(t, err)
+		if len(pkgs) != 1 || pkgs[0] != m.Packages[tt.selected].Digest {
+			t.Fatalf("%s installed the wrong SDKs: %v", tt.platform, pkgs)
+		}
+	}
+	// Overridden packages are still verified: never skip unsafe unused bytes.
+	evil := maliciousPackage(t)
+	bad := manifestFor(t, func(man *manifest.Manifest) {
+		man.Platforms = []string{"windows-x64"}
+		man.Packages = []manifest.Package{{Name: "sdk", Platform: "any", Digest: digestOfBytes(evil), Size: int64(len(evil))}, m.Packages[1]}
+	})
+	var valid bytes.Buffer
+	_, _, err = pkgtar.Write(&valid, win)
+	must(t, err)
+	crafted := craftSnapshot(t, bad, rawEntry{"packages/" + strings.TrimPrefix(digestOfBytes(evil), "sha256:") + ".tar", evil}, rawEntry{m.Packages[1].Entry(), valid.Bytes()})
+	_, err = Unpack(crafted, filepath.Join(t.TempDir(), "project"), openStore(t), "windows-x64")
+	if err == nil {
+		t.Fatal("overridden malicious SDK was not verified")
+	}
+}
+
 func TestAddEntryRejectsChangedInput(t *testing.T) {
 	for _, content := range []string{"abc-extra", "ab", "xyz"} {
 		t.Run(content, func(t *testing.T) {

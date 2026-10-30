@@ -27,25 +27,34 @@ func extract(archive, format string, strip int, dest string) error {
 }
 
 func extractContext(ctx context.Context, archive, format string, strip int, dest string) error {
+	_, err := extractLayout(ctx, archive, format, strip, dest, false)
+	return err
+}
+
+func extractLayout(ctx context.Context, archive, format string, strip int, dest string, windowsLayout bool) (map[string]string, error) {
 	if err := ctx.Err(); err != nil {
-		return err
+		return nil, err
 	}
 	if err := os.Mkdir(dest, 0o755); err != nil {
-		return err
+		return nil, err
 	}
 	root, err := os.OpenRoot(dest)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer root.Close()
-	w := &writer{ctx: ctx, root: root, symlinks: map[string]bool{}, files: map[string]bool{}}
+	var links map[string]string
+	if windowsLayout {
+		links = map[string]string{}
+	}
+	w := &writer{links: links, ctx: ctx, root: root, symlinks: map[string]bool{}, files: map[string]bool{}}
 
 	if format == "zip" {
-		return extractZip(archive, strip, w)
+		return links, extractZip(archive, strip, w)
 	}
 	f, err := os.Open(archive)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer f.Close()
 	var r io.Reader
@@ -53,20 +62,20 @@ func extractContext(ctx context.Context, archive, format string, strip int, dest
 	case "tar.gz":
 		gz, err := gzip.NewReader(f)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		defer gz.Close()
 		r = gz
 	case "tar.xz":
 		xr, err := xz.NewReader(f)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		r = xr
 	default:
-		return fmt.Errorf("unsupported archive format %q", format)
+		return nil, fmt.Errorf("unsupported archive format %q", format)
 	}
-	return extractTar(contextio.Reader{Context: ctx, Reader: r}, strip, w)
+	return links, extractTar(contextio.Reader{Context: ctx, Reader: r}, strip, w)
 }
 
 func extractTar(r io.Reader, strip int, w *writer) error {
@@ -168,6 +177,7 @@ func stripPath(name string, n int) (string, bool, error) {
 }
 
 type writer struct {
+	links    map[string]string
 	ctx      context.Context
 	root     *os.Root
 	symlinks map[string]bool
@@ -232,6 +242,24 @@ func (w *writer) symlink(name, target string) error {
 		return err
 	}
 	w.symlinks[name] = true
+	if w.links != nil {
+		// A placeholder reserves the name against duplicate entries without
+		// requiring symlink privileges. Resolve only after the tree is complete.
+		f, err := w.root.OpenFile(name, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)
+		if err != nil {
+			return err
+		}
+		_, err = f.WriteString(target)
+		closeErr := f.Close()
+		if err != nil {
+			return err
+		}
+		if closeErr != nil {
+			return closeErr
+		}
+		w.links[name] = target
+		return nil
+	}
 	return w.root.Symlink(target, name)
 }
 

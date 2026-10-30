@@ -84,7 +84,10 @@ type SourceArchive struct {
 
 // Source is either a downloadable archive or a git checkout.
 type Source struct {
-	URL string `toml:"url,omitempty"`
+	// Layout selects an explicit, versioned package representation, independent
+	// of the machine preparing it. Empty retains the original native layout.
+	Layout string `toml:"layout,omitempty"`
+	URL    string `toml:"url,omitempty"`
 	// Mirrors serve the same file; the sha256 decides, not the source.
 	Mirrors []string `toml:"mirrors,omitempty"`
 	SHA256  string   `toml:"sha256,omitempty"`
@@ -98,6 +101,8 @@ type Source struct {
 	// Digest is the expected package digest. Empty means not pinned yet.
 	Digest string `toml:"digest,omitempty"`
 }
+
+const LayoutWindows = "windows-v1"
 
 // IDs returns the identifiers of the built-in profiles.
 func IDs() []string {
@@ -150,6 +155,12 @@ func (p *Profile) validate() error {
 		}
 		for platform, s := range c.Sources {
 			where := c.Name + "/" + platform
+			if s.Layout != "" && s.Layout != LayoutWindows {
+				return fmt.Errorf("%s: unknown layout %q", where, s.Layout)
+			}
+			if s.Layout == LayoutWindows && !strings.HasPrefix(platform, "windows-") {
+				return fmt.Errorf("%s: Windows layout needs a Windows platform", where)
+			}
 			switch {
 			case s.Git != "":
 				if s.Ref == "" || !commitRe.MatchString(s.Commit) {
