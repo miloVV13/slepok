@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/miloVV13/slepok/internal/pkgtar"
 	"github.com/miloVV13/slepok/internal/store"
 )
 
@@ -64,7 +65,9 @@ func TestGCCRuntimeLaunchersAreLiteralAndRecreated(t *testing.T) {
 	if got.Libraries != libs || !reflect.DeepEqual(got.Args, args) {
 		t.Fatalf("forwarded: %+v", got)
 	}
-	must(t, st.Remove("sha256:"+filepath.Base(dir)))
+	digest, _, err := pkgtar.Write(io.Discard, dir)
+	must(t, err)
+	must(t, st.Remove(digest))
 	again, err := gccRuntimeLaunchers(t.Context(), st, gcc, libs)
 	must(t, err)
 	if again != dir {
