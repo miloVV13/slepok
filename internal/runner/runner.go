@@ -431,9 +431,6 @@ func fileSHA256(ctx context.Context, p string) (string, error) {
 // work. A cmake wrapper adds the profile's configure arguments, so running
 // cmake by hand configures the project the same way slepok build does.
 func Shell(e *Env, dir string, st *store.Store, stdin io.Reader, stdout, stderr io.Writer) error {
-	if runtime.GOOS == "windows" {
-		return fmt.Errorf("slepok shell is not yet supported on Windows; run slepok build")
-	}
 	cmake, err := e.LookPath("cmake")
 	if err != nil {
 		return err
@@ -443,25 +440,23 @@ func Shell(e *Env, dir string, st *store.Store, stdin io.Reader, stdout, stderr 
 		return err
 	}
 	defer os.RemoveAll(bin)
-	if err := os.WriteFile(filepath.Join(bin, "cmake"), []byte(cmakeWrapper(cmake, e.Configure)), 0o755); err != nil {
+	sh, args, extra, err := prepareShell(bin, cmake, e.Configure)
+	if err != nil {
 		return err
-	}
-
-	sh := os.Getenv("SHELL")
-	if sh == "" {
-		sh = "/bin/sh"
 	}
 	path := slices.Concat([]string{bin}, e.Path, filepath.SplitList(os.Getenv("PATH")))
 	env := []string{"PATH=" + strings.Join(path, string(os.PathListSeparator)), "SLEPOK_SHELL=1"}
 	for _, kv := range os.Environ() {
-		if !strings.HasPrefix(kv, "PATH=") {
+		key, _, _ := strings.Cut(kv, "=")
+		if !strings.EqualFold(key, "PATH") && !strings.EqualFold(key, "SLEPOK_SHELL") {
 			env = append(env, kv)
 		}
 	}
+	env = append(env, extra...)
 	for _, k := range slices.Sorted(mapKeys(e.Vars)) {
 		env = append(env, k+"="+e.Vars[k])
 	}
-	cmd := exec.Command(sh)
+	cmd := exec.Command(sh, args...)
 	cmd.Env, cmd.Dir = env, dir
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = stdin, stdout, stderr
 	err = cmd.Run()

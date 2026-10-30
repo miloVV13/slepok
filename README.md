@@ -14,6 +14,12 @@ $ slepok pack                 # proves an offline build, writes blinky.slepok
 $ slepok unpack blinky.slepok && cd blinky && slepok build
 ```
 
+No environment setup is required. `SLEPOK_HOME` is an optional store
+override, useful for testing or choosing another disk. By default the
+store is `~/.local/share/slepok` on Linux (`XDG_DATA_HOME` is respected)
+and `%LOCALAPPDATA%\slepok` on Windows. Restored tools are selected by
+Slepok automatically; no SDK installation or global `PATH` changes are needed.
+
 > **Status: early.** Works on Linux x86-64 with one profile, Raspberry Pi
 > RP2040 (Pico SDK 2.3.1, ARM GCC 14.2). The snapshot format may still
 > change before 1.0. Windows, macOS, STM32 and ESP32 are planned.

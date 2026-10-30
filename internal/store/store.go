@@ -38,6 +38,11 @@ func DefaultRoot() (string, error) {
 		if dir := os.Getenv("LocalAppData"); dir != "" {
 			return filepath.Join(dir, "slepok"), nil
 		}
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		return filepath.Join(home, "AppData", "Local", "slepok"), nil
 	}
 	if dir := os.Getenv("XDG_DATA_HOME"); dir != "" {
 		return filepath.Join(dir, "slepok"), nil
@@ -51,6 +56,11 @@ func DefaultRoot() (string, error) {
 
 // Open opens the store at root, creating it if needed.
 func Open(root string) (*Store, error) {
+	abs, err := filepath.Abs(root)
+	if err != nil {
+		return nil, err
+	}
+	root = abs
 	if err := os.MkdirAll(filepath.Join(root, "packages"), 0o755); err != nil {
 		return nil, err
 	}
