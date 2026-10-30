@@ -45,6 +45,13 @@ func DefaultRoot() (string, error) {
 		}
 		return filepath.Join(home, "AppData", "Local", "slepok"), nil
 	}
+	if runtime.GOOS == "darwin" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		return filepath.Join(home, "Library", "Application Support", "slepok"), nil
+	}
 	if dir := os.Getenv("XDG_DATA_HOME"); dir != "" {
 		return filepath.Join(dir, "slepok"), nil
 	}

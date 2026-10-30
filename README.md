@@ -231,7 +231,7 @@ Slepok's niche: one offline file, a proven restore, no Docker, any editor.
 
 ## Roadmap
 
-Windows and macOS hosts · STM32 and ESP32 profiles · Python packages for
+macOS hosts · STM32 and ESP32 profiles · Python packages for
 project scripts · snapshot signatures · release binaries.
 
 ## Development checks

@@ -8,6 +8,21 @@ permissions:
   contents: read
 
 jobs:
+  macos-core:
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go vet ./...
+      - run: go test -race ./internal/process ./internal/filelock ./internal/safepath ./internal/runner ./internal/pkgtar
+      - run: go test ./internal/store -run '^(TestArchive|TestDefaultRootWithoutOverride|TestRelativeStoreRoot)'
+      - run: go test ./internal/snapshot -run '^TestForeignArchiveSurvivesUnpackAndRepack$'
+      - run: go test ./internal/fetch -run '^(TestPortable|TestWindowsGitLayout|TestProgress|TestInteractiveProgress|TestRedirectedProgress)'
+      - run: go build -trimpath -o slepok ./cmd/slepok
+
   windows:
     runs-on: windows-2022
     timeout-minutes: 15
