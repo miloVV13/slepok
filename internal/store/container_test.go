@@ -60,7 +60,14 @@ func TestContainerPublishesSealedTreeAndGC(t *testing.T) {
 		t.Fatal("container survived GC")
 	}
 	// Legacy trees remain readable and need no migration.
-	if err := s.installContext(t.Context(), digest, bytes.NewReader(data), false); err != nil {
+	legacy, err := s.Path(digest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := pkgtar.Extract(bytes.NewReader(data), legacy); err != nil {
+		t.Fatal(err)
+	}
+	if err := setWritable(legacy, false); err != nil {
 		t.Fatal(err)
 	}
 	p, err = s.Path(digest)
