@@ -18,6 +18,7 @@ jobs:
       - run: go test -race ./...
         env:
           SLEPOK_REQUIRE_FILESYSTEM_TESTS: "1"
+          SLEPOK_REQUIRE_NETWORK_ISOLATION: "1"
       - run: go vet ./...
 
   rp2040-offline:
@@ -28,5 +29,9 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+      - run: sudo apt-get update
+      - run: sudo apt-get install -y clangd-14
       - run: CGO_ENABLED=0 go build -trimpath -o "$RUNNER_TEMP/slepok" ./cmd/slepok
       - run: bash scripts/offline_smoke.sh "$RUNNER_TEMP/slepok"
+        env:
+          SLEPOK_CLANGD: clangd-14

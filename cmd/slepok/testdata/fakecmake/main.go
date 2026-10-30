@@ -64,6 +64,15 @@ func configure(args []string) error {
 	if _, err := os.Stat(filepath.Join(src, "leak")); err == nil {
 		cache = append(cache, "LEAKY_TOOL:FILEPATH=/usr/bin/python3")
 	}
+	if _, err := os.Stat(filepath.Join(src, "ninja-leak")); err == nil {
+		dir := filepath.Join(out, "CMakeFiles")
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return err
+		}
+		if err := os.WriteFile(filepath.Join(dir, "rules.ninja"), []byte("command = /usr/bin/python3 generate.py\n"), 0o644); err != nil {
+			return err
+		}
+	}
 	return os.WriteFile(filepath.Join(out, "CMakeCache.txt"), []byte(strings.Join(cache, "\n")+"\n"), 0o644)
 }
 
@@ -87,6 +96,11 @@ func probe(src string) error {
 	}
 	defer f.Close()
 	_, err = fmt.Fprintln(f, result)
+	if err == nil && result == "unreachable" {
+		if _, required := os.Stat(filepath.Join(src, "requires-network")); required == nil {
+			return fmt.Errorf("required network dependency is unavailable")
+		}
+	}
 	return err
 }
 

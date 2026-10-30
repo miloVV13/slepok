@@ -29,13 +29,14 @@ Slepok makes the environment a pinned, verifiable, portable object:
 
 - **One file** holds the project and every tool needed to build it.
 - **Offline by proof, not by promise.** `slepok pack` builds a clean copy
-  of the project without network access before it writes the snapshot.
-  If the build tries to download anything, there is no snapshot.
+  of the project before it writes the snapshot. With Linux network
+  isolation available, a required download makes that build fail.
+  If isolation is unavailable, Slepok warns that offline builds are unproven.
 - **Nothing installed into the system.** Tools live in a local store and
   are only ever used through Slepok.
-- **No host leaks.** Builds run with an empty environment; Slepok checks
-  that the configured build does not refer to host tools (a system Python
-  found by CMake behind your back, for example).
+- **Checks for host dependencies.** Builds run with an empty environment;
+  Slepok checks the CMake cache and generated Ninja rules for system tool
+  paths (a system Python found by CMake, for example).
 - **Any editor.** Slepok is a command-line tool. clangd picks up
   `build/compile_commands.json`.
 - **No Docker.** Toolchains for microcontrollers are relocatable; Slepok
@@ -133,6 +134,8 @@ The full specification, including design decisions and measurements, is in
 - **Guaranteed:** a restored snapshot builds on a compatible host
   (same OS and architecture as listed by `slepok inspect`) with the same
   pinned tools, without network.
+  This offline guarantee requires a verification build with network
+  isolation; a fallback build on a host that forbids namespaces is unproven.
 - **Observed, not promised:** identical firmware. The RP2040 blink builds
   bit-for-bit identically on different stores and directories. Builds
   get `SOURCE_DATE_EPOCH` from `slepok.lock` (the moment the environment
@@ -197,6 +200,9 @@ project scripts · snapshot signatures · release binaries.
 
 ## Development checks
 
+The Linux MVP acceptance evidence and remaining CI status are recorded in
+[MVP_ACCEPTANCE.md](docs/MVP_ACCEPTANCE.md) (Russian).
+
 Run `go test -race ./...` and `go vet ./...`. Tests use local HTTP servers;
 they do not download the RP2040 environment.
 
@@ -212,4 +218,8 @@ then validates, restores and builds it in a second empty store inside
 a network namespace. It also compares the UF2 files. The script requires
 `git`, util-linux `unshare` and enabled unprivileged user namespaces;
 it fails if network isolation is unavailable. Temporary data is removed
-on exit. Both checks run in GitHub Actions.
+on exit. It verifies that `compile_commands.json` uses the restored store.
+If clangd is available (or selected via `SLEPOK_CLANGD`), it also checks
+the restored source using the ARM compiler through `--query-driver`.
+Both checks run in GitHub Actions; the real-build job installs clangd
+for this editor check, while the firmware still uses bundled tools.

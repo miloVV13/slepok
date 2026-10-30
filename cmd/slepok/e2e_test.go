@@ -176,6 +176,9 @@ func TestEndToEnd(t *testing.T) {
 	fakeProfile(t, srv.URL, archive, source, sdkURL, sdkCommit)
 
 	isolated := runner.IsolationAvailable()
+	if os.Getenv("SLEPOK_REQUIRE_NETWORK_ISOLATION") == "1" && !isolated {
+		t.Fatal("network isolation is required for the acceptance test")
+	}
 	probeLog := filepath.Join(tmp, "probe.log")
 	probe := strings.TrimPrefix(srv.URL, "http://") + "\n" + probeLog + "\n"
 	homeA, homeB := filepath.Join(tmp, "homeA"), filepath.Join(tmp, "homeB")
@@ -225,6 +228,17 @@ func TestEndToEnd(t *testing.T) {
 	must(t, os.WriteFile("leak", nil, 0o644))
 	mustFail(t, execute([]string{"pack", "-o", "../proj.slepok"}), "depends on the host")
 	must(t, os.Remove("leak"))
+	must(t, os.WriteFile("ninja-leak", nil, 0o644))
+	mustFail(t, execute([]string{"pack", "-o", "../proj.slepok"}), "depends on the host")
+	must(t, os.Remove("ninja-leak"))
+	if isolated {
+		must(t, os.WriteFile("requires-network", nil, 0o644))
+		mustFail(t, execute([]string{"pack", "-o", "../needs-network.slepok"}), "configure failed")
+		if _, err := os.Stat("../needs-network.slepok"); !os.IsNotExist(err) {
+			t.Fatalf("network-dependent build published a snapshot: %v", err)
+		}
+		must(t, os.Remove("requires-network"))
+	}
 
 	must(t, os.WriteFile(probeLog, nil, 0o644))
 	snap := filepath.Join(work, "proj.slepok")
@@ -241,6 +255,22 @@ func TestEndToEnd(t *testing.T) {
 	must(t, execute([]string{"pack", "-with-sources", "-o", withSrc}))
 	checkLicenses(t, withSrc, srv.URL, source)
 	mustFail(t, execute([]string{"pack", "-o", snap}), "exists")
+
+	// Initializing an existing project must preserve its sources/build files.
+	existing := filepath.Join(work, "existing")
+	must(t, os.Mkdir(existing, 0o755))
+	for name, content := range map[string]string{"main.c": "/* user's source */\n", "CMakeLists.txt": "project(user_project)\n"} {
+		must(t, os.WriteFile(filepath.Join(existing, name), []byte(content), 0o644))
+	}
+	must(t, execute([]string{"init", "--profile", "fake", existing}))
+	for name, want := range map[string]string{"main.c": "/* user's source */\n", "CMakeLists.txt": "project(user_project)\n"} {
+		got, err := os.ReadFile(filepath.Join(existing, name))
+		must(t, err)
+		if string(got) != want {
+			t.Fatalf("init overwrote existing %s", name)
+		}
+	}
+	must(t, os.RemoveAll(existing))
 
 	corrupt, err := os.ReadFile(snap)
 	must(t, err)

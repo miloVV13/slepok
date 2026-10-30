@@ -17,6 +17,7 @@ export SLEPOK_HOME="$smoke_dir/store-a"
 "$slepok_bin" init "$smoke_dir/blink"
 cd "$smoke_dir/blink"
 "$slepok_bin" build
+test -s build/compile_commands.json
 "$slepok_bin" pack -o "$smoke_dir/blink.slepok"
 
 # The receiver gets the archive and an empty store. Its entire process tree
@@ -28,7 +29,25 @@ unshare --user --map-current-user --net bash -eu -c '
     "$2" unpack blink.slepok restored
     cd restored
     "$2" build
+    test -s build/compile_commands.json
+    grep -Fq "$SLEPOK_HOME/packages/" build/compile_commands.json
 ' bash "$smoke_dir" "$slepok_bin"
+
+if grep -Fq "$smoke_dir/store-a/" "$smoke_dir/restored/build/compile_commands.json"; then
+    echo 'Restored compile_commands.json still refers to the original store' >&2
+    exit 1
+fi
+
+# An optional editor check; clangd is a test tool, not a build dependency.
+clangd_bin="${SLEPOK_CLANGD:-}"
+if [[ -z "$clangd_bin" ]] && command -v clangd >/dev/null; then
+    clangd_bin=clangd
+fi
+if [[ -n "$clangd_bin" ]]; then
+    "$clangd_bin" --check="$smoke_dir/restored/main.c" \
+        --compile-commands-dir="$smoke_dir/restored/build" \
+        --query-driver="$SLEPOK_HOME/packages/*/bin/arm-none-eabi-*" --log=error
+fi
 
 # Compare the same source and lock after two clean builds in different stores.
 shopt -s nullglob

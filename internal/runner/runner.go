@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -151,7 +152,7 @@ type Output struct {
 type Result struct {
 	// Isolated reports whether the build really ran without network.
 	Isolated bool
-	// Leaks lists cache entries that point into the host system.
+	// Leaks lists cache entries and Ninja rules that point into the host system.
 	Leaks   []string
 	Outputs []Output
 }
@@ -168,10 +169,16 @@ func Build(e *Env, src, build string, o Options) (*Result, error) {
 		return nil, fmt.Errorf("configure failed: %w", err)
 	}
 	res := &Result{}
-	res.Leaks, err = Leaks(filepath.Join(build, "CMakeCache.txt"), []string{e.StoreRoot, src, build})
+	allowed := []string{e.StoreRoot, src, build}
+	res.Leaks, err = Leaks(filepath.Join(build, "CMakeCache.txt"), allowed)
 	if err != nil {
 		return nil, err
 	}
+	ninjaLeaks, err := NinjaLeaks(build, allowed)
+	if err != nil {
+		return nil, err
+	}
+	res.Leaks = append(res.Leaks, ninjaLeaks...)
 	if err := r.run(cmake, "--build", build); err != nil {
 		return nil, fmt.Errorf("build failed: %w", err)
 	}
@@ -302,6 +309,57 @@ func hostPath(v string, allowed []string) bool {
 		}
 	}
 	return false
+}
+
+// Keep quoted paths and Ninja's escaped spaces together. This checks literal
+// paths in generated rules; it does not interpret shell scripts or variables.
+var ninjaWords = regexp.MustCompile(`"[^"]*"|'[^']*'|(?:\$ |[^\s"';|&<>])+`)
+var ninjaUnescape = strings.NewReplacer("$ ", " ", "$:", ":", "$$", "$")
+
+// NinjaLeaks checks the generated graph and included rule files, where custom
+// commands can refer to host tools without adding anything to CMakeCache.txt.
+func NinjaLeaks(build string, allowed []string) ([]string, error) {
+	var leaks []string
+	err := filepath.WalkDir(build, func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.Type().IsRegular() || filepath.Ext(p) != ".ninja" {
+			return nil
+		}
+		f, err := os.Open(p)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		rel, err := filepath.Rel(build, p)
+		if err != nil {
+			return err
+		}
+		s := bufio.NewScanner(f)
+		s.Buffer(make([]byte, 64<<10), 1<<20)
+		seen := map[string]bool{}
+		for line := 1; s.Scan(); line++ {
+			if strings.HasPrefix(strings.TrimSpace(s.Text()), "#") {
+				continue
+			}
+			for _, word := range ninjaWords.FindAllString(s.Text(), -1) {
+				word = strings.Trim(word, `"'`)
+				word = ninjaUnescape.Replace(word)
+				for _, value := range strings.Split(word, "=") {
+					for _, prefix := range []string{"-isystem", "-I", "-L"} {
+						value = strings.TrimPrefix(value, prefix)
+					}
+					if hostPath(value, allowed) && !seen[value] {
+						seen[value] = true
+						leaks = append(leaks, fmt.Sprintf("%s:%d: %s", filepath.ToSlash(rel), line, value))
+					}
+				}
+			}
+		}
+		return s.Err()
+	})
+	return leaks, err
 }
 
 func outputs(ctx context.Context, build string, patterns []string) ([]Output, error) {

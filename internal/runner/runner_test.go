@@ -80,6 +80,29 @@ NOT_A_PATH:STRING=Release
 	}
 }
 
+func TestNinjaLeaks(t *testing.T) {
+	dir := t.TempDir()
+	must(t, os.MkdirAll(filepath.Join(dir, "CMakeFiles"), 0o755))
+	must(t, os.WriteFile(filepath.Join(dir, "build.ninja"), []byte(`# /usr/bin/ignored-comment
+command = /store/bin/cmake -S /opt/my$ project -B /build
+flags = -I/usr/include -L/opt/vendor/lib --sysroot=/usr/sysroot
+`), 0o644))
+	must(t, os.WriteFile(filepath.Join(dir, "CMakeFiles", "rules.ninja"), []byte(`command = "/usr/bin/python3" gen.py
+command = "/opt/my project/tool" '/store/bin/cc'
+command = /store/bin/cc -isystem/usr/local/include
+`), 0o644))
+	leaks, err := NinjaLeaks(dir, []string{"/store", "/opt/my project", "/build"})
+	must(t, err)
+	for _, want := range []string{"/usr/bin/python3", "/usr/include", "/opt/vendor/lib", "/usr/sysroot", "/usr/local/include"} {
+		if !strings.Contains(strings.Join(leaks, "\n"), want) {
+			t.Errorf("missing %s in %v", want, leaks)
+		}
+	}
+	if len(leaks) != 5 {
+		t.Fatalf("unexpected Ninja leaks: %v", leaks)
+	}
+}
+
 func TestCmakeWrapper(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("POSIX shell wrapper")
