@@ -20,9 +20,11 @@ store is `~/.local/share/slepok` on Linux (`XDG_DATA_HOME` is respected)
 and `%LOCALAPPDATA%\slepok` on Windows. Restored tools are selected by
 Slepok automatically; no SDK installation or global `PATH` changes are needed.
 
-> **Status: early.** Works on Linux x86-64 with one profile, Raspberry Pi
+> **Status: early.** Works on Linux x86-64 and Windows x86-64 with one profile, Raspberry Pi
 > RP2040 (Pico SDK 2.3.1, ARM GCC 14.2). The snapshot format may still
-> change before 1.0. Windows, macOS, STM32 and ESP32 are planned.
+> change before 1.0. Windows → Windows and Windows → Linux restore/build
+> have been checked on real machines with matching firmware SHA256.
+> macOS, STM32 and ESP32 are planned.
 
 ## Why
 
@@ -51,7 +53,7 @@ Slepok makes the environment a pinned, verifiable, portable object:
 ## Install
 
 Requirements: Linux x86-64 with glibc 2.34 or newer (Ubuntu 22.04+,
-Debian 12+, Fedora 35+); `git` for `slepok init` only.
+Debian 12+, Fedora 35+), or Windows 10/11 x64; `git` for `slepok init` only.
 
 Build from a checkout with Go 1.25+. `CGO_ENABLED=0` makes a static
 binary that runs on any Linux x86-64, so you can copy it to machines
@@ -113,7 +115,7 @@ project config unchanged. It does not download missing packages: run
 other hosts still require native testing. Windows can prepare Linux packages
 as canonical tar archives, preserving Unix permissions and links without
 creating them on Windows. Combined snapshots can be prepared on either host;
-native Windows acceptance is still pending.
+Windows → Windows and Windows → Linux migrations have been checked on real machines.
 
 - **`slepok.toml`** — written by you: profile, board, platforms.
 
