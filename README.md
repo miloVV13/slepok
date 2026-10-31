@@ -211,8 +211,9 @@ Flash firmware rather than automatically relaunching the RAM image.
 
 RAM compilation, ELF validation, native OpenOCD Tcl parsing with hardware
 operations stubbed, and an offline snapshot restore/build with identical
-RAM BIN have been checked on Linux. Hardware RAM execution is pending;
-Windows/macOS RAM builds and execution need native acceptance. Ordinary
+RAM BIN have been checked on Linux. The user subsequently confirmed
+successful hardware RAM execution following the Windows instructions.
+Hardware RAM execution on Linux/macOS still needs acceptance. Ordinary
 Flash programming remains available through `slepok flash`.
 
 ## Files in your project

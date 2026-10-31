@@ -40,7 +40,7 @@ func maxArgs(args []string, n int) error {
 
 // --- init -------------------------------------------------------------
 
-var initFlags struct{ profile, board, platform *string }
+var initFlags struct{ profile, mcu, board, platform *string }
 
 var initCmd = &command{
 	name:    "init",
@@ -48,6 +48,7 @@ var initCmd = &command{
 	summary: "create a project or set up the environment of an existing one (needs network)",
 	flags: func(fs *flag.FlagSet) {
 		initFlags.profile = fs.String("profile", "rp2040", "platform profile ("+strings.Join(profile.IDs(), ", ")+")")
+		initFlags.mcu = fs.String("mcu", "", "target MCU; selects its profile and packages ("+strings.Join(profile.IDs(), ", ")+")")
 		initFlags.board = fs.String("board", "", "board (default: the profile's first board)")
 		initFlags.platform = fs.String("platform", "", "prepare host platforms, comma-separated (default: existing config or current host)")
 	},
@@ -61,6 +62,19 @@ func runInit(ctx context.Context, fs *flag.FlagSet, args []string) error {
 	targets, err := selectedPlatforms(*initFlags.platform)
 	if err != nil {
 		return err
+	}
+	explicit := map[string]bool{}
+	fs.Visit(func(f *flag.Flag) { explicit[f.Name] = true })
+	profileID := *initFlags.profile
+	if explicit["mcu"] {
+		mcu := strings.ToLower(strings.TrimSpace(*initFlags.mcu))
+		if mcu == "" {
+			return &usageError{"--mcu requires a target MCU"}
+		}
+		if explicit["profile"] && profileID != mcu {
+			return &usageError{"--mcu and --profile select different targets; use one or matching values"}
+		}
+		profileID = mcu
 	}
 	dir := "."
 	if len(args) == 1 {
@@ -83,23 +97,20 @@ func runInit(ctx context.Context, fs *flag.FlagSet, args []string) error {
 	}
 	defer guard.Close()
 
-	explicit := map[string]bool{}
-	fs.Visit(func(f *flag.Flag) { explicit[f.Name] = true })
-
 	var cfg project.Config
 	if p, err := project.Load(dir); err == nil {
 		cfg = p.Config
 		if explicit["platform"] {
 			cfg.Platforms = withBuildHost(targets)
 		}
-		if (explicit["profile"] && *initFlags.profile != cfg.Profile) || (explicit["board"] && *initFlags.board != cfg.Board) {
+		if ((explicit["profile"] || explicit["mcu"]) && profileID != cfg.Profile) || (explicit["board"] && *initFlags.board != cfg.Board) {
 			return fmt.Errorf("%s already sets profile %s, board %s; edit it to change them", project.ConfigName, cfg.Profile, cfg.Board)
 		}
 		fmt.Printf("Setting up the environment of %s\n", dir)
 	} else if _, statErr := os.Stat(filepath.Join(dir, project.ConfigName)); statErr == nil {
 		return err // slepok.toml exists but is invalid
 	} else {
-		prof, err := profile.Load(*initFlags.profile)
+		prof, err := profile.Load(profileID)
 		if err != nil {
 			return err
 		}
@@ -132,6 +143,7 @@ func runInit(ctx context.Context, fs *flag.FlagSet, args []string) error {
 	if err != nil {
 		return err
 	}
+	fmt.Printf("Target MCU/profile: %s; board: %s. Preparing only this target's packages.\n", cfg.Profile, cfg.Board)
 	cfg.Platforms = withBuildHost(cfg.Platforms)
 	lock, err := lockFor(dir, cfg, prof)
 	if err != nil {
