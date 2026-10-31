@@ -33,6 +33,35 @@ type FlashOptions struct {
 // PlanRP2040Flash selects an unambiguous ARM ELF and the locked OpenOCD.
 // Explicit firmware paths are relative to dir, not the build directory.
 func PlanRP2040Flash(e *Env, dir, build string, options FlashOptions) (*FlashPlan, error) {
+	p, err := prepareRP2040OpenOCD(e, dir, build, options)
+	if err != nil {
+		return nil, err
+	}
+	image, err := elf.Open(p.Firmware)
+	if err != nil {
+		return nil, err
+	}
+	ramOnly := false
+	for _, segment := range image.Progs {
+		if segment.Type == elf.PT_LOAD && segment.Filesz > 0 {
+			if !inRAM(segment.Paddr, segment.Filesz) {
+				ramOnly = false
+				break
+			}
+			ramOnly = true
+		}
+	}
+	_ = image.Close()
+	if ramOnly {
+		return nil, fmt.Errorf("ELF is linked for RAM; use slepok run --ram --no-build --elf %q", p.Firmware)
+	}
+	p.Args = append(p.Args, "-c", "program "+tclWord(filepath.ToSlash(p.Firmware))+" verify reset exit")
+	return p, nil
+}
+
+// prepareRP2040OpenOCD only selects the tool, image and target configuration.
+// It never includes any init, memory access or Flash programming commands.
+func prepareRP2040OpenOCD(e *Env, dir, build string, options FlashOptions) (*FlashPlan, error) {
 	firmware, probe, serial, speed := options.Firmware, options.Probe, options.Serial, options.Speed
 	if probe != "cmsis-dap" {
 		return nil, fmt.Errorf("unsupported RP2040 probe %q; use cmsis-dap", probe)
@@ -98,7 +127,7 @@ func PlanRP2040Flash(e *Env, dir, build string, options FlashOptions) (*FlashPla
 	if serial != "" {
 		args = append(args, "-c", "adapter serial "+tclWord(serial))
 	}
-	args = append(args, "-f", filepath.Join(scripts, "target", "rp2040.cfg"), "-c", "program "+tclWord(filepath.ToSlash(firmware))+" verify reset exit")
+	args = append(args, "-f", filepath.Join(scripts, "target", "rp2040.cfg"))
 	return &FlashPlan{Executable: executable, Directory: root, Args: args, Firmware: firmware}, nil
 }
 

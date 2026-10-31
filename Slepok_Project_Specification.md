@@ -570,6 +570,20 @@ Pico Zero в роли программатора; протокол и распи
 инструментом. Получатель был в отдельном network namespace, UF2 совпали;
 `flash --dry-run` использовал OpenOCD из восстановленного хранилища.
 
+**Экспериментальный RAM-режим RP2040:** `build --ram` собирает Pico SDK
+`no_flash` в отдельный `build_dir/ram`; `run --ram` загружает ELF через
+SWD, проверяет RAM и запускает core 0 без записи Flash. Поддержаны
+`--elf`, `--no-build`, `--dry-run`, `--serial`, `--speed`,
+`--cmsis-dap-quirk`. До USB проверяются PT_LOAD (VMA/LMA только в
+SRAM 264 KiB, без перекрытий), Thumb entry point и символы/векторы
+стандартного Pico SDK. Flash/copy_to_ram/mixed ELF не принимаются RAM-
+загрузчиком; `flash` отвергает RAM-only ELF. Состояние CPU и VTOR
+инициализируются, после загрузки reset не вызывается. При выключении
+питания RAM-образ теряется. Проверены реальная Linux-сборка, негативные
+ELF-тесты, Tcl-план без оборудования и офлайн pack/restore/build
+с одинаковым RAM BIN. Аппаратный запуск RAM и нативная приёмка RAM
+на Windows/macOS пока не выполнены.
+
 ## 12. Безопасность
 
 -   `validate` и `inspect` никогда не запускают код из архива;

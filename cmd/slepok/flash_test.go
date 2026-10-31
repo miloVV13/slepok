@@ -65,6 +65,8 @@ format = "zip"
 	t.Chdir(dir)
 	must(t, execute([]string{"flash", "--dry-run"}))
 	must(t, execute([]string{"flash", "--dry-run", "--cmsis-dap-quirk"}))
+	mustFail(t, execute([]string{"run"}), "requires --ram")
+	mustFail(t, execute([]string{"run", "--ram", "--dry-run", "--elf", "build/blink.elf"}), "RAM image")
 	mustFail(t, execute([]string{"flash", "--dry-run", "--probe", "unknown"}), "cmsis-dap")
 	mustFail(t, execute([]string{"flash", "--dry-run", "--speed", "0"}), "speed")
 	lock.Packages = nil

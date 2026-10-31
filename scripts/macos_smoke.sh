@@ -30,6 +30,8 @@ fi
 cd "$smoke_dir/blink"
 "$slepok_bin" build
 test -s build/compile_commands.json
+"$slepok_bin" build --ram
+"$slepok_bin" run --ram --dry-run --cmsis-dap-quirk > "$smoke_dir/ram-plan-a.txt"
 "$slepok_bin" pack -o "$smoke_dir/blink.slepok"
 
 export SLEPOK_HOME="$smoke_dir/store b"
@@ -40,6 +42,10 @@ cd "$smoke_dir/restored"
 "$slepok_bin" flash --dry-run > "$smoke_dir/flash-plan.txt"
 grep -Fq "verify reset exit" "$smoke_dir/flash-plan.txt"
 grep -Fq "$SLEPOK_HOME/" "$smoke_dir/flash-plan.txt"
+"$slepok_bin" build --ram
+"$slepok_bin" run --ram --dry-run --cmsis-dap-quirk > "$smoke_dir/ram-plan-b.txt"
+grep -Fq "load_image" "$smoke_dir/ram-plan-b.txt"
+grep -Fq "verify_image" "$smoke_dir/ram-plan-b.txt"
 test -s build/compile_commands.json
 if ! grep -Fq "$SLEPOK_HOME/" build/compile_commands.json; then
     echo 'Restored compilation database does not refer to the receiver store.' >&2
@@ -58,6 +64,14 @@ if (( ${#firmware[@]} == 0 )); then
 fi
 for original in "${firmware[@]}"; do
     cmp "$original" "$smoke_dir/restored/build/$(basename "$original")"
+done
+ram_firmware=("$smoke_dir/blink/build/ram/"*.bin)
+if (( ${#ram_firmware[@]} == 0 )); then
+    echo 'No RAM firmware produced.' >&2
+    exit 1
+fi
+for original in "${ram_firmware[@]}"; do
+    cmp "$original" "$smoke_dir/restored/build/ram/$(basename "$original")"
 done
 echo 'Native macOS RP2040 restore and build passed; UF2 files are identical.'
 echo 'Network isolation was not enforced by this test.'

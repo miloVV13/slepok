@@ -22,6 +22,9 @@ fi
 cd "$smoke_dir/blink"
 "$slepok_bin" build
 test -s build/compile_commands.json
+"$slepok_bin" build --ram
+"$slepok_bin" run --ram --dry-run --cmsis-dap-quirk > "$smoke_dir/ram-plan-a.txt"
+grep -Fq 'load_image' "$smoke_dir/ram-plan-a.txt"
 "$slepok_bin" pack -o "$smoke_dir/blink.slepok"
 
 # The receiver gets the archive and an empty store. Its entire process tree
@@ -36,6 +39,10 @@ unshare --user --map-current-user --net bash -eu -c '
     "$2" flash --dry-run > "$1/flash-plan.txt"
     grep -Fq "$SLEPOK_HOME/packages/" "$1/flash-plan.txt"
     grep -Fq "verify reset exit" "$1/flash-plan.txt"
+    "$2" build --ram
+    "$2" run --ram --dry-run --cmsis-dap-quirk > "$1/ram-plan-b.txt"
+    grep -Fq "load_image" "$1/ram-plan-b.txt"
+    grep -Fq "verify_image" "$1/ram-plan-b.txt"
     test -s build/compile_commands.json
     grep -Fq "$SLEPOK_HOME/packages/" build/compile_commands.json
 ' bash "$smoke_dir" "$slepok_bin"
@@ -66,4 +73,13 @@ fi
 for original in "${firmware[@]}"; do
     cmp "$original" "$smoke_dir/restored/build/$(basename "$original")"
 done
+ram_firmware=("$smoke_dir/blink/build/ram/"*.bin)
+if (( ${#ram_firmware[@]} == 0 )); then
+    echo 'No RAM firmware produced' >&2
+    exit 1
+fi
+for original in "${ram_firmware[@]}"; do
+    cmp "$original" "$smoke_dir/restored/build/ram/$(basename "$original")"
+done
 echo 'RP2040 offline restore and build passed; UF2 files are identical.'
+echo 'RAM builds passed before and after restore; BIN files are identical.'

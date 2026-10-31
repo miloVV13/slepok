@@ -278,9 +278,10 @@ func writeTemplate(dir, profileID string) error {
 
 var buildCmd = &command{
 	name:    "build",
-	args:    "",
+	args:    "[--ram]",
 	summary: "build the project in its environment, without network access",
-	run: func(ctx context.Context, _ *flag.FlagSet, args []string) error {
+	flags:   func(fs *flag.FlagSet) { fs.Bool("ram", false, "build RP2040 no_flash ELF in build_dir/ram") },
+	run: func(ctx context.Context, fs *flag.FlagSet, args []string) error {
 		if err := maxArgs(args, 0); err != nil {
 			return err
 		}
@@ -288,15 +289,24 @@ var buildCmd = &command{
 		if err != nil {
 			return err
 		}
-		res, err := runner.Build(env, p.Dir, p.BuildDir(), runner.Options{
+		ram := fs.Lookup("ram").Value.(flag.Getter).Get().(bool)
+		build := p.BuildDir()
+		if ram {
+			if p.Config.Profile != "rp2040" {
+				return fmt.Errorf("RAM builds currently support only the rp2040 profile")
+			}
+			build = filepath.Join(build, "ram")
+		}
+		res, err := runner.Build(env, p.Dir, build, runner.Options{
 			Context: ctx,
+			RAM:     ram,
 			Isolate: true, Stdout: os.Stdout, Stderr: os.Stderr, Warn: os.Stderr,
 		})
 		if err != nil {
 			return err
 		}
 		reportLeaks(os.Stderr, res.Leaks)
-		fmt.Printf("\nBuilt %s:\n", relTo(p.BuildDir()))
+		fmt.Printf("\nBuilt %s:\n", relTo(build))
 		for _, o := range res.Outputs {
 			fmt.Printf("  %s\n", o.Path)
 		}

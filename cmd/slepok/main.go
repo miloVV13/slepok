@@ -24,7 +24,7 @@ type command struct {
 }
 
 var commands = []*command{
-	initCmd, buildCmd, flashCmd, shellCmd, packCmd, unpackCmd, validateCmd, inspectCmd, listCmd, gcCmd, versionCmd,
+	initCmd, buildCmd, flashCmd, runCmd, shellCmd, packCmd, unpackCmd, validateCmd, inspectCmd, listCmd, gcCmd, versionCmd,
 }
 
 func usage() {
@@ -80,7 +80,7 @@ func executeContext(ctx context.Context, args []string) error {
 		// Hold the store lock through package use, project lock publication
 		// and registration. GC must plan and delete without concurrent users.
 		switch c.name {
-		case "init", "build", "flash", "shell", "pack", "unpack", "list", "gc":
+		case "init", "build", "flash", "run", "shell", "pack", "unpack", "list", "gc":
 			st, err := openStore()
 			if err != nil {
 				return err
@@ -104,7 +104,7 @@ func main() {
 	ctx := context.Background()
 	stop := func() {}
 	// Only long-running commands with cancellable work intercept signals.
-	if len(os.Args) >= 2 && (os.Args[1] == "init" || os.Args[1] == "build" || os.Args[1] == "flash" || os.Args[1] == "pack" || os.Args[1] == "unpack" || os.Args[1] == "validate") {
+	if len(os.Args) >= 2 && (os.Args[1] == "init" || os.Args[1] == "build" || os.Args[1] == "flash" || os.Args[1] == "run" || os.Args[1] == "pack" || os.Args[1] == "unpack" || os.Args[1] == "validate") {
 		ctx, stop = signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	}
 	err := executeContext(ctx, os.Args[1:])
@@ -113,6 +113,8 @@ func main() {
 	if interrupted {
 		if len(os.Args) >= 2 && os.Args[1] == "flash" {
 			fmt.Fprintln(os.Stderr, "slepok: interrupted; target programming may be incomplete, rerun flash to program and verify")
+		} else if len(os.Args) >= 2 && os.Args[1] == "run" {
+			fmt.Fprintln(os.Stderr, "slepok: interrupted; RAM loading may be incomplete, rerun run --ram to reload and verify")
 		} else {
 			fmt.Fprintln(os.Stderr, "slepok: interrupted (verified packages and partial downloads kept for reuse)")
 		}

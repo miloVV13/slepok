@@ -85,8 +85,9 @@ are planned.
 | Command | What it does |
 |---|---|
 | `slepok init [--profile rp2040] [--board pico\|pico_w] [dir]` | Creates a blink project in an empty directory, or adds Slepok to an existing one, then downloads and verifies the environment. Needs network unless the packages are already in the store. |
-| `slepok build` | Configures and builds the project without network access. |
+| `slepok build [--ram]` | Configures and builds the project without network access. `--ram` builds and validates RP2040 `no_flash` firmware in `build_dir/ram`. |
 | `slepok flash [--elf file] [--serial id] [--speed kHz] [--no-build] [--dry-run]` | Builds and programs RP2040 through a CMSIS-DAP SWD probe using the locked OpenOCD, verifies the write and resets the target. `--dry-run` shows the invocation without building or accessing USB. |
+| `slepok run --ram [--no-build] [--dry-run] [--cmsis-dap-quirk]` | Builds a RAM ELF, loads and verifies it in RP2040 SRAM, then starts it without programming Flash. Supports the same probe/serial/speed/ELF options as `flash`. |
 | `slepok shell` | Opens your shell with the environment first in `PATH`. Running `cmake -S . -B build` by hand configures the project exactly like `slepok build`. Not network-isolated. |
 | `slepok pack [-o file] [-with-sources]` | Builds a clean copy offline, then writes the snapshot. Refuses files that look like secrets unless `-allow-sensitive`. `-with-sources` bundles the source code of GPL components (see Licenses). |
 | `slepok unpack <file> [dir]` | Verifies and restores a snapshot. No network needed. |
@@ -174,6 +175,45 @@ part of this command.
 Driver references: [CMSIS-DAP USB firmware requirements](https://arm-software.github.io/CMSIS-DAP/latest/dap_firmware.html),
 [OpenOCD on Windows](https://github.com/openocd-org/openocd/blob/master/README.Windows.md),
 and [xPack OpenOCD USB access setup](https://xpack-dev-tools.github.io/openocd-xpack/docs/install/).
+
+## Running RP2040 firmware in RAM (experimental)
+
+```console
+$ slepok build --ram
+$ slepok run --ram --dry-run --cmsis-dap-quirk
+$ slepok run --ram --no-build --cmsis-dap-quirk
+```
+
+`run --ram` builds first unless `--no-build` or `--dry-run` is given.
+`--elf path` selects an existing ELF; relative paths start at the project
+root. `--dry-run` requires an existing ELF and never opens USB.
+
+The RAM build uses Pico SDK `PICO_DEFAULT_BINARY_TYPE=no_flash` in a
+separate `build_dir/ram` directory (normally `build/ram`). It does not edit
+your CMake files or switch the normal build mode. Projects that explicitly
+override the target binary type must select `no_flash` themselves; the
+resulting ELF is checked rather than assumed to be suitable.
+
+Before USB access, Slepok checks every load segment's physical and virtual
+address against RP2040's 264 KiB SRAM, rejects overlapping/mixed Flash
+images, and checks the Thumb entry point, stack and vector table. This
+initial implementation requires an unstripped Pico SDK ELF with
+`_entry_point` and `__vectors` symbols. It does not support RP2350, SRAM
+aliases or external RAM. `flash` rejects RAM-only ELF images.
+
+OpenOCD resets and halts the target, loads and verifies SRAM, initializes
+core 0 startup registers and VTOR, and resumes at the ELF entry point.
+Core 1 is left to the normal boot ROM/SDK startup rather than resumed via
+OpenOCD SMP. No `program`, Flash erase/write, or reset-after-load command
+is issued. The application can still write Flash if its own code does so.
+RAM contents are lost on power-off; an ordinary reset boots the existing
+Flash firmware rather than automatically relaunching the RAM image.
+
+RAM compilation, ELF validation, native OpenOCD Tcl parsing with hardware
+operations stubbed, and an offline snapshot restore/build with identical
+RAM BIN have been checked on Linux. Hardware RAM execution is pending;
+Windows/macOS RAM builds and execution need native acceptance. Ordinary
+Flash programming remains available through `slepok flash`.
 
 ## Files in your project
 

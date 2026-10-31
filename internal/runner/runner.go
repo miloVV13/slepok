@@ -188,6 +188,8 @@ func mapKeys(m map[string]string) func(func(string) bool) {
 
 type Options struct {
 	Context context.Context
+	// RAM selects Pico SDK no_flash and validates the resulting ELF images.
+	RAM bool
 	// Isolate runs the build without network access where the host allows
 	// it.
 	Isolate bool
@@ -218,6 +220,9 @@ func Build(e *Env, src, build string, o Options) (*Result, error) {
 	}
 	r := &runner{env: e.buildEnviron(), dir: src, o: o, isolate: o.Isolate}
 	configure := append([]string{"-S", src, "-B", build}, e.Configure...)
+	if o.RAM {
+		configure = append(configure, "-DPICO_DEFAULT_BINARY_TYPE=no_flash")
+	}
 	if err := r.run(cmake, configure...); err != nil {
 		return nil, fmt.Errorf("configure failed: %w", err)
 	}
@@ -243,6 +248,20 @@ func Build(e *Env, src, build string, o Options) (*Result, error) {
 	}
 	res.Isolated = r.isolate
 	res.Outputs, err = outputs(o.Context, build, e.Outputs)
+	if err == nil && o.RAM {
+		images := 0
+		for _, output := range res.Outputs {
+			if strings.HasSuffix(output.Path, ".elf") {
+				images++
+				if _, err := InspectRP2040RAM(filepath.Join(build, output.Path)); err != nil {
+					return nil, fmt.Errorf("%s: %w (the project may override PICO_DEFAULT_BINARY_TYPE)", output.Path, err)
+				}
+			}
+		}
+		if images == 0 {
+			return nil, fmt.Errorf("RAM build produced no ELF images")
+		}
+	}
 	return res, err
 }
 
