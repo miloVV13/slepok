@@ -28,6 +28,10 @@ jobs:
         run: go test -v ./internal/fetch -run '^TestPrepareMacOSPackages/${{ matrix.platform }}/' -count=1 -timeout 45m
         env:
           SLEPOK_MACOS_PACKAGES_OUT: ${{ runner.temp }}/macos-packages
+      - name: Parse RP2040 OpenOCD scripts without accessing USB
+        run: go test -v ./internal/fetch -run '^TestRealOpenOCDPackages/${{ matrix.platform }}$' -count=1
+        env:
+          SLEPOK_OPENOCD_PACKAGES: ${{ runner.temp }}/macos-packages
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -49,6 +53,7 @@ jobs:
           go-version-file: go.mod
       - run: go vet ./...
       - run: go test -race ./internal/process ./internal/filelock ./internal/safepath ./internal/runner ./internal/pkgtar
+      - run: go test ./cmd/slepok -run '^TestFlashDryRun'
       - run: go test ./internal/store -run '^(TestArchive|TestContainer|TestDefaultRootWithoutOverride|TestRelativeStoreRoot)'
       - run: go test ./internal/snapshot -run '^TestForeignArchiveSurvivesUnpackAndRepack$'
       - run: go test ./internal/fetch -run '^(TestPortable|TestWindowsGitLayout|TestProgress|TestInteractiveProgress|TestRedirectedProgress)'
@@ -64,6 +69,11 @@ jobs:
           go-version-file: go.mod
       - run: go vet ./...
       - run: go test ./internal/process ./internal/filelock ./internal/safepath ./internal/runner
+      - run: go test ./cmd/slepok -run '^TestFlashDryRun'
+      - name: Verify native OpenOCD and RP2040 scripts without accessing USB
+        run: go test -v ./internal/fetch -run '^TestRealOpenOCDPackages/windows-x64$' -count=1
+        env:
+          SLEPOK_OPENOCD_PACKAGES: ${{ runner.temp }}/openocd-packages
       - run: go test ./internal/pkgtar -run '^TestPortable'
       - run: go test ./internal/store -run '^(TestArchive|TestContainer|TestDefaultRootWithoutOverride|TestRelativeStoreRoot)'
       - run: go test ./internal/snapshot -run '^TestForeignArchiveSurvivesUnpackAndRepack$'
@@ -93,6 +103,10 @@ jobs:
           go-version-file: go.mod
       - run: sudo apt-get update
       - run: sudo apt-get install -y clangd-14
+      - name: Verify native OpenOCD and RP2040 scripts without accessing USB
+        run: go test -v ./internal/fetch -run '^TestRealOpenOCDPackages/linux-x64$' -count=1
+        env:
+          SLEPOK_OPENOCD_PACKAGES: ${{ runner.temp }}/openocd-packages
       - run: CGO_ENABLED=0 go build -trimpath -o "$RUNNER_TEMP/slepok" ./cmd/slepok
       - run: bash scripts/offline_smoke.sh "$RUNNER_TEMP/slepok"
         env:

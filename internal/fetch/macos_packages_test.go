@@ -70,7 +70,8 @@ func TestPrepareMacOSPackages(t *testing.T) {
 		"arm-gcc": {"bin/arm-none-eabi-gcc", "bin/arm-none-eabi-g++", "bin/arm-none-eabi-objcopy", "bin/arm-none-eabi-objdump", "libexec/gcc/arm-none-eabi/14.2.1/cc1", "libexec/gcc/arm-none-eabi/14.2.1/cc1plus"},
 		"cmake":   {"CMake.app/Contents/bin/cmake"}, "ninja": {"ninja"}, "python": {"bin/python3"},
 		"pioasm": {"pioasm/pioasm"}, "picotool": {"picotool/picotool", "picotool/libusb-1.0.0.dylib"},
-		"zstd": {"lib/libzstd.1.dylib"},
+		"zstd":    {"lib/libzstd.1.dylib"},
+		"openocd": {"bin/openocd"},
 	}
 	results := map[string]string{}
 	for _, platform := range []string{"macos-arm64", "macos-x64"} {

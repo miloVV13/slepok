@@ -94,6 +94,9 @@ func (p *Profile) ForHost(platform string) *Profile {
 }
 
 type Component struct {
+	// BuildOptional permits older locks without a flashing-only tool.
+	// Init still pins and installs it; flash checks it separately.
+	BuildOptional bool `toml:"build_optional,omitempty"`
 	// Platforms restricts a host-specific runtime dependency; empty means all.
 	Platforms []string `toml:"platforms,omitempty"`
 	Name      string   `toml:"name"`

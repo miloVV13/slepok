@@ -14,6 +14,10 @@ trap cleanup EXIT
 # Fail early if offline execution cannot be enforced; no fallback in this test.
 unshare --user --map-current-user --net true
 export SLEPOK_HOME="$smoke_dir/store-a"
+if [[ -n "${SLEPOK_SMOKE_DOWNLOADS:-}" ]]; then
+    mkdir -p "$SLEPOK_HOME/downloads"
+    cp "$SLEPOK_SMOKE_DOWNLOADS/"* "$SLEPOK_HOME/downloads/"
+fi
 "$slepok_bin" init "$smoke_dir/blink"
 cd "$smoke_dir/blink"
 "$slepok_bin" build
@@ -29,6 +33,9 @@ unshare --user --map-current-user --net bash -eu -c '
     "$2" unpack blink.slepok restored
     cd restored
     "$2" build
+    "$2" flash --dry-run > "$1/flash-plan.txt"
+    grep -Fq "$SLEPOK_HOME/packages/" "$1/flash-plan.txt"
+    grep -Fq "verify reset exit" "$1/flash-plan.txt"
     test -s build/compile_commands.json
     grep -Fq "$SLEPOK_HOME/packages/" build/compile_commands.json
 ' bash "$smoke_dir" "$slepok_bin"

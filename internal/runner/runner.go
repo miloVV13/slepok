@@ -30,6 +30,8 @@ import (
 // Env is a resolved environment: profile templates expanded with the store
 // paths of the locked packages.
 type Env struct {
+	// Packages maps locked component names to their installed roots.
+	Packages  map[string]string
 	Path      []string
 	Vars      map[string]string
 	Configure []string
@@ -64,7 +66,7 @@ func ResolveContext(ctx context.Context, prof *profile.Profile, lock *project.Lo
 		vars[pkg.Name] = dir
 	}
 	for _, c := range prof.Components {
-		if c.Supports(platform) && vars[c.Name] == "" {
+		if c.Supports(platform) && !c.BuildOptional && vars[c.Name] == "" {
 			return nil, fmt.Errorf("%s has no package for %s on %s; run slepok init", project.LockName, c.Name, platform)
 		}
 	}
@@ -76,7 +78,7 @@ func ResolveContext(ctx context.Context, prof *profile.Profile, lock *project.Lo
 		vars["arm-gcc"] = dir
 	}
 
-	e := &Env{Vars: map[string]string{}, Outputs: prof.Outputs, StoreRoot: st.Root()}
+	e := &Env{Vars: map[string]string{}, Packages: vars, Outputs: prof.Outputs, StoreRoot: st.Root()}
 	// A SOURCE_DATE_EPOCH set by the user wins, as is the convention.
 	if v := os.Getenv("SOURCE_DATE_EPOCH"); v != "" {
 		e.Vars["SOURCE_DATE_EPOCH"] = v
@@ -110,6 +112,12 @@ func ResolveContext(ctx context.Context, prof *profile.Profile, lock *project.Lo
 			return nil, err
 		}
 		e.Configure = append(e.Configure, a)
+	}
+	// Flashing tools may be absent in older locks. Expose them in shells
+	// when installed without introducing required profile placeholders.
+	if root := vars["openocd"]; root != "" {
+		e.Path = append(e.Path, filepath.Join(root, "bin"))
+		e.Vars["OPENOCD_SCRIPTS"] = filepath.Join(root, "openocd", "scripts")
 	}
 	return e, nil
 }

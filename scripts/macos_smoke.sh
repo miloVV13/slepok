@@ -37,6 +37,9 @@ export SLEPOK_HOME="$smoke_dir/store b"
 "$slepok_bin" unpack "$smoke_dir/blink.slepok" "$smoke_dir/restored"
 cd "$smoke_dir/restored"
 "$slepok_bin" build
+"$slepok_bin" flash --dry-run > "$smoke_dir/flash-plan.txt"
+grep -Fq "verify reset exit" "$smoke_dir/flash-plan.txt"
+grep -Fq "$SLEPOK_HOME/" "$smoke_dir/flash-plan.txt"
 test -s build/compile_commands.json
 if ! grep -Fq "$SLEPOK_HOME/" build/compile_commands.json; then
     echo 'Restored compilation database does not refer to the receiver store.' >&2

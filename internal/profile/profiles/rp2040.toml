@@ -23,7 +23,7 @@ configure = [
     "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
 ]
 
-shared_components = ["arm-gcc", "cmake", "ninja", "zstd"]
+shared_components = ["arm-gcc", "cmake", "ninja", "zstd", "openocd"]
 
 outputs = ["*.uf2", "*.elf", "*.bin", "*.hex"]
 

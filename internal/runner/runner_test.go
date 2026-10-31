@@ -39,9 +39,10 @@ func TestResolve(t *testing.T) {
 	must(t, err)
 
 	prof := &profile.Profile{
-		Path:      []string{"{tc}/bin"},
-		Env:       map[string]string{"TC_ROOT": "{tc}"},
-		Configure: []string{"-DBOARD={board}", "-DTC={tc}"},
+		Components: []profile.Component{{Name: "tc"}, {Name: "openocd", BuildOptional: true}},
+		Path:       []string{"{tc}/bin"},
+		Env:        map[string]string{"TC_ROOT": "{tc}"},
+		Configure:  []string{"-DBOARD={board}", "-DTC={tc}"},
 	}
 	lock := &project.Lock{Packages: []project.LockedPackage{
 		{Name: "tc", Platform: "any", Source: profile.Source{Digest: digest}},

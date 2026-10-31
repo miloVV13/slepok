@@ -86,6 +86,7 @@ are planned.
 |---|---|
 | `slepok init [--profile rp2040] [--board pico\|pico_w] [dir]` | Creates a blink project in an empty directory, or adds Slepok to an existing one, then downloads and verifies the environment. Needs network unless the packages are already in the store. |
 | `slepok build` | Configures and builds the project without network access. |
+| `slepok flash [--elf file] [--serial id] [--speed kHz] [--no-build] [--dry-run]` | Builds and programs RP2040 through a CMSIS-DAP SWD probe using the locked OpenOCD, verifies the write and resets the target. `--dry-run` shows the invocation without building or accessing USB. |
 | `slepok shell` | Opens your shell with the environment first in `PATH`. Running `cmake -S . -B build` by hand configures the project exactly like `slepok build`. Not network-isolated. |
 | `slepok pack [-o file] [-with-sources]` | Builds a clean copy offline, then writes the snapshot. Refuses files that look like secrets unless `-allow-sensitive`. `-with-sources` bundles the source code of GPL components (see Licenses). |
 | `slepok unpack <file> [dir]` | Verifies and restores a snapshot. No network needed. |
@@ -96,13 +97,34 @@ are planned.
 
 ## Flashing RP2040 and USB access
 
-The current release produces firmware files; it does not yet provide
-`slepok flash` or bundle OpenOCD. You can copy the built `.uf2` to the
-target board's BOOTSEL USB drive. Building, packing and restoring a
-project do not require a connected board or USB driver setup.
+The RP2040 profile includes xPack OpenOCD 0.12.0-7, its runtime libraries,
+and its target and adapter scripts. `init` pins the host package and
+`pack` carries it for each selected platform. A restored project can
+flash offline without installing OpenOCD globally.
+`slepok shell` also exposes this OpenOCD and its scripts automatically.
 
-Planned SWD support will use a pinned OpenOCD package and its target and
-adapter scripts from the snapshot, with a CMSIS-DAP programmer. An
+```console
+$ slepok init                     # existing project: add OpenOCD to older locks
+$ slepok build
+$ slepok flash --dry-run           # inspect the command; no USB access or build
+$ slepok flash                     # rebuild, program ELF, verify, reset and exit
+$ slepok flash --no-build          # use the existing single build/*.elf
+$ slepok flash --no-build --elf build/blinky.elf --serial YOUR_PROBE_SERIAL --speed 1000
+```
+
+The default probe is `cmsis-dap`, with a 5000 kHz SWD clock. If the build
+directory contains multiple ELF files, select one with `--elf`; relative
+paths are resolved from the project root. `--elf` still builds first
+unless `--no-build` or `--dry-run` is specified. Flashing does not download
+tools. Old snapshots without OpenOCD continue to build and pack; repeat
+`init` with network access and repack to add flashing support. Existing
+compiler/SDK pins and the build timestamp are preserved.
+
+You can also copy the built `.uf2` to the target board's BOOTSEL USB
+drive. Building, packing and restoring do not require a connected board
+or USB driver setup.
+
+SWD flashing requires a CMSIS-DAP programmer. An
 RP2040 Zero used as a programmer needs firmware built for its board and
 wiring; the board alone does not identify its USB protocol. With
 compatible CMSIS-DAP firmware, connect its SWDIO, SWCLK and GND to the
@@ -122,6 +144,11 @@ one-time setup even when all flashing tools are inside the snapshot:
 USB drivers and udev rules are not environment variables: they do not
 require setting `SLEPOK_HOME` or adding tools to the global `PATH`.
 Hardware flashing through Slepok has not yet been verified.
+Automated checks cover package integrity, native OpenOCD startup and
+script parsing without USB access, literal argument handling, and
+restored flashing plans. OpenOCD's GDB, Tcl and Telnet listeners are
+disabled for the one-shot flash command; interactive debugging is not
+part of this command.
 Driver references: [CMSIS-DAP USB firmware requirements](https://arm-software.github.io/CMSIS-DAP/latest/dap_firmware.html),
 [OpenOCD on Windows](https://github.com/openocd-org/openocd/blob/master/README.Windows.md),
 and [xPack OpenOCD USB access setup](https://xpack-dev-tools.github.io/openocd-xpack/docs/install/).
@@ -216,8 +243,9 @@ The full specification, including design decisions and measurements, is in
   was pinned), so the build date the Pico SDK embeds is the same
   everywhere; set `SOURCE_DATE_EPOCH` yourself to override it. Projects
   that embed absolute paths may still differ.
-- **Not covered:** flashing and debugging. For RP2040, hold BOOTSEL and
-  copy the `.uf2` from the build directory onto the `RPI-RP2` drive.
+- **Requires hardware acceptance:** SWD flashing through `slepok flash`.
+  Interactive debugging is not implemented. BOOTSEL and copying `.uf2`
+  to `RPI-RP2` remain available independently.
 
 ## Security
 
@@ -255,6 +283,12 @@ the RP2040 profile:
 | Sell devices with firmware built by Slepok | same as without Slepok: GCC's runtime library exception keeps your firmware free of the GPL; keep the BSD notices of the Pico SDK in your documentation |
 
 Bundled sources come out with `tar --zstd -xf project.slepok sources/`.
+OpenOCD is GPL-2.0-or-later and carries additional library licenses under
+`distro-info/licenses`. `-with-sources` includes its pinned upstream
+OpenOCD archive; it does not include all xPack build recipes, changes or
+bundled dependency sources. Those must also be provided as required when
+redistributing the tool. The package NOTICE links the
+[matching xPack recipes](https://github.com/xpack-dev-tools/openocd-xpack/tree/v0.12.0-7.1).
 
 ## Compared to
 

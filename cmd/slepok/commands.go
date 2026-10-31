@@ -544,7 +544,7 @@ func snapshotPackages(p *project.Project, st *store.Store, prof *profile.Profile
 			if !c.Supports(platform) {
 				continue
 			}
-			if !available[c.Name] {
+			if !available[c.Name] && !c.BuildOptional {
 				return nil, fmt.Errorf("%s has no locked %s package for %s; run slepok init after adding the platform", project.LockName, c.Name, platform)
 			}
 		}

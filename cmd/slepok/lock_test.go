@@ -145,3 +145,43 @@ func TestPackRejectsIncompleteAddedHost(t *testing.T) {
 		t.Fatalf("incomplete Windows snapshot accepted: %v", err)
 	}
 }
+
+func TestLegacyLockAddsFlashingToolWithoutChangingBuildPins(t *testing.T) {
+	dir := t.TempDir()
+	cfg := project.Config{Profile: "rp2040", Board: "pico", Platforms: []string{"linux-x64"}, BuildDir: "build"}
+	must(t, project.WriteConfig(dir, cfg))
+	prof, err := profile.Load("rp2040")
+	must(t, err)
+	lock, err := lockFor(dir, cfg, prof)
+	must(t, err)
+	var legacy []project.LockedPackage
+	for _, pkg := range lock.Packages {
+		if pkg.Name != "openocd" {
+			legacy = append(legacy, pkg)
+		}
+	}
+	lock.Packages, lock.SourceDateEpoch = legacy, 123456
+	must(t, project.WriteLock(dir, *lock))
+	updated, err := lockFor(dir, cfg, prof)
+	must(t, err)
+	if updated.SourceDateEpoch != 123456 || len(updated.Packages) != len(legacy)+1 || !reflect.DeepEqual(updated.Packages[:len(legacy)], legacy) || updated.Packages[len(legacy)].Name != "openocd" {
+		t.Fatal("adding OpenOCD changed the pinned build environment")
+	}
+}
+
+func TestSnapshotAllowsLegacyLockWithoutFlashingTool(t *testing.T) {
+	st, err := store.Open(t.TempDir())
+	must(t, err)
+	t.Cleanup(func() { _ = store.RemoveTree(st.Root()) })
+	dir := t.TempDir()
+	must(t, os.WriteFile(filepath.Join(dir, "tool"), []byte("build tool"), 0755))
+	digest, err := st.InstallDir(dir, "")
+	must(t, err)
+	p := &project.Project{Config: project.Config{Platforms: []string{"linux-x64"}}, Lock: &project.Lock{Packages: []project.LockedPackage{{Name: "tc", Platform: "linux-x64", Source: profile.Source{Digest: digest}}}}}
+	prof := &profile.Profile{Components: []profile.Component{{Name: "tc"}, {Name: "openocd", BuildOptional: true}}}
+	pkgs, err := snapshotPackages(p, st, prof)
+	must(t, err)
+	if len(pkgs) != 1 || pkgs[0].Name != "tc" {
+		t.Fatal("legacy snapshot unexpectedly changed its packages")
+	}
+}
