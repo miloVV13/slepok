@@ -1,0 +1,27 @@
+name = "ninja"
+version = "1.13.2"
+license = "Apache-2.0"
+[sources.linux-x64]
+url = "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-linux.zip"
+sha256 = "5749cbc4e668273514150a80e387a957f933c6ed3f5f11e03fb30955e2bbead6"
+format = "zip"
+digest = "sha256:d22916dcd743f8cad75f12cb8d8e5ba02115b654b2d90287cd101e6547f3166a"
+
+[sources.windows-x64]
+layout = "windows-v1"
+url = "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-win.zip"
+sha256 = "07fc8261b42b20e71d1720b39068c2e14ffcee6396b76fb7a795fb460b78dc65"
+format = "zip"
+digest = "sha256:6a366fc97b1287958c4371573dbaacd7a362a221e8ff0974ba82255c0556d717"
+
+[sources.macos-arm64]
+url = "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-mac.zip"
+sha256 = "c99048673aa765960a99cf10c6ddb9f1fad506099ff0a0e137ad8960a88f321b"
+format = "zip"
+digest = "sha256:b5548b4c17cbcd2824bbe8d6929d3199aca88b2525137befd1fd284f18980633"
+
+[sources.macos-x64]
+url = "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-mac.zip"
+sha256 = "c99048673aa765960a99cf10c6ddb9f1fad506099ff0a0e137ad8960a88f321b"
+format = "zip"
+digest = "sha256:b5548b4c17cbcd2824bbe8d6929d3199aca88b2525137befd1fd284f18980633"

@@ -1,0 +1,11 @@
+name = "zstd"
+version = "1.5.7_1"
+platforms = ["macos-x64"]
+license = "BSD-3-Clause; BSD-2-Clause; MIT"
+[sources.macos-x64]
+url = "https://mirror.nju.edu.cn/homebrew-bottles/zstd-1.5.7_1.sequoia.bottle.tar.gz"
+mirrors = ["https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles/zstd-1.5.7_1.sequoia.bottle.tar.gz"]
+sha256 = "8b2443dfa62b9d28cf0321e0e670bb096b2680fe72739999228291f36018311f"
+format = "tar.gz"
+strip = 2
+digest = "sha256:a708bb97af79d5759a53f9b5060dcfd78c84375b19cf1024c137a26139667867"

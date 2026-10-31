@@ -16,11 +16,12 @@ import (
 	"github.com/miloVV13/slepok/internal/manifest"
 )
 
-//go:embed profiles/*.toml all:templates
+//go:embed profiles/*.toml components/*.toml all:templates
 var builtin embed.FS
 
-// FS holds the profiles (profiles/<id>.toml) and project templates
-// (templates/<id>/). It is the built-in set; tests replace it.
+// FS holds profiles (profiles/<id>.toml), shared components
+// (components/<name>.toml), and project templates (templates/<id>/).
+// It is the built-in set; tests replace it.
 var FS fs.FS = builtin
 
 // Template returns the starter project of a profile: file names mapped to
@@ -55,12 +56,13 @@ type Profile struct {
 	Boards []string `toml:"boards"`
 	// Path is prepended to PATH; Env holds further variables; Configure
 	// holds the CMake configure arguments. All may use placeholders.
-	Path       []string          `toml:"path"`
-	Env        map[string]string `toml:"env"`
-	Configure  []string          `toml:"configure"`
-	Outputs    []string          `toml:"outputs"`
-	Components []Component       `toml:"components"`
-	Hosts      map[string]Host   `toml:"hosts,omitempty"`
+	Path             []string          `toml:"path"`
+	Env              map[string]string `toml:"env"`
+	Configure        []string          `toml:"configure"`
+	Outputs          []string          `toml:"outputs"`
+	Components       []Component       `toml:"components"`
+	SharedComponents []string          `toml:"shared_components,omitempty"`
+	Hosts            map[string]Host   `toml:"hosts,omitempty"`
 }
 
 // Host customizes invocation details without changing the shared profile or
@@ -174,6 +176,29 @@ func Load(id string) (*Profile, error) {
 	if undecoded := md.Undecoded(); len(undecoded) > 0 {
 		return nil, fmt.Errorf("profile %s: unknown keys %v", id, undecoded)
 	}
+	var shared []Component
+	for _, name := range p.SharedComponents {
+		if !componentNameRe.MatchString(name) {
+			return nil, fmt.Errorf("profile %s: invalid shared component %q", id, name)
+		}
+		data, err := fs.ReadFile(FS, path.Join("components", name+".toml"))
+		if err != nil {
+			return nil, fmt.Errorf("profile %s: shared component %s: %w", id, name, err)
+		}
+		var component Component
+		md, err := toml.Decode(string(data), &component)
+		if err != nil {
+			return nil, fmt.Errorf("shared component %s: %w", name, err)
+		}
+		if len(md.Undecoded()) > 0 {
+			return nil, fmt.Errorf("shared component %s: unknown keys %v", name, md.Undecoded())
+		}
+		if component.Name != name {
+			return nil, fmt.Errorf("shared component %s declares name %q", name, component.Name)
+		}
+		shared = append(shared, component)
+	}
+	p.Components = append(shared, p.Components...)
 	if err := p.validate(); err != nil {
 		return nil, fmt.Errorf("profile %s: %w", id, err)
 	}
@@ -181,10 +206,11 @@ func Load(id string) (*Profile, error) {
 }
 
 var (
-	sha256Re = regexp.MustCompile(`^[0-9a-f]{64}$`)
-	commitRe = regexp.MustCompile(`^[0-9a-f]{40}$`)
-	hostRe   = regexp.MustCompile(`^[a-z0-9]+-[a-z0-9]+$`)
-	formats  = []string{"tar.gz", "tar.xz", "zip"}
+	sha256Re        = regexp.MustCompile(`^[0-9a-f]{64}$`)
+	componentNameRe = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
+	commitRe        = regexp.MustCompile(`^[0-9a-f]{40}$`)
+	hostRe          = regexp.MustCompile(`^[a-z0-9]+-[a-z0-9]+$`)
+	formats         = []string{"tar.gz", "tar.xz", "zip"}
 )
 
 func (p *Profile) validate() error {

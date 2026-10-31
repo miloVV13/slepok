@@ -1,0 +1,31 @@
+name = "cmake"
+version = "4.3.6"
+license = "BSD-3-Clause"
+[sources.linux-x64]
+url = "https://github.com/Kitware/CMake/releases/download/v4.3.6/cmake-4.3.6-linux-x86_64.tar.gz"
+sha256 = "fba967b44c7b40f155f9492dacb5477aab8333699986e1e07a7d90803aba7219"
+format = "tar.gz"
+strip = 1
+digest = "sha256:7fd0623a01208e3bcf8b4752e31995bfdd76f60035444602240311a389f5ce7e"
+
+[sources.windows-x64]
+layout = "windows-v1"
+url = "https://github.com/Kitware/CMake/releases/download/v4.3.6/cmake-4.3.6-windows-x86_64.zip"
+sha256 = "570a0d6e1f84fda24b8cb5bb96465b164726c7c066ba44cdadd136ebcb8bf7bd"
+format = "zip"
+strip = 1
+digest = "sha256:377792190fca0a904dfa1320a1bfcce3faef8de95aa88506e4fc898c7ae41dc4"
+
+[sources.macos-arm64]
+url = "https://github.com/Kitware/CMake/releases/download/v4.3.6/cmake-4.3.6-macos-universal.tar.gz"
+sha256 = "b9864989cea0546f2482e0d645c92402a0fc5b254f1d745f06a823b8fb400aa0"
+format = "tar.gz"
+strip = 1
+digest = "sha256:f91983036470c1334df4e9af2cc5cc8a27c99c5763e7e64644cdc1b373316ea2"
+
+[sources.macos-x64]
+url = "https://github.com/Kitware/CMake/releases/download/v4.3.6/cmake-4.3.6-macos-universal.tar.gz"
+sha256 = "b9864989cea0546f2482e0d645c92402a0fc5b254f1d745f06a823b8fb400aa0"
+format = "tar.gz"
+strip = 1
+digest = "sha256:f91983036470c1334df4e9af2cc5cc8a27c99c5763e7e64644cdc1b373316ea2"

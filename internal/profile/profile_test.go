@@ -2,8 +2,43 @@ package profile
 
 import (
 	"slices"
+	"strings"
 	"testing"
+	"testing/fstest"
 )
+
+func TestSharedComponentsAreValidatedAndIndependent(t *testing.T) {
+	saved := FS
+	t.Cleanup(func() { FS = saved })
+	base := "id = \"test\"\nversion = \"1\"\nboards = [\"board\"]\npath = [\"{tc}/bin\"]\nshared_components = [\"tc\"]\n"
+	component := "name = \"tc\"\nversion = \"1\"\nlicense = \"BSD-3-Clause\"\n[sources.linux-x64]\nurl = \"https://example.invalid/tc.tar.gz\"\nsha256 = \"" + strings.Repeat("a", 64) + "\"\nformat = \"tar.gz\"\n"
+	FS = fstest.MapFS{"profiles/test.toml": {Data: []byte(base)}, "components/tc.toml": {Data: []byte(component)}}
+	a, err := Load("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := Load("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	a.Components[0].Sources["linux-x64"] = Source{URL: "changed"}
+	if b.Components[0].Sources["linux-x64"].URL == "changed" {
+		t.Fatal("shared component state leaked between profiles")
+	}
+	for _, tc := range []struct{ name, profile, component string }{
+		{"traversal", strings.Replace(base, `["tc"]`, `["../tc"]`, 1), component},
+		{"duplicate", strings.Replace(base, `["tc"]`, `["tc","tc"]`, 1), component},
+		{"wrong-name", base, strings.Replace(component, `name = "tc"`, `name = "other"`, 1)},
+		{"unknown-key", base, component + "unexpected = true\n"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			FS = fstest.MapFS{"profiles/test.toml": {Data: []byte(tc.profile)}, "components/tc.toml": {Data: []byte(tc.component)}}
+			if _, err := Load("test"); err == nil {
+				t.Fatal("invalid shared component accepted")
+			}
+		})
+	}
+}
 
 func TestBuiltinProfilesLoad(t *testing.T) {
 	ids := IDs()

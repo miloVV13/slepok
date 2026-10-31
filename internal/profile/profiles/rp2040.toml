@@ -23,6 +23,8 @@ configure = [
     "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
 ]
 
+shared_components = ["arm-gcc", "cmake", "ninja", "zstd"]
+
 outputs = ["*.uf2", "*.elf", "*.bin", "*.hex"]
 
 [env]
@@ -53,112 +55,6 @@ configure = ["-DPython3_EXECUTABLE={python}/bin/python3", "-DCMAKE_MAKE_PROGRAM=
 PYTHONNOUSERSITE = "1"
 PYTHONUTF8 = "1"
 
-
-[[components]]
-name = "arm-gcc"
-version = "14.2.rel1"
-license = "GPL-3.0-or-later WITH GCC-exception-3.1; newlib: BSD-style"
-[components.source_code]
-# Arm's own storage, where developer.arm.com redirects; that name comes
-# second because it does not resolve on some networks.
-url = "https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.2.rel1/srcrel/arm-gnu-toolchain-src-snapshot-14.2.rel1.tar.xz"
-mirrors = ["https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/srcrel/arm-gnu-toolchain-src-snapshot-14.2.rel1.tar.xz"]
-sha256 = "e6405f20f8a817a50d92dbf7974d0ee77708dfdf9e79900a59c5d343b464ef9c"
-[components.sources.linux-x64]
-# Arm's own storage, where developer.arm.com redirects; that name comes
-# second because it does not resolve on some networks.
-url = "https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi.tar.xz"
-mirrors = ["https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi.tar.xz"]
-sha256 = "62a63b981fe391a9cbad7ef51b17e49aeaa3e7b0d029b36ca1e9c3b2a9b78823"
-format = "tar.xz"
-strip = 1
-digest = "sha256:97a1b0815f92b31c01e86d4aa42763474c5a16a997d17c5296fc1f2928f31085"
-
-[components.sources.windows-x64]
-layout = "windows-v1"
-url = "https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-mingw-w64-x86_64-arm-none-eabi.zip"
-mirrors = ["https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-mingw-w64-x86_64-arm-none-eabi.zip"]
-sha256 = "f074615953f76036e9a51b87f6577fdb4ed8e77d3322a6f68214e92e7859888f"
-format = "zip"
-digest = "sha256:74c858e2fcf05eac615bec8ab1b9f4cb32b14162f6bf888172d145e589fd7240"
-
-[components.sources.macos-arm64]
-url = "https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-darwin-arm64-arm-none-eabi.tar.xz"
-mirrors = ["https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-darwin-arm64-arm-none-eabi.tar.xz"]
-sha256 = "c7c78ffab9bebfce91d99d3c24da6bf4b81c01e16cf551eb2ff9f25b9e0a3818"
-format = "tar.xz"
-strip = 1
-digest = "sha256:26413b74839436b4acf8afc695d2ae9cb73084a9bbfdbbfd9ab3deb497ba2b01"
-
-[components.sources.macos-x64]
-url = "https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-darwin-x86_64-arm-none-eabi.tar.xz"
-mirrors = ["https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-darwin-x86_64-arm-none-eabi.tar.xz"]
-sha256 = "2d9e717dd4f7751d18936ae1365d25916534105ebcb7583039eff1092b824505"
-format = "tar.xz"
-strip = 1
-digest = "sha256:d2c524a3057cdb0b0c0c110c14cd3706486b2231a10dd20032702ef39da49533"
-
-[[components]]
-name = "cmake"
-version = "4.3.6"
-license = "BSD-3-Clause"
-[components.sources.linux-x64]
-url = "https://github.com/Kitware/CMake/releases/download/v4.3.6/cmake-4.3.6-linux-x86_64.tar.gz"
-sha256 = "fba967b44c7b40f155f9492dacb5477aab8333699986e1e07a7d90803aba7219"
-format = "tar.gz"
-strip = 1
-digest = "sha256:7fd0623a01208e3bcf8b4752e31995bfdd76f60035444602240311a389f5ce7e"
-
-[components.sources.windows-x64]
-layout = "windows-v1"
-url = "https://github.com/Kitware/CMake/releases/download/v4.3.6/cmake-4.3.6-windows-x86_64.zip"
-sha256 = "570a0d6e1f84fda24b8cb5bb96465b164726c7c066ba44cdadd136ebcb8bf7bd"
-format = "zip"
-strip = 1
-digest = "sha256:377792190fca0a904dfa1320a1bfcce3faef8de95aa88506e4fc898c7ae41dc4"
-
-[components.sources.macos-arm64]
-url = "https://github.com/Kitware/CMake/releases/download/v4.3.6/cmake-4.3.6-macos-universal.tar.gz"
-sha256 = "b9864989cea0546f2482e0d645c92402a0fc5b254f1d745f06a823b8fb400aa0"
-format = "tar.gz"
-strip = 1
-digest = "sha256:f91983036470c1334df4e9af2cc5cc8a27c99c5763e7e64644cdc1b373316ea2"
-
-[components.sources.macos-x64]
-url = "https://github.com/Kitware/CMake/releases/download/v4.3.6/cmake-4.3.6-macos-universal.tar.gz"
-sha256 = "b9864989cea0546f2482e0d645c92402a0fc5b254f1d745f06a823b8fb400aa0"
-format = "tar.gz"
-strip = 1
-digest = "sha256:f91983036470c1334df4e9af2cc5cc8a27c99c5763e7e64644cdc1b373316ea2"
-
-[[components]]
-name = "ninja"
-version = "1.13.2"
-license = "Apache-2.0"
-[components.sources.linux-x64]
-url = "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-linux.zip"
-sha256 = "5749cbc4e668273514150a80e387a957f933c6ed3f5f11e03fb30955e2bbead6"
-format = "zip"
-digest = "sha256:d22916dcd743f8cad75f12cb8d8e5ba02115b654b2d90287cd101e6547f3166a"
-
-[components.sources.windows-x64]
-layout = "windows-v1"
-url = "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-win.zip"
-sha256 = "07fc8261b42b20e71d1720b39068c2e14ffcee6396b76fb7a795fb460b78dc65"
-format = "zip"
-digest = "sha256:6a366fc97b1287958c4371573dbaacd7a362a221e8ff0974ba82255c0556d717"
-
-[components.sources.macos-arm64]
-url = "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-mac.zip"
-sha256 = "c99048673aa765960a99cf10c6ddb9f1fad506099ff0a0e137ad8960a88f321b"
-format = "zip"
-digest = "sha256:b5548b4c17cbcd2824bbe8d6929d3199aca88b2525137befd1fd284f18980633"
-
-[components.sources.macos-x64]
-url = "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-mac.zip"
-sha256 = "c99048673aa765960a99cf10c6ddb9f1fad506099ff0a0e137ad8960a88f321b"
-format = "zip"
-digest = "sha256:b5548b4c17cbcd2824bbe8d6929d3199aca88b2525137befd1fd284f18980633"
 
 [[components]]
 name = "python"
@@ -275,15 +171,3 @@ digest = "sha256:b703458527aae69f96c8ad1b162d4bc8d019641bd6eaa150a954a076c83271c
 # Runtime required by the official Intel GCC cc1/cc1plus binaries.
 # Formula checksum: https://formulae.brew.sh/api/formula/zstd.json
 # Only the packaged dylib is used; Homebrew is not installed or invoked.
-[[components]]
-name = "zstd"
-version = "1.5.7_1"
-platforms = ["macos-x64"]
-license = "BSD-3-Clause; BSD-2-Clause; MIT"
-[components.sources.macos-x64]
-url = "https://mirror.nju.edu.cn/homebrew-bottles/zstd-1.5.7_1.sequoia.bottle.tar.gz"
-mirrors = ["https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles/zstd-1.5.7_1.sequoia.bottle.tar.gz"]
-sha256 = "8b2443dfa62b9d28cf0321e0e670bb096b2680fe72739999228291f36018311f"
-format = "tar.gz"
-strip = 2
-digest = "sha256:a708bb97af79d5759a53f9b5060dcfd78c84375b19cf1024c137a26139667867"
