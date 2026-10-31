@@ -35,7 +35,7 @@ var runCmd = &command{
 		}
 		options := runner.FlashOptions{
 			Firmware: fs.Lookup("elf").Value.String(), Probe: fs.Lookup("probe").Value.String(),
-			Serial: fs.Lookup("serial").Value.String(), Speed: fs.Lookup("speed").Value.(flag.Getter).Get().(int),
+			Serial: fs.Lookup("serial").Value.String(), Speed: swdSpeed(fs, 5000),
 			CMSISDAPQuirk: fs.Lookup("cmsis-dap-quirk").Value.(flag.Getter).Get().(bool),
 		}
 		if options.Probe != "cmsis-dap" || options.Speed <= 0 || options.Speed > 50000 {

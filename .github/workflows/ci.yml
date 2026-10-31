@@ -42,6 +42,10 @@ jobs:
         run: bash scripts/macos_smoke.sh "$RUNNER_TEMP/slepok"
         env:
           SLEPOK_SMOKE_DOWNLOADS: ${{ runner.temp }}/macos-packages/downloads
+      - name: Native STM32 build, pack, restore and compare BIN
+        run: bash scripts/stm32_smoke.sh "$RUNNER_TEMP/slepok"
+        env:
+          SLEPOK_STM32_SOURCE_STORE: ${{ runner.temp }}/macos-packages
 
   macos-core:
     runs-on: macos-latest
@@ -61,7 +65,7 @@ jobs:
 
   windows:
     runs-on: windows-2022
-    timeout-minutes: 15
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -79,6 +83,20 @@ jobs:
       - run: go test ./internal/snapshot -run '^TestForeignArchiveSurvivesUnpackAndRepack$'
       - run: go test ./internal/fetch -run '^(TestPortable|TestWindowsGitLayout|TestProgress|TestInteractiveProgress|TestRedirectedProgress)'
       - run: go build -trimpath -o slepok.exe ./cmd/slepok
+      - name: Native STM32 build, pack, restore and compare BIN
+        shell: pwsh
+        run: ./scripts/stm32_smoke.ps1 -Slepok ./slepok.exe
+
+  stm32-offline:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: CGO_ENABLED=0 go build -trimpath -o "$RUNNER_TEMP/slepok" ./cmd/slepok
+      - run: bash scripts/stm32_smoke.sh "$RUNNER_TEMP/slepok"
 
   test:
     runs-on: ubuntu-22.04

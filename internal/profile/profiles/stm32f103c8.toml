@@ -1,0 +1,35 @@
+id = "stm32f103c8"
+version = "1"
+description = "STM32F103C8T6 Blue Pill · HAL 1.1.10 · CMSIS Core 6.4.0 · ARM GCC 14.2"
+boards = ["blue-pill"]
+shared_components = ["arm-gcc", "cmake", "ninja", "zstd", "openocd", "cmsis-core", "stm32f1-device", "stm32f1-hal"]
+path = ["{arm-gcc}/bin", "{cmake}/bin", "{ninja}"]
+outputs = ["*.elf", "*.bin", "*.hex"]
+configure = [
+    "-G", "Ninja", "-DCMAKE_SYSTEM_NAME=Generic", "-DCMAKE_SYSTEM_PROCESSOR=arm",
+    "-DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY", "-DCMAKE_BUILD_TYPE=Release",
+    "-DCMAKE_C_COMPILER={arm-gcc}/bin/arm-none-eabi-gcc",
+    "-DCMAKE_ASM_COMPILER={arm-gcc}/bin/arm-none-eabi-gcc",
+    "-DCMAKE_OBJCOPY={arm-gcc}/bin/arm-none-eabi-objcopy",
+    "-DCMAKE_MAKE_PROGRAM={ninja}/ninja",
+    "-DCMAKE_C_FLAGS_INIT=-mcpu=cortex-m3 -mthumb",
+    "-DCMAKE_ASM_FLAGS_INIT=-mcpu=cortex-m3 -mthumb",
+    "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON", "-DFETCHCONTENT_FULLY_DISCONNECTED=ON",
+    "-DCMAKE_FIND_USE_CMAKE_SYSTEM_PATH=OFF",
+]
+[env]
+CMSIS_CORE_PATH = "{cmsis-core}"
+STM32_DEVICE_PATH = "{stm32f1-device}"
+STM32_HAL_PATH = "{stm32f1-hal}"
+
+[hosts.windows-x64]
+configure = [
+    "-DCMAKE_C_COMPILER={arm-gcc}/bin/arm-none-eabi-gcc.exe",
+    "-DCMAKE_ASM_COMPILER={arm-gcc}/bin/arm-none-eabi-gcc.exe",
+    "-DCMAKE_OBJCOPY={arm-gcc}/bin/arm-none-eabi-objcopy.exe",
+    "-DCMAKE_MAKE_PROGRAM={ninja}/ninja.exe",
+]
+[hosts.macos-arm64]
+path = ["{arm-gcc}/bin", "{cmake}/CMake.app/Contents/bin", "{ninja}"]
+[hosts.macos-x64]
+path = ["{arm-gcc}/bin", "{cmake}/CMake.app/Contents/bin", "{ninja}"]

@@ -1,0 +1,18 @@
+name = "stm32f1-hal"
+version = "1.1.10"
+license = "BSD-3-Clause"
+
+[sources.any]
+url = "https://codeload.github.com/STMicroelectronics/stm32f1xx-hal-driver/tar.gz/77fbb30b7a1d02533980400083e48c559aae5a4f"
+sha256 = "902136d60dce47ac4e442c274939ba1f38b786175de25d72ee67776b1f535fec"
+format = "tar.gz"
+strip = 1
+digest = "sha256:ede166dd5da60ef769b8f9515c7f3a37888bd0d7c92dd42a4122cfe68d9e660c"
+
+[sources.windows-x64]
+layout = "windows-v1"
+url = "https://codeload.github.com/STMicroelectronics/stm32f1xx-hal-driver/tar.gz/77fbb30b7a1d02533980400083e48c559aae5a4f"
+sha256 = "902136d60dce47ac4e442c274939ba1f38b786175de25d72ee67776b1f535fec"
+format = "tar.gz"
+strip = 1
+digest = "sha256:ede166dd5da60ef769b8f9515c7f3a37888bd0d7c92dd42a4122cfe68d9e660c"

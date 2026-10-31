@@ -98,7 +98,7 @@ func InspectRP2040RAM(file string) (*RAMImage, error) {
 // PlanRP2040RAM uses only memory loading/verification and CPU startup commands.
 // The secondary core waits in boot ROM after reset; no SMP resume is used.
 func PlanRP2040RAM(e *Env, dir, build string, options FlashOptions) (*FlashPlan, error) {
-	p, err := prepareRP2040OpenOCD(e, dir, build, options)
+	p, err := prepareOpenOCD(e, dir, build, options, "rp2040")
 	if err != nil {
 		return nil, err
 	}

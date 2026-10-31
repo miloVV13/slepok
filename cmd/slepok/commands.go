@@ -68,6 +68,9 @@ func runInit(ctx context.Context, fs *flag.FlagSet, args []string) error {
 	profileID := *initFlags.profile
 	if explicit["mcu"] {
 		mcu := strings.ToLower(strings.TrimSpace(*initFlags.mcu))
+		if mcu == "stm32f103c8t6" {
+			mcu = "stm32f103c8"
+		}
 		if mcu == "" {
 			return &usageError{"--mcu requires a target MCU"}
 		}

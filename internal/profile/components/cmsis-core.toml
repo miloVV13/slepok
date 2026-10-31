@@ -1,0 +1,18 @@
+name = "cmsis-core"
+version = "6.4.0"
+license = "Apache-2.0"
+
+[sources.any]
+url = "https://codeload.github.com/ARM-software/CMSIS_6/tar.gz/af1b110e46a1720349f6f125e386e126767699bd"
+sha256 = "8c01ea5b9c79d2766ef134194259cd7b97c0419f2d0a55356d44c8bf9aad1d1f"
+format = "tar.gz"
+strip = 1
+digest = "sha256:ce256bfd0cd24676d3279b3df2a67ad5886648fa53288d58510928321c76b04d"
+
+[sources.windows-x64]
+layout = "windows-v1"
+url = "https://codeload.github.com/ARM-software/CMSIS_6/tar.gz/af1b110e46a1720349f6f125e386e126767699bd"
+sha256 = "8c01ea5b9c79d2766ef134194259cd7b97c0419f2d0a55356d44c8bf9aad1d1f"
+format = "tar.gz"
+strip = 1
+digest = "sha256:165de94f0196be8976e1ce13dde2d83d249705832e00fed0a5809adc48860249"

@@ -46,7 +46,7 @@ func TestInitMCUDownloadsOnlySelectedTarget(t *testing.T) {
 	dir := filepath.Join(root, "project")
 	must(t, os.MkdirAll(dir, 0755))
 	must(t, os.WriteFile(filepath.Join(dir, "main.c"), []byte("int main(void){}"), 0644))
-	must(t, execute([]string{"init", "--mcu", "STM32F103C8", dir}))
+	must(t, execute([]string{"init", "--mcu", "STM32F103C8T6", dir}))
 	p, err := project.Load(dir)
 	must(t, err)
 	if p.Config.Profile != "stm32f103c8" || len(p.Lock.Packages) != 1 || p.Lock.Packages[0].Name != "stm32f103c8-sdk" {

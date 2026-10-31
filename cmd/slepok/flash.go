@@ -11,12 +11,12 @@ import (
 
 var flashCmd = &command{
 	name: "flash", args: "[--elf file] [--probe cmsis-dap] [--serial id] [--speed kHz] [--cmsis-dap-quirk] [--no-build] [--dry-run]",
-	summary: "build and flash RP2040 through SWD, verify and reset",
+	summary: "build and flash the target MCU through SWD, verify and reset",
 	flags: func(fs *flag.FlagSet) {
 		fs.String("elf", "", "ARM ELF to flash; default: the single build/*.elf")
 		fs.String("probe", "cmsis-dap", "SWD adapter (cmsis-dap)")
 		fs.String("serial", "", "select a probe by USB serial number")
-		fs.Int("speed", 5000, "SWD clock in kHz")
+		fs.Int("speed", 0, "SWD clock in kHz (default: RP2040 5000, STM32 1000)")
 		fs.Bool("cmsis-dap-quirk", false, "enable CMSIS-DAP compatibility workarounds, including disabling packet pipelining")
 		fs.Bool("no-build", false, "flash existing firmware without rebuilding")
 		fs.Bool("dry-run", false, "show the invocation without building or accessing USB; requires an existing ELF")
@@ -29,11 +29,20 @@ var flashCmd = &command{
 		if err != nil {
 			return err
 		}
-		if p.Config.Profile != "rp2040" {
-			return fmt.Errorf("SWD flashing currently supports only the rp2040 profile")
+		planFor := runner.PlanRP2040Flash
+		switch p.Config.Profile {
+		case "rp2040":
+		case "stm32f103c8":
+			planFor = runner.PlanSTM32F103Flash
+		default:
+			return fmt.Errorf("SWD flashing is not supported for profile %s", p.Config.Profile)
 		}
 		probe, serial := fs.Lookup("probe").Value.String(), fs.Lookup("serial").Value.String()
-		speed := fs.Lookup("speed").Value.(flag.Getter).Get().(int)
+		defaultSpeed := 5000
+		if p.Config.Profile == "stm32f103c8" {
+			defaultSpeed = 1000
+		}
+		speed := swdSpeed(fs, defaultSpeed)
 		noBuild := fs.Lookup("no-build").Value.(flag.Getter).Get().(bool)
 		dryRun := fs.Lookup("dry-run").Value.(flag.Getter).Get().(bool)
 		if probe != "cmsis-dap" || speed <= 0 || speed > 50000 {
@@ -47,7 +56,7 @@ var flashCmd = &command{
 				return err
 			}
 		}
-		plan, err := runner.PlanRP2040Flash(env, p.Dir, p.BuildDir(), runner.FlashOptions{
+		plan, err := planFor(env, p.Dir, p.BuildDir(), runner.FlashOptions{
 			Firmware: fs.Lookup("elf").Value.String(), Probe: probe, Serial: serial, Speed: speed,
 			CMSISDAPQuirk: fs.Lookup("cmsis-dap-quirk").Value.(flag.Getter).Get().(bool),
 		})
@@ -61,4 +70,17 @@ var flashCmd = &command{
 		fmt.Printf("Flashing %s through %s (%d kHz); verify and reset enabled.\n", plan.Firmware, probe, speed)
 		return runner.Flash(ctx, env, plan, os.Stdout, os.Stderr)
 	},
+}
+
+func swdSpeed(fs *flag.FlagSet, defaultSpeed int) int {
+	set := false
+	fs.Visit(func(f *flag.Flag) {
+		if f.Name == "speed" {
+			set = true
+		}
+	})
+	if !set {
+		return defaultSpeed
+	}
+	return fs.Lookup("speed").Value.(flag.Getter).Get().(int)
 }

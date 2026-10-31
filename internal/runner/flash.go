@@ -33,7 +33,7 @@ type FlashOptions struct {
 // PlanRP2040Flash selects an unambiguous ARM ELF and the locked OpenOCD.
 // Explicit firmware paths are relative to dir, not the build directory.
 func PlanRP2040Flash(e *Env, dir, build string, options FlashOptions) (*FlashPlan, error) {
-	p, err := prepareRP2040OpenOCD(e, dir, build, options)
+	p, err := prepareOpenOCD(e, dir, build, options, "rp2040")
 	if err != nil {
 		return nil, err
 	}
@@ -59,12 +59,12 @@ func PlanRP2040Flash(e *Env, dir, build string, options FlashOptions) (*FlashPla
 	return p, nil
 }
 
-// prepareRP2040OpenOCD only selects the tool, image and target configuration.
+// prepareOpenOCD only selects the tool, image and target configuration.
 // It never includes any init, memory access or Flash programming commands.
-func prepareRP2040OpenOCD(e *Env, dir, build string, options FlashOptions) (*FlashPlan, error) {
+func prepareOpenOCD(e *Env, dir, build string, options FlashOptions, target string) (*FlashPlan, error) {
 	firmware, probe, serial, speed := options.Firmware, options.Probe, options.Serial, options.Speed
 	if probe != "cmsis-dap" {
-		return nil, fmt.Errorf("unsupported RP2040 probe %q; use cmsis-dap", probe)
+		return nil, fmt.Errorf("unsupported SWD probe %q; use cmsis-dap", probe)
 	}
 	if speed <= 0 || speed > 50000 {
 		return nil, fmt.Errorf("adapter speed must be between 1 and 50000 kHz")
@@ -82,7 +82,7 @@ func prepareRP2040OpenOCD(e *Env, dir, build string, options FlashOptions) (*Fla
 		return nil, err
 	}
 	scripts := filepath.Join(root, "openocd", "scripts")
-	for _, rel := range []string{"interface/cmsis-dap.cfg", "target/rp2040.cfg"} {
+	for _, rel := range []string{"interface/cmsis-dap.cfg", "target/" + target + ".cfg"} {
 		info, err := os.Stat(filepath.Join(scripts, filepath.FromSlash(rel)))
 		if err != nil || !info.Mode().IsRegular() {
 			return nil, fmt.Errorf("OpenOCD package is missing %s", rel)
@@ -127,7 +127,7 @@ func prepareRP2040OpenOCD(e *Env, dir, build string, options FlashOptions) (*Fla
 	if serial != "" {
 		args = append(args, "-c", "adapter serial "+tclWord(serial))
 	}
-	args = append(args, "-f", filepath.Join(scripts, "target", "rp2040.cfg"))
+	args = append(args, "-f", filepath.Join(scripts, "target", target+".cfg"))
 	return &FlashPlan{Executable: executable, Directory: root, Args: args, Firmware: firmware}, nil
 }
 

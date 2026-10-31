@@ -20,13 +20,14 @@ store is `~/.local/share/slepok` on Linux (`XDG_DATA_HOME` is respected)
 and `%LOCALAPPDATA%\slepok` on Windows. Restored tools are selected by
 Slepok automatically; no SDK installation or global `PATH` changes are needed.
 
-> **Status: early.** Works on Linux x86-64 and Windows x86-64 with one profile, Raspberry Pi
-> RP2040 (Pico SDK 2.3.1, ARM GCC 14.2). The snapshot format may still
+> **Status: early.** RP2040 (Pico SDK 2.3.1, ARM GCC 14.2) works on
+> Linux x86-64 and Windows x86-64. An experimental STM32F103C8 Blue Pill
+> profile adds pinned CMSIS/HAL and a blink example. The snapshot format may still
 > change before 1.0. Windows → Windows and Windows → Linux restore/build
 > have been checked on real machines with matching firmware SHA256.
 > Experimental macOS 15 support (Apple Silicon and Intel) has passed native
 > RP2040 build/pack/restore tests with identical UF2 in CI. A clean offline
-> Mac receiver still needs manual acceptance. STM32 and ESP32 are planned.
+> Mac receiver still needs manual acceptance. STM32 hardware acceptance and ESP32 are pending.
 
 ## Why
 
@@ -56,7 +57,7 @@ Slepok makes the environment a pinned, verifiable, portable object:
 
 Requirements: Linux x86-64 with glibc 2.34 or newer (Ubuntu 22.04+,
 Debian 12+, Fedora 35+), Windows 10/11 x64, or experimental macOS 15
-(Apple Silicon / Intel); `git` for `slepok init` only.
+(Apple Silicon / Intel); `git` when preparing the RP2040 SDK with `init`.
 
 Build from a checkout with Go 1.25+. `CGO_ENABLED=0` makes a static
 binary that runs on any Linux x86-64, so you can copy it to machines
@@ -84,9 +85,9 @@ are planned.
 
 | Command | What it does |
 |---|---|
-| `slepok init [--profile rp2040] [--board pico\|pico_w] [dir]` | Creates a blink project in an empty directory, or adds Slepok to an existing one, then downloads and verifies the environment. Needs network unless the packages are already in the store. |
+| `slepok init [--mcu rp2040\|stm32f103c8] [--board board] [dir]` | Creates a blink project or adds Slepok to existing sources. Downloads and verifies only the selected MCU profile's packages. `--profile` remains an equivalent selection flag. |
 | `slepok build [--ram]` | Configures and builds the project without network access. `--ram` builds and validates RP2040 `no_flash` firmware in `build_dir/ram`. |
-| `slepok flash [--elf file] [--serial id] [--speed kHz] [--no-build] [--dry-run]` | Builds and programs RP2040 through a CMSIS-DAP SWD probe using the locked OpenOCD, verifies the write and resets the target. `--dry-run` shows the invocation without building or accessing USB. |
+| `slepok flash [--elf file] [--serial id] [--speed kHz] [--no-build] [--dry-run]` | Builds and programs the selected RP2040 or STM32F103C8 through CMSIS-DAP using locked OpenOCD, verifies the write and resets the target. `--dry-run` does not build or access USB. |
 | `slepok run --ram [--no-build] [--dry-run] [--cmsis-dap-quirk]` | Builds a RAM ELF, loads and verifies it in RP2040 SRAM, then starts it without programming Flash. Supports the same probe/serial/speed/ELF options as `flash`. |
 | `slepok shell` | Opens your shell with the environment first in `PATH`. Running `cmake -S . -B build` by hand configures the project exactly like `slepok build`. Not network-isolated. |
 | `slepok pack [-o file] [-with-sources]` | Builds a clean copy offline, then writes the snapshot. Refuses files that look like secrets unless `-allow-sensitive`. `-with-sources` bundles the source code of GPL components (see Licenses). |
@@ -175,6 +176,60 @@ part of this command.
 Driver references: [CMSIS-DAP USB firmware requirements](https://arm-software.github.io/CMSIS-DAP/latest/dap_firmware.html),
 [OpenOCD on Windows](https://github.com/openocd-org/openocd/blob/master/README.Windows.md),
 and [xPack OpenOCD USB access setup](https://xpack-dev-tools.github.io/openocd-xpack/docs/install/).
+
+## Selecting the target MCU
+
+```console
+$ slepok init --mcu rp2040 pico-blink
+$ slepok init --mcu stm32f103c8 bluepill-blink
+```
+
+`--mcu` selects the MCU profile and its SDK. `STM32F103C8T6` is also
+accepted as an alias for `stm32f103c8`, case-insensitively. `--board`
+selects a supported board within that profile; `--platform` selects the
+computer OS/architecture to include, independently of the MCU.
+
+Only one MCU profile is prepared. A STM32 project does not download Pico
+SDK, Python, pioasm or picotool. GCC/CMake/Ninja and OpenOCD already in
+the local store are reused by digest. Packages for other projects can
+coexist in that store without being included in this project's snapshot.
+With no target flag, a new project defaults to RP2040 for compatibility;
+an existing project keeps its saved target. `--profile` remains supported;
+conflicting `--profile` and `--mcu` values are rejected.
+
+## STM32 Blue Pill (experimental)
+
+The first STM32 profile targets [**STM32F103C8T6**](https://www.st.com/en/microcontrollers-microprocessors/stm32f103c8.html), Cortex-M3, with the
+documented 64 KiB Flash and 20 KiB SRAM. It does not depend on extra
+undocumented Flash capacity sometimes found on Blue Pill boards.
+
+```console
+$ slepok init --mcu stm32f103c8 bluepill
+$ cd bluepill
+$ slepok build
+$ slepok flash --dry-run --cmsis-dap-quirk
+# Once the matching target board is connected:
+$ slepok flash --no-build --cmsis-dap-quirk
+```
+
+The generated blink toggles PC13 every 500 ms using HAL and the reset-
+default 8 MHz HSI clock. An external crystal, CubeIDE, CubeMX and Python
+are not needed. The pinned SDK consists of STM32F1 HAL 1.1.10, CMSIS Device
+4.3.5 and CMSIS Core 6.4.0. Outputs are ELF, BIN and HEX; the linker script
+enforces the C8 memory sizes. SDK components retain their license files.
+
+`flash` selects `stm32f1x.cfg` for this profile, defaults to 1000 kHz SWD,
+and checks the ELF against the C8 memory ranges before opening USB.
+The existing Pico Zero CMSIS-DAP programmer can provide SWD; connect
+its configured SWDIO/SWCLK to PA13/PA14 and share GND with the powered
+target. This initial integration accepts CMSIS-DAP; ST-Link selection
+is not implemented. `build --ram` and `run --ram` remain RP2040-only.
+
+Linux native compilation and offline restore/build are covered by the
+STM32 smoke test, including identical BIN comparison and a dry-run plan
+using the receiver's OpenOCD. Native Windows/macOS builds are included
+in CI; their results and real Blue Pill programming need acceptance.
+See [STM32 acceptance](docs/STM32_ACCEPTANCE.md).
 
 ## Running RP2040 firmware in RAM (experimental)
 

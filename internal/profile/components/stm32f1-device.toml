@@ -1,0 +1,18 @@
+name = "stm32f1-device"
+version = "4.3.5"
+license = "Apache-2.0; vendor file notices apply"
+
+[sources.any]
+url = "https://codeload.github.com/STMicroelectronics/cmsis-device-f1/tar.gz/8a76309ed1250d817e9c888c4417171d2ba3ba63"
+sha256 = "808a462aeb068b8c46fa1a055d75466a4392229210be5801c94cc23dfe8f0d45"
+format = "tar.gz"
+strip = 1
+digest = "sha256:833aeff73b31bef512b1132e8bc96393b1bbc3a491f931f1f330bae54efeef5f"
+
+[sources.windows-x64]
+layout = "windows-v1"
+url = "https://codeload.github.com/STMicroelectronics/cmsis-device-f1/tar.gz/8a76309ed1250d817e9c888c4417171d2ba3ba63"
+sha256 = "808a462aeb068b8c46fa1a055d75466a4392229210be5801c94cc23dfe8f0d45"
+format = "tar.gz"
+strip = 1
+digest = "sha256:833aeff73b31bef512b1132e8bc96393b1bbc3a491f931f1f330bae54efeef5f"
