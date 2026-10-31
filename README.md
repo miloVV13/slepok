@@ -133,7 +133,10 @@ throughput. Lowering `--speed` alone does not fix USB packet ordering.
 No automatic retry occurs after a failed flash. The attached Picoprobe
 (`2e8a:000c`, USB `bcdDevice=1.01`) failed a read-only ROM transfer even
 at 1000 kHz; repeated ROM/RAM reads passed with this mode at 5000 kHz.
-That read test does not establish successful flash programming.
+The user subsequently programmed a real RP2040 rev 2 through the same
+probe at 5000 kHz with `--no-build --cmsis-dap-quirk`: OpenOCD detected
+4096 KiB Flash, completed programming, reported `Verified OK`, and reset
+the target (2026-10-31). Application behavior has not yet been confirmed.
 
 You can also copy the built `.uf2` to the target board's BOOTSEL USB
 drive. Building, packing and restoring do not require a connected board
@@ -158,7 +161,10 @@ one-time setup even when all flashing tools are inside the snapshot:
 
 USB drivers and udev rules are not environment variables: they do not
 require setting `SLEPOK_HOME` or adding tools to the global `PATH`.
-Hardware flashing through Slepok has not yet been verified.
+Linux SWD programming, verification and reset have passed on real
+hardware with the Picoprobe and compatibility flag described above.
+Windows/macOS flashing and flashing from an offline restored snapshot
+still require hardware acceptance.
 Automated checks cover package integrity, native OpenOCD startup and
 script parsing without USB access, literal argument handling, and
 restored flashing plans. OpenOCD's GDB, Tcl and Telnet listeners are
@@ -258,9 +264,11 @@ The full specification, including design decisions and measurements, is in
   was pinned), so the build date the Pico SDK embeds is the same
   everywhere; set `SOURCE_DATE_EPOCH` yourself to override it. Projects
   that embed absolute paths may still differ.
-- **Requires hardware acceptance:** SWD flashing through `slepok flash`.
-  Interactive debugging is not implemented. BOOTSEL and copying `.uf2`
-  to `RPI-RP2` remain available independently.
+- **Hardware checked:** Linux SWD flashing with the Picoprobe and
+  `--cmsis-dap-quirk` described above. Other hosts/probes and offline
+  restored flashing still require hardware acceptance. Interactive
+  debugging is not implemented. BOOTSEL and copying `.uf2` to `RPI-RP2`
+  remain available independently.
 
 ## Security
 
