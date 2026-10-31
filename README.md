@@ -163,8 +163,9 @@ USB drivers and udev rules are not environment variables: they do not
 require setting `SLEPOK_HOME` or adding tools to the global `PATH`.
 Linux SWD programming, verification and reset have passed on real
 hardware with the Picoprobe and compatibility flag described above.
-Windows/macOS flashing and flashing from an offline restored snapshot
-still require hardware acceptance.
+The user also confirmed successful native Windows flashing with the same
+setup and compatibility mode (2026-10-31). macOS flashing and flashing
+from an offline restored snapshot still require hardware acceptance.
 Automated checks cover package integrity, native OpenOCD startup and
 script parsing without USB access, literal argument handling, and
 restored flashing plans. OpenOCD's GDB, Tcl and Telnet listeners are
@@ -265,7 +266,8 @@ The full specification, including design decisions and measurements, is in
   everywhere; set `SOURCE_DATE_EPOCH` yourself to override it. Projects
   that embed absolute paths may still differ.
 - **Hardware checked:** Linux SWD flashing with the Picoprobe and
-  `--cmsis-dap-quirk` described above. Other hosts/probes and offline
+  `--cmsis-dap-quirk` described above; the user also confirmed Windows
+  flashing with that setup. Other hosts/probes and offline
   restored flashing still require hardware acceptance. Interactive
   debugging is not implemented. BOOTSEL and copying `.uf2` to `RPI-RP2`
   remain available independently.
