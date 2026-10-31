@@ -94,6 +94,38 @@ are planned.
 | `slepok list` | Shows known projects and how much space the store uses. |
 | `slepok gc [-n] [-y]` | Removes packages no known project uses, unused downloads and leftovers. Shows the plan first; never touches project sources. |
 
+## Flashing RP2040 and USB access
+
+The current release produces firmware files; it does not yet provide
+`slepok flash` or bundle OpenOCD. You can copy the built `.uf2` to the
+target board's BOOTSEL USB drive. Building, packing and restoring a
+project do not require a connected board or USB driver setup.
+
+Planned SWD support will use a pinned OpenOCD package and its target and
+adapter scripts from the snapshot, with a CMSIS-DAP programmer. An
+RP2040 Zero used as a programmer needs firmware built for its board and
+wiring; the board alone does not identify its USB protocol. With
+compatible CMSIS-DAP firmware, connect its SWDIO, SWCLK and GND to the
+powered target according to the programmer firmware's pin assignment.
+See the [Raspberry Pi Debug Probe documentation](https://www.raspberrypi.com/documentation/microcontrollers/debug-probe.html)
+and [debugprobe firmware project](https://github.com/raspberrypi/debugprobe).
+
+USB access belongs to the receiving operating system and may require
+one-time setup even when all flashing tools are inside the snapshot:
+
+| Host | Programmer access |
+|---|---|
+| Linux | If the programmer is detected but access is denied, install the OpenOCD package's matching udev rules through an administrator, reload the rules and reconnect the programmer. Use the rule for the actual firmware's USB VID/PID; do not make every USB device globally writable. Slepok will not install rules or elevate itself automatically. |
+| Windows | CMSIS-DAP v1 uses HID; CMSIS-DAP v2 uses a bulk USB interface that needs WinUSB. Compatible firmware may bind the driver automatically. If it does not, follow the programmer firmware's driver instructions and select its debug interface, keeping the UART interface's driver intact. |
+| macOS | A compatible CMSIS-DAP programmer normally needs no separate USB driver. Manual flashing acceptance on macOS is still pending. |
+
+USB drivers and udev rules are not environment variables: they do not
+require setting `SLEPOK_HOME` or adding tools to the global `PATH`.
+Hardware flashing through Slepok has not yet been verified.
+Driver references: [CMSIS-DAP USB firmware requirements](https://arm-software.github.io/CMSIS-DAP/latest/dap_firmware.html),
+[OpenOCD on Windows](https://github.com/openocd-org/openocd/blob/master/README.Windows.md),
+and [xPack OpenOCD USB access setup](https://xpack-dev-tools.github.io/openocd-xpack/docs/install/).
+
 ## Files in your project
 
 Select snapshot host platforms with `--platform` (these are the computers
