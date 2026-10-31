@@ -120,6 +120,21 @@ tools. Old snapshots without OpenOCD continue to build and pack; repeat
 `init` with network access and repack to add flashing support. Existing
 compiler/SDK pins and the build timestamp are preserved.
 
+If OpenOCD reports `CMSIS-DAP command mismatch`, try the compatibility
+mode for programmers with packet-pipelining issues:
+
+```console
+$ slepok flash --no-build --cmsis-dap-quirk
+```
+
+This enables OpenOCD's [CMSIS-DAP quirk workarounds](https://openocd.org/doc/html/Debug-Adapter-Configuration.html),
+including one USB command packet at a time. It is opt-in and may reduce
+throughput. Lowering `--speed` alone does not fix USB packet ordering.
+No automatic retry occurs after a failed flash. The attached Picoprobe
+(`2e8a:000c`, USB `bcdDevice=1.01`) failed a read-only ROM transfer even
+at 1000 kHz; repeated ROM/RAM reads passed with this mode at 5000 kHz.
+That read test does not establish successful flash programming.
+
 You can also copy the built `.uf2` to the target board's BOOTSEL USB
 drive. Building, packing and restoring do not require a connected board
 or USB driver setup.

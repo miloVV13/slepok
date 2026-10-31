@@ -64,6 +64,7 @@ format = "zip"
 	must(t, os.WriteFile(filepath.Join(dir, "build", "blink.elf"), header, 0644))
 	t.Chdir(dir)
 	must(t, execute([]string{"flash", "--dry-run"}))
+	must(t, execute([]string{"flash", "--dry-run", "--cmsis-dap-quirk"}))
 	mustFail(t, execute([]string{"flash", "--dry-run", "--probe", "unknown"}), "cmsis-dap")
 	mustFail(t, execute([]string{"flash", "--dry-run", "--speed", "0"}), "speed")
 	lock.Packages = nil

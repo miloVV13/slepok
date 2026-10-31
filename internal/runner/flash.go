@@ -22,9 +22,18 @@ type FlashPlan struct {
 	Firmware   string
 }
 
+type FlashOptions struct {
+	Firmware      string
+	Probe         string
+	Serial        string
+	Speed         int
+	CMSISDAPQuirk bool
+}
+
 // PlanRP2040Flash selects an unambiguous ARM ELF and the locked OpenOCD.
 // Explicit firmware paths are relative to dir, not the build directory.
-func PlanRP2040Flash(e *Env, dir, build, firmware, probe, serial string, speed int) (*FlashPlan, error) {
+func PlanRP2040Flash(e *Env, dir, build string, options FlashOptions) (*FlashPlan, error) {
+	firmware, probe, serial, speed := options.Firmware, options.Probe, options.Serial, options.Speed
 	if probe != "cmsis-dap" {
 		return nil, fmt.Errorf("unsupported RP2040 probe %q; use cmsis-dap", probe)
 	}
@@ -83,6 +92,9 @@ func PlanRP2040Flash(e *Env, dir, build, firmware, probe, serial string, speed i
 	}
 	args := []string{"-s", scripts, "-c", "gdb port disabled", "-c", "tcl port disabled", "-c", "telnet port disabled",
 		"-f", filepath.Join(scripts, "interface", "cmsis-dap.cfg"), "-c", "transport select swd", "-c", "adapter speed " + strconv.Itoa(speed)}
+	if options.CMSISDAPQuirk {
+		args = append(args, "-c", "cmsis-dap quirk enable")
+	}
 	if serial != "" {
 		args = append(args, "-c", "adapter serial "+tclWord(serial))
 	}

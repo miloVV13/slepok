@@ -10,13 +10,14 @@ import (
 )
 
 var flashCmd = &command{
-	name: "flash", args: "[--elf file] [--probe cmsis-dap] [--serial id] [--speed kHz] [--no-build] [--dry-run]",
+	name: "flash", args: "[--elf file] [--probe cmsis-dap] [--serial id] [--speed kHz] [--cmsis-dap-quirk] [--no-build] [--dry-run]",
 	summary: "build and flash RP2040 through SWD, verify and reset",
 	flags: func(fs *flag.FlagSet) {
 		fs.String("elf", "", "ARM ELF to flash; default: the single build/*.elf")
 		fs.String("probe", "cmsis-dap", "SWD adapter (cmsis-dap)")
 		fs.String("serial", "", "select a probe by USB serial number")
 		fs.Int("speed", 5000, "SWD clock in kHz")
+		fs.Bool("cmsis-dap-quirk", false, "enable CMSIS-DAP compatibility workarounds, including disabling packet pipelining")
 		fs.Bool("no-build", false, "flash existing firmware without rebuilding")
 		fs.Bool("dry-run", false, "show the invocation without building or accessing USB; requires an existing ELF")
 	},
@@ -46,7 +47,10 @@ var flashCmd = &command{
 				return err
 			}
 		}
-		plan, err := runner.PlanRP2040Flash(env, p.Dir, p.BuildDir(), fs.Lookup("elf").Value.String(), probe, serial, speed)
+		plan, err := runner.PlanRP2040Flash(env, p.Dir, p.BuildDir(), runner.FlashOptions{
+			Firmware: fs.Lookup("elf").Value.String(), Probe: probe, Serial: serial, Speed: speed,
+			CMSISDAPQuirk: fs.Lookup("cmsis-dap-quirk").Value.(flag.Getter).Get().(bool),
+		})
 		if err != nil {
 			return err
 		}

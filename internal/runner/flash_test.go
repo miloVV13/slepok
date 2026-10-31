@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 
@@ -45,13 +46,22 @@ func flashFixture(t *testing.T) (*Env, string, string) {
 
 func TestFlashPlanAndErrors(t *testing.T) {
 	e, dir, build := flashFixture(t)
-	p, err := PlanRP2040Flash(e, dir, build, "", "cmsis-dap", `probe $x [x] "`, 1000)
+	p, err := PlanRP2040Flash(e, dir, build, FlashOptions{Probe: "cmsis-dap", Serial: `probe $x [x] "`, Speed: 1000})
 	must(t, err)
 	if p.Firmware != filepath.Join(build, "blink.elf") || !strings.Contains(p.Args[len(p.Args)-1], `verify reset exit`) {
 		t.Fatalf("wrong plan: %+v", p)
 	}
 	if !strings.Contains(p.Args[len(p.Args)-1], `\$x \[x\]`) {
 		t.Fatalf("Tcl substitutions not quoted: %v", p.Args)
+	}
+	if slices.Contains(p.Args, "cmsis-dap quirk enable") {
+		t.Fatal("compatibility mode enabled by default")
+	}
+	compatible, err := PlanRP2040Flash(e, dir, build, FlashOptions{Probe: "cmsis-dap", Speed: 5000, CMSISDAPQuirk: true})
+	must(t, err)
+	index := slices.Index(compatible.Args, "cmsis-dap quirk enable")
+	if index < 1 || compatible.Args[index-1] != "-c" || index >= slices.Index(compatible.Args, filepath.Join(e.Packages["openocd"], "openocd", "scripts", "target", "rp2040.cfg")) {
+		t.Fatal("compatibility mode must be enabled before target initialization")
 	}
 	for _, tc := range []struct {
 		name, file, probe string
@@ -61,22 +71,22 @@ func TestFlashPlanAndErrors(t *testing.T) {
 		{"missing", "missing.elf", "cmsis-dap", 1000},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			if _, err := PlanRP2040Flash(e, dir, build, tc.file, tc.probe, "", tc.speed); err == nil {
+			if _, err := PlanRP2040Flash(e, dir, build, FlashOptions{Firmware: tc.file, Probe: tc.probe, Speed: tc.speed}); err == nil {
 				t.Fatal("invalid flash request accepted")
 			}
 		})
 	}
 	must(t, os.WriteFile(filepath.Join(build, "other.elf"), []byte("not an ELF"), 0644))
-	if _, err := PlanRP2040Flash(e, dir, build, "", "cmsis-dap", "", 1000); err == nil || !strings.Contains(err.Error(), "--elf") {
+	if _, err := PlanRP2040Flash(e, dir, build, FlashOptions{Probe: "cmsis-dap", Speed: 1000}); err == nil || !strings.Contains(err.Error(), "--elf") {
 		t.Fatalf("ambiguous firmware accepted: %v", err)
 	}
-	if _, err := PlanRP2040Flash(e, dir, build, "build/other.elf", "cmsis-dap", "", 1000); err == nil {
+	if _, err := PlanRP2040Flash(e, dir, build, FlashOptions{Firmware: "build/other.elf", Probe: "cmsis-dap", Speed: 1000}); err == nil {
 		t.Fatal("invalid ELF accepted")
 	}
-	_, err = PlanRP2040Flash(e, dir, build, "build/blink.elf", "cmsis-dap", "", 1000)
+	_, err = PlanRP2040Flash(e, dir, build, FlashOptions{Firmware: "build/blink.elf", Probe: "cmsis-dap", Speed: 1000})
 	must(t, err)
 	delete(e.Packages, "openocd")
-	if _, err := PlanRP2040Flash(e, dir, build, "build/blink.elf", "cmsis-dap", "", 1000); err == nil || !strings.Contains(err.Error(), "slepok init") {
+	if _, err := PlanRP2040Flash(e, dir, build, FlashOptions{Firmware: "build/blink.elf", Probe: "cmsis-dap", Speed: 1000}); err == nil || !strings.Contains(err.Error(), "slepok init") {
 		t.Fatalf("missing locked tool accepted: %v", err)
 	}
 }
@@ -89,7 +99,7 @@ func TestRealOpenOCDFlashArguments(t *testing.T) {
 	}
 	e, dir, build := flashFixture(t)
 	e.Packages["openocd"] = root
-	p, err := PlanRP2040Flash(e, dir, build, "", "cmsis-dap", `serial $x [x] "`, 1000)
+	p, err := PlanRP2040Flash(e, dir, build, FlashOptions{Probe: "cmsis-dap", Serial: `serial $x [x] "`, Speed: 1000, CMSISDAPQuirk: true})
 	must(t, err)
 	args := append([]string(nil), p.Args[:len(p.Args)-2]...)
 	args = append(args, "-c", `proc program {file args} {echo "SLEPOK_FIRMWARE=$file"; shutdown}`)
