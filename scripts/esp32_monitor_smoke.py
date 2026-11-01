@@ -30,7 +30,8 @@ if pid == 0:
     args = plan['Args']
     args[args.index('--port') + 1] = port
     # Test-only modem emulation: real byte transport and console use PTYs.
-    bootstrap = """import runpy, serial, sys
+    bootstrap = """import runpy, serial, sys, signal, faulthandler
+faulthandler.register(signal.SIGUSR1, all_threads=True)
 virtual_port = sys.argv[1]
 original_dtr = serial.Serial._update_dtr_state
 original_rts = serial.Serial._update_rts_state
@@ -96,8 +97,25 @@ try:
             if os.waitstatus_to_exitcode(status) != 0:
                 raise RuntimeError('Monitor exit status ' + str(status))
             break
-        time.sleep(0.05)
+        # BSD tty cleanup uses TCSAFLUSH, which waits for pending output.
+        # Continue consuming both PTY masters while waiting for process exit.
+        readable, _, _ = select.select([console, uart_master], [], [], 0.05)
+        for fd in readable:
+            try:
+                data = os.read(fd, 65536)
+            except OSError as exc:
+                if exc.errno != errno.EIO:
+                    raise
+                data = b''
+            if fd == console:
+                output.extend(data)
     if not finished:
+        os.kill(pid, signal.SIGUSR1)
+        deadline = time.monotonic() + 1
+        while time.monotonic() < deadline:
+            readable, _, _ = select.select([console], [], [], 0.1)
+            if readable:
+                output.extend(os.read(console, 65536))
         raise RuntimeError('Monitor did not exit: ' + plan['ExitMode'])
     if termios.tcgetattr(console) != original_console_settings:
         raise RuntimeError('Monitor did not restore console settings')
