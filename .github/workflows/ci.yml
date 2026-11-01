@@ -24,6 +24,8 @@ jobs:
       - name: ESP32 offline restore on Linux and native restore on macOS
         if: runner.os != 'Windows'
         run: bash scripts/esp32_smoke.sh ./slepok-ci.exe
+        env:
+          SLEPOK_ESP32_PTY_TEST: "1"
       - name: ESP32 native Windows restore
         if: runner.os == 'Windows'
         shell: pwsh

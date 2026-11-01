@@ -11,6 +11,16 @@ import (
 	"time"
 )
 
+func TestInteractiveCommandStaysInForegroundGroup(t *testing.T) {
+	cmd := InteractiveCommand(context.Background(), "/bin/sh", "-c", "exit 0")
+	if cmd.SysProcAttr != nil && cmd.SysProcAttr.Setpgid {
+		t.Fatal("interactive reader moved to a background process group")
+	}
+	if err := cmd.Run(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestCancelStopsDescendants(t *testing.T) {
 	dir := t.TempDir()
 	ready, escaped := filepath.Join(dir, "ready"), filepath.Join(dir, "escaped")

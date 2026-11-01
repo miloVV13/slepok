@@ -15,6 +15,70 @@ supports original ESP32 only; S2/S3 and RISC-V chips need separate profiles.
 The vendor compiler archive shares Xtensa support, so its contents also
 include S2/S3 tools. No additional RISC-V compiler is fetched.
 
+## USB/UART flash and monitor
+
+Run these commands from the ESP32 project. The port is explicit; Slepok does
+not choose a connected device automatically.
+
+```sh
+slepok ports
+slepok flash --port /dev/ttyUSB0 --dry-run
+slepok flash --port /dev/ttyUSB0
+slepok monitor --port /dev/ttyUSB0
+```
+
+In PowerShell, for example with `$exe` pointing to the new binary:
+
+```powershell
+& $exe ports
+& $exe flash --port COM3 --dry-run
+& $exe flash --port COM3
+& $exe monitor --port COM3
+```
+
+`flash` builds first; `--no-build` uses existing images. `--dry-run` skips
+building and never opens the port, but needs existing build artifacts.
+The locked esptool reads addresses and settings from IDF's
+`build/flasher_args.json`; the plan includes bootloader, partition table,
+application and any additional ordinary images. Images are checked before
+opening the device: files stay within the build directory, offsets/erase
+sectors do not overlap and the main images identify classic ESP32. Encryption
+and custom reset/no-stub modes are outside this initial serial integration.
+A normal write verifies data using esptool's automatic MD5 check and resets
+the target ([vendor documentation](https://docs.espressif.com/projects/esptool/en/release-v4/esp32/esptool/advanced-commands.html)).
+The default flash baud rate is 460800; try `--baud 115200` if the link is
+unreliable. SWD flags (`--probe`, `--serial`, `--speed`, `--elf`,
+`--cmsis-dap-quirk`) apply to the ARM profiles, not ESP32 serial flashing.
+
+`monitor` uses the locked IDF monitor and ELF for address decoding. It does
+not build or flash. The default baud rate is 115200; override with `--baud`.
+It does not request a startup reset unless `--reset` is supplied. Use
+`--timestamps` for timestamps, `--elf path` to select an existing ELF,
+Ctrl+] to exit and Ctrl+T then Ctrl+H for help. Build/flash menu shortcuts
+are adapted to print the Slepok commands instead of invoking a host `make`.
+GDB/debugger integration remains a future task. `monitor --dry-run` and
+`ports --dry-run` only print their invocations. No environment activation,
+user pip installation or SLEPOK_HOME override is required.
+
+### USB access and board check
+
+Use a data-capable USB cable and the board's USB/UART port. On Windows,
+identify its COM port in Device Manager and install the matching bridge
+vendor's serial driver if needed: [CP210x VCP](https://www.silabs.com/software-and-tools/usb-to-uart-bridge-vcp-drivers)
+or [CH340/CH341](https://www.wch.cn/downloads/CH341SER_EXE.html).
+On Linux, inspect the device's group with `ls -l /dev/ttyUSB0` and give your
+user serial-port access through that group (commonly `dialout` on Ubuntu,
+`uucp` on Arch/CachyOS); log in again after changing group membership.
+On macOS choose the `/dev/cu.*` entry shown by `slepok ports`.
+Close other terminals/IDEs that hold the same port. If auto-reset does not
+enter the ROM loader, use the board's BOOT/EN buttons following its manual.
+
+Hardware acceptance is still pending: on a classic ESP32 board run flash,
+confirm all images report verified data, then open monitor and confirm
+`Hello from Slepok on ESP32!` repeats. Exit with Ctrl+], reopen the monitor,
+then repeat with `flash --no-build --baud 115200` and a restored snapshot.
+Perform that check on native Windows and Linux when a board is available.
+
 ## Portable Python
 
 The interpreter is the same shared, immutable component used by RP2040.
@@ -101,5 +165,10 @@ Linux enforces network isolation for the receiver; Windows/macOS do not.
 Their internal SLEPOK_HOME overrides simulate two machines; ordinary use
 requires no override. CI runs these checks on all four supported hosts.
 Manual Windows ↔ Linux migration and physical board acceptance remain
-separate checks. ESP32 serial flashing, monitor and debugger commands will
-be integrated after the build/restore baseline is accepted.
+separate checks. Serial flash/monitor commands are implemented with metadata
+and CLI dry-run tests; actual board programming has not been accepted yet.
+An opt-in POSIX PTY test runs the real pinned IDF monitor/bridge, receives
+UART text, checks the disabled flash shortcut, Ctrl+] exit and terminal
+restoration. PTYs emulate DTR/RTS ioctls; this does not test physical reset
+wiring or an actual ESP32. CI enables this test on Linux and macOS; it also
+checks flash/monitor plans on both sides of native snapshot restoration.

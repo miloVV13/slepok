@@ -12,6 +12,8 @@ import (
 
 const processMarker = "--slepok-managed-process-v1"
 
+func configureInteractive(cmd *exec.Cmd) { configure(cmd) }
+
 // Launch a supervisor in the same executable. It joins the job before
 // creating the target, so even an immediately spawning target cannot escape
 // assignment. This also works in test binaries importing this package.

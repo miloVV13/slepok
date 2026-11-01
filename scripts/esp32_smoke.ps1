@@ -15,6 +15,8 @@ try {
     Set-Location (Join-Path $work 'hello')
     if (Select-String -Path slepok.lock -Pattern 'name = "(arm-gcc|pico-sdk|pioasm|picotool|openocd|riscv[^\"]*)"') { throw 'Unexpected tool for another MCU' }
     Invoke-Slepok build
+    Invoke-Slepok flash --port __slepok_virtual_port__ --dry-run
+    Invoke-Slepok monitor --port __slepok_virtual_port__ --dry-run
     Invoke-Slepok pack -o (Join-Path $work 'hello.slepok')
     $hashes = @{}
     foreach ($output in @('hello.bin', 'bootloader/bootloader.bin', 'partition_table/partition-table.bin')) {
@@ -25,6 +27,13 @@ try {
     Invoke-Slepok unpack (Join-Path $work 'hello.slepok') (Join-Path $work 'restored')
     Set-Location (Join-Path $work 'restored')
     Invoke-Slepok build
+    $flashPlan = Invoke-Slepok flash --port __slepok_virtual_port__ --dry-run
+    $monitorPlan = Invoke-Slepok monitor --port __slepok_virtual_port__ --dry-run
+    Invoke-Slepok ports --dry-run
+    $escapedReceiver = $env:SLEPOK_HOME.Replace('\', '\\')
+    if (-not $flashPlan.Contains($escapedReceiver) -or -not $monitorPlan.Contains($escapedReceiver)) { throw 'Serial plans do not use receiver packages' }
+    $restoredBuild = (Join-Path $work 'restored/build').Replace('\', '\\')
+    if (-not $flashPlan.Contains($restoredBuild)) { throw 'Flash plan does not use receiver firmware' }
     foreach ($output in $hashes.Keys) {
         if ((Get-FileHash -Algorithm SHA256 (Join-Path 'build' $output)).Hash -ne $hashes[$output]) { throw "Restored $output differs" }
     }

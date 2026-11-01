@@ -89,7 +89,9 @@ are planned.
 |---|---|
 | `slepok init [--mcu rp2040\|stm32f103c8\|esp32] [--board board] [dir]` | Creates a starter project or adds Slepok to existing sources. Downloads and verifies only the selected MCU profile's packages. `--profile` remains an equivalent selection flag. |
 | `slepok build [--ram]` | Configures and builds the project without network access. `--ram` builds and validates RP2040 `no_flash` firmware in `build_dir/ram`. |
-| `slepok flash [--elf file] [--serial id] [--speed kHz] [--no-build] [--dry-run]` | Builds and programs the selected RP2040 or STM32F103C8 through CMSIS-DAP using locked OpenOCD, verifies the write and resets the target. `--dry-run` does not build or access USB. |
+| `slepok flash [--port PORT] [--baud rate] [--elf file] [--serial id] [--speed kHz] [--no-build] [--dry-run]` | Builds and programs RP2040/STM32F103C8 through locked OpenOCD, or classic ESP32 through locked esptool (`--port` required). Verifies writes and resets the target. `--dry-run` does not build or access USB. |
+| `slepok ports [--dry-run]` | Lists local serial ports from an ESP32 project, using its locked Python libraries. |
+| `slepok monitor --port PORT [--baud rate] [--elf file] [--reset] [--timestamps] [--dry-run]` | Opens the ESP32 IDF serial monitor (default 115200 baud). Ctrl+] exits; does not build or flash. |
 | `slepok run --ram [--no-build] [--dry-run] [--cmsis-dap-quirk]` | Builds a RAM ELF, loads and verifies it in RP2040 SRAM, then starts it without programming Flash. Supports the same probe/serial/speed/ELF options as `flash`. |
 | `slepok shell` | Opens your shell with the environment first in `PATH`. Running `cmake -S . -B build` by hand configures the project exactly like `slepok build`. Not network-isolated. |
 | `slepok pack [-o file] [-with-sources]` | Builds a clean copy offline, then writes the snapshot. Refuses files that look like secrets unless `-allow-sensitive`. `-with-sources` bundles the source code of GPL components (see Licenses). |
@@ -218,8 +220,9 @@ bootloader BIN and partition-table BIN.
 
 Only this profile's dependencies are selected. The vendor Xtensa toolchain
 archive contains shared support for ESP32/S2/S3; no separate RISC-V, ARM,
-OpenOCD or Pico tools are downloaded. ESP32-C/S/H/P variants and serial/SWD
-flashing through `slepok flash` are outside this initial profile.
+OpenOCD or Pico tools are downloaded. ESP32-C/S/H/P variants need separate
+profiles. `slepok flash --port PORT` uses the board's USB/UART bridge;
+`slepok monitor --port PORT` opens its serial console.
 See [scope and acceptance](docs/ESP32.md) for offline and native-host checks.
 
 ## STM32 Blue Pill (experimental)
@@ -267,7 +270,7 @@ $ slepok run --ram --no-build --cmsis-dap-quirk
 
 `run --ram` builds first unless `--no-build` or `--dry-run` is given.
 `--elf path` selects an existing ELF; relative paths start at the project
-root. `--dry-run` requires an existing ELF and never opens USB.
+root. `--dry-run` requires existing build artifacts and never opens USB.
 
 The RAM build uses Pico SDK `PICO_DEFAULT_BINARY_TYPE=no_flash` in a
 separate `build_dir/ram` directory (normally `build/ram`). It does not edit

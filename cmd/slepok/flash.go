@@ -10,9 +10,11 @@ import (
 )
 
 var flashCmd = &command{
-	name: "flash", args: "[--elf file] [--probe cmsis-dap] [--serial id] [--speed kHz] [--cmsis-dap-quirk] [--no-build] [--dry-run]",
-	summary: "build and flash the target MCU through SWD, verify and reset",
+	name: "flash", args: "[--port PORT] [--baud rate] [--elf file] [--probe cmsis-dap] [--serial id] [--speed kHz] [--cmsis-dap-quirk] [--no-build] [--dry-run]",
+	summary: "build and flash through SWD or ESP32 USB/UART, verify and reset",
 	flags: func(fs *flag.FlagSet) {
+		fs.String("port", "", "ESP32 local serial port, e.g. /dev/ttyUSB0 or COM3")
+		fs.Int("baud", 460800, "ESP32 flashing baud rate")
 		fs.String("elf", "", "ARM ELF to flash; default: the single build/*.elf")
 		fs.String("probe", "cmsis-dap", "SWD adapter (cmsis-dap)")
 		fs.String("serial", "", "select a probe by USB serial number")
@@ -27,6 +29,12 @@ var flashCmd = &command{
 		}
 		p, env, err := loadEnv(ctx)
 		if err != nil {
+			return err
+		}
+		if p.Config.Profile == "esp32" {
+			return flashESP32(ctx, fs, p, env)
+		}
+		if err := rejectExplicitFlags(fs, "port", "baud"); err != nil {
 			return err
 		}
 		planFor := runner.PlanRP2040Flash
