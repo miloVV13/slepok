@@ -6,6 +6,7 @@ function Invoke-Slepok {
     if ($LASTEXITCODE -ne 0) { throw "slepok failed: $args (exit $LASTEXITCODE)" }
 }
 $savedHome = $env:SLEPOK_HOME
+$savedTestProject = $env:SLEPOK_ESP32_PROJECT
 $savedLocation = Get-Location
 $work = Join-Path ([IO.Path]::GetTempPath()) ('slepok-esp32-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $work | Out-Null
@@ -17,6 +18,12 @@ try {
     Invoke-Slepok build
     Invoke-Slepok flash --port __slepok_virtual_port__ --dry-run
     Invoke-Slepok monitor --port __slepok_virtual_port__ --dry-run
+    if ($env:SLEPOK_ESP32_PYTHON_TEST -eq '1') {
+        $env:SLEPOK_ESP32_PROJECT = (Get-Location).Path
+        go -C (Join-Path $PSScriptRoot '..') test -v ./internal/runner -run '^TestRealESP32SerialBackends$' -count=1 -timeout 45s
+        if ($LASTEXITCODE -ne 0) { throw 'Locked serial backends failed' }
+        Remove-Item Env:SLEPOK_ESP32_PROJECT
+    }
     Invoke-Slepok pack -o (Join-Path $work 'hello.slepok')
     $hashes = @{}
     foreach ($output in @('hello.bin', 'bootloader/bootloader.bin', 'partition_table/partition-table.bin')) {
@@ -58,5 +65,6 @@ try {
 } finally {
     Set-Location $savedLocation
     $env:SLEPOK_HOME = $savedHome
+    $env:SLEPOK_ESP32_PROJECT = $savedTestProject
     Remove-Item -LiteralPath $work -Recurse -Force
 }

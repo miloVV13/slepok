@@ -19,15 +19,11 @@ import (
 	"github.com/miloVV13/slepok/internal/store"
 )
 
-// Opt-in real pinned Python, IDF monitor and addr2line, on virtual UART/TTY.
-// The harness simulates only modem-line ioctls unsupported by PTYs.
-func TestRealESP32MonitorPTY(t *testing.T) {
+func realESP32SerialEnv(t *testing.T) (*project.Project, *Env, *store.Store) {
+	t.Helper()
 	dir := os.Getenv("SLEPOK_ESP32_PROJECT")
 	if dir == "" {
 		t.Skip("SLEPOK_ESP32_PROJECT not set")
-	}
-	if runtime.GOOS == "windows" {
-		t.Skip("POSIX PTYs")
 	}
 	p, err := project.Load(dir)
 	must(t, err)
@@ -39,9 +35,47 @@ func TestRealESP32MonitorPTY(t *testing.T) {
 	must(t, err)
 	guard, err := st.Acquire(t.Context(), false)
 	must(t, err)
-	defer guard.Close()
+	t.Cleanup(func() { _ = guard.Close() })
 	e, err := ResolveContext(t.Context(), prof, p.Lock, st, manifest.HostPlatform(), p.Config.Board)
 	must(t, err)
+	return p, e, st
+}
+
+func TestRealESP32SerialBackends(t *testing.T) {
+	p, e, st := realESP32SerialEnv(t)
+	flash, err := PlanESP32Flash(e, p.BuildDir(), "__slepok_test_port__", 460800)
+	must(t, err)
+	monitor, err := PlanESP32Monitor(t.Context(), e, st, p.Dir, p.BuildDir(), "", "__slepok_test_port__", 115200, false, false)
+	must(t, err)
+	ports, err := PlanESP32Ports(e)
+	must(t, err)
+	for _, tc := range []struct {
+		name string
+		plan *SerialPlan
+		args []string
+	}{
+		{"esptool", flash, []string{"-m", "esptool", "--help"}},
+		{"monitor", monitor, []string{monitor.Args[0], "--help"}},
+		{"ports", ports, []string{"-m", "serial.tools.list_ports", "--help"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cmd := exec.CommandContext(t.Context(), tc.plan.Executable, tc.args...)
+			cmd.Dir, cmd.Env = tc.plan.Directory, e.buildEnviron()
+			output, err := cmd.CombinedOutput()
+			if err != nil || !strings.Contains(strings.ToLower(string(output)), "usage") {
+				t.Fatalf("locked backend help: %v\n%s", err, output)
+			}
+		})
+	}
+}
+
+// Opt-in real pinned Python, IDF monitor and addr2line, on virtual UART/TTY.
+// The harness simulates only modem-line ioctls unsupported by PTYs.
+func TestRealESP32MonitorPTY(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("POSIX PTYs")
+	}
+	p, e, st := realESP32SerialEnv(t)
 	plan, err := PlanESP32Monitor(t.Context(), e, st, p.Dir, p.BuildDir(), "", "/dev/slepok-virtual", 115200, false, false)
 	must(t, err)
 	image, err := elf.Open(plan.Args[len(plan.Args)-1])

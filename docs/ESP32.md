@@ -176,3 +176,5 @@ UTF-8 keyboard input, the disabled flash shortcut, Ctrl+] / SIGTERM exit
 and terminal restoration. PTYs emulate DTR/RTS ioctls; this does not test physical reset
 wiring or an actual ESP32. CI enables this test on Linux and macOS; it also
 checks flash/monitor plans on both sides of native snapshot restoration.
+An opt-in backend check launches the locked esptool, monitor bridge and
+port-listing module with --help on every native host, without opening ports.

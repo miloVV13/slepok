@@ -32,6 +32,7 @@ jobs:
         run: ./scripts/esp32_smoke.ps1 -Slepok ./slepok-ci.exe
         env:
           SLEPOK_SMOKE_DIAGNOSTICS: ${{ runner.temp }}/esp32-diagnostics
+          SLEPOK_ESP32_PYTHON_TEST: "1"
       - uses: actions/upload-artifact@v4
         if: failure() && runner.os == 'Windows'
         with:

@@ -22,7 +22,7 @@ fi
 "$slepok_bin" flash --port __slepok_virtual_port__ --dry-run > "$smoke_dir/serial-flash-a.txt"
 "$slepok_bin" monitor --port __slepok_virtual_port__ --dry-run > "$smoke_dir/monitor-a.txt"
 if [[ ${SLEPOK_ESP32_PTY_TEST:-} == 1 ]]; then
-    SLEPOK_ESP32_PROJECT="$PWD" go -C "$repo_dir" test -v ./internal/runner -run '^TestRealESP32MonitorPTY$' -count=1 -timeout 45s
+    SLEPOK_ESP32_PROJECT="$PWD" go -C "$repo_dir" test -v ./internal/runner -run '^TestRealESP32(MonitorPTY|SerialBackends)$' -count=1 -timeout 45s
 fi
 "$slepok_bin" pack -o "$smoke_dir/hello.slepok"
 export SLEPOK_HOME="$smoke_dir/store b"
