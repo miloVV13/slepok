@@ -31,6 +31,9 @@ func (f *Fetcher) InstallPortable(name string, src profile.Source) (string, erro
 	if src.Digest != "" && f.Store.Has(src.Digest) {
 		return src.Digest, nil
 	}
+	if len(src.Python) != 0 {
+		return f.installPython(name, src, true)
+	}
 	work, err := f.Store.TempDir("fetch-portable-")
 	if err != nil {
 		return "", err
@@ -134,7 +137,15 @@ func (f *Fetcher) portableGit(tree *pkgtar.Tree, dir string) error {
 				continue
 			}
 			if fields[0] == "160000" {
-				if err := visit(filepath.Join(repo, filepath.FromSlash(name)), rel); err != nil {
+				// An explicitly omitted submodule has an empty directory,
+				// not its own repository. Git there would read the parent index.
+				child := filepath.Join(repo, filepath.FromSlash(name))
+				if _, err := os.Stat(filepath.Join(child, ".git")); os.IsNotExist(err) {
+					continue
+				} else if err != nil {
+					return err
+				}
+				if err := visit(child, rel); err != nil {
 					return err
 				}
 				continue

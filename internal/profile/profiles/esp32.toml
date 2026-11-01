@@ -1,0 +1,59 @@
+id = "esp32"
+version = "1"
+description = "Classic ESP32 · ESP-IDF 5.5.6 · Xtensa GCC 14.2"
+boards = ["esp32"]
+shared_components = ["cmake", "ninja", "python", "xtensa-esp-elf", "esp-idf-python", "esp-rom-elfs"]
+path = ["{python}/bin", "{xtensa-esp-elf}/bin", "{cmake}/bin", "{ninja}"]
+configure = ["-G", "Ninja", "-DIDF_TARGET=esp32", "-DPYTHON={python}/bin/python3", "-DCCACHE_ENABLE=OFF", "-DPYTHON_DEPS_CHECKED=1", "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"]
+checks = [["{python}/bin/python3", "{esp-idf}/tools/check_python_dependencies.py", "-r", "{esp-idf}/tools/requirements/requirements.core.txt"]]
+outputs = ["*.elf", "*.bin", "bootloader/*.bin", "partition_table/*.bin"]
+[env]
+IDF_PATH = "{esp-idf}"
+ESP_ROM_ELF_DIR = "{esp-rom-elfs}"
+IDF_COMPONENT_MANAGER = "0"
+IDF_PYTHON_CHECK_CONSTRAINTS = "0"
+PYTHONPATH = "{esp-idf-python}"
+PYTHONNOUSERSITE = "1"
+PYTHONDONTWRITEBYTECODE = "1"
+PYTHONUTF8 = "1"
+[hosts.windows-x64]
+checks = [["{python}/python.exe", "{esp-idf}/tools/check_python_dependencies.py", "-r", "{esp-idf}/tools/requirements/requirements.core.txt"]]
+path = ["{python}", "{xtensa-esp-elf}/bin", "{cmake}/bin", "{ninja}"]
+configure = ["-DPYTHON={python}/python.exe", "-DCMAKE_MAKE_PROGRAM={ninja}/ninja.exe"]
+[hosts.macos-arm64]
+path = ["{python}/bin", "{xtensa-esp-elf}/bin", "{cmake}/CMake.app/Contents/bin", "{ninja}"]
+[hosts.macos-x64]
+path = ["{python}/bin", "{xtensa-esp-elf}/bin", "{cmake}/CMake.app/Contents/bin", "{ninja}"]
+[[components]]
+name = "esp-idf"
+version = "5.5.6"
+license = "Apache-2.0 AND LicenseRef-ESP-IDF-Third-Party"
+
+[components.sources.linux-x64]
+digest = "sha256:86eb5920483cb7f0aba949883baf6c265cd49a64b508e7039882d8b6d7eaf7af"
+git = "https://github.com/espressif/esp-idf.git"
+ref = "v5.5.6"
+commit = "880a203ae603d08a94d06aa01e0d6761958e5e9e"
+submodules = ["components/bt/controller/lib_esp32", "components/bootloader/subproject/components/micro-ecc/micro-ecc", "components/spiffs/spiffs", "components/json/cJSON", "components/mbedtls/mbedtls", "components/lwip/lwip", "components/mqtt/esp-mqtt", "components/protobuf-c/protobuf-c", "components/unity/unity", "components/bt/host/nimble/nimble", "components/esp_wifi/lib", "components/cmock/CMock", "components/esp_phy/lib", "components/heap/tlsf", "components/esp_coex/lib", "components/bt/esp_ble_mesh/lib/lib"]
+
+[components.sources.windows-x64]
+digest = "sha256:3bf31ac107cb39379e74c5b46dd19d4443bf48e36230f3bb689180e791ab9bd0"
+layout = "windows-v1"
+git = "https://github.com/espressif/esp-idf.git"
+ref = "v5.5.6"
+commit = "880a203ae603d08a94d06aa01e0d6761958e5e9e"
+submodules = ["components/bt/controller/lib_esp32", "components/bootloader/subproject/components/micro-ecc/micro-ecc", "components/spiffs/spiffs", "components/json/cJSON", "components/mbedtls/mbedtls", "components/lwip/lwip", "components/mqtt/esp-mqtt", "components/protobuf-c/protobuf-c", "components/unity/unity", "components/bt/host/nimble/nimble", "components/esp_wifi/lib", "components/cmock/CMock", "components/esp_phy/lib", "components/heap/tlsf", "components/esp_coex/lib", "components/bt/esp_ble_mesh/lib/lib"]
+
+[components.sources.macos-arm64]
+digest = "sha256:86eb5920483cb7f0aba949883baf6c265cd49a64b508e7039882d8b6d7eaf7af"
+git = "https://github.com/espressif/esp-idf.git"
+ref = "v5.5.6"
+commit = "880a203ae603d08a94d06aa01e0d6761958e5e9e"
+submodules = ["components/bt/controller/lib_esp32", "components/bootloader/subproject/components/micro-ecc/micro-ecc", "components/spiffs/spiffs", "components/json/cJSON", "components/mbedtls/mbedtls", "components/lwip/lwip", "components/mqtt/esp-mqtt", "components/protobuf-c/protobuf-c", "components/unity/unity", "components/bt/host/nimble/nimble", "components/esp_wifi/lib", "components/cmock/CMock", "components/esp_phy/lib", "components/heap/tlsf", "components/esp_coex/lib", "components/bt/esp_ble_mesh/lib/lib"]
+
+[components.sources.macos-x64]
+digest = "sha256:86eb5920483cb7f0aba949883baf6c265cd49a64b508e7039882d8b6d7eaf7af"
+git = "https://github.com/espressif/esp-idf.git"
+ref = "v5.5.6"
+commit = "880a203ae603d08a94d06aa01e0d6761958e5e9e"
+submodules = ["components/bt/controller/lib_esp32", "components/bootloader/subproject/components/micro-ecc/micro-ecc", "components/spiffs/spiffs", "components/json/cJSON", "components/mbedtls/mbedtls", "components/lwip/lwip", "components/mqtt/esp-mqtt", "components/protobuf-c/protobuf-c", "components/unity/unity", "components/bt/host/nimble/nimble", "components/esp_wifi/lib", "components/cmock/CMock", "components/esp_phy/lib", "components/heap/tlsf", "components/esp_coex/lib", "components/bt/esp_ble_mesh/lib/lib"]

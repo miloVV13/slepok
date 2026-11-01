@@ -133,7 +133,7 @@ func runInit(ctx context.Context, fs *flag.FlagSet, args []string) error {
 			if err := writeTemplate(dir, prof.ID); err != nil {
 				return err
 			}
-			fmt.Printf("Created a %s blink project in %s\n", prof.ID, dir)
+			fmt.Printf("Created a %s starter project in %s\n", prof.ID, dir)
 		} else {
 			fmt.Printf("Adding slepok to the existing project in %s\n", dir)
 		}
@@ -282,6 +282,9 @@ func writeTemplate(dir, profileID string) error {
 			}
 		}
 	}) {
+		if err := os.MkdirAll(filepath.Dir(filepath.Join(dir, rel)), 0o755); err != nil {
+			return err
+		}
 		if err := os.WriteFile(filepath.Join(dir, rel), files[rel], 0o644); err != nil {
 			return err
 		}

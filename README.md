@@ -27,7 +27,9 @@ Slepok automatically; no SDK installation or global `PATH` changes are needed.
 > have been checked on real machines with matching firmware SHA256.
 > Experimental macOS 15 support (Apple Silicon and Intel) has passed native
 > RP2040 build/pack/restore tests with identical UF2 in CI. A clean offline
-> Mac receiver still needs manual acceptance. STM32 hardware acceptance and ESP32 are pending.
+> Mac receiver still needs manual acceptance. STM32 hardware acceptance is pending. An experimental classic ESP32 profile
+> with ESP-IDF 5.5.6 is available; native Windows/macOS and hardware acceptance
+> are tracked in [ESP32 notes](docs/ESP32.md).
 
 ## Why
 
@@ -57,7 +59,7 @@ Slepok makes the environment a pinned, verifiable, portable object:
 
 Requirements: Linux x86-64 with glibc 2.34 or newer (Ubuntu 22.04+,
 Debian 12+, Fedora 35+), Windows 10/11 x64, or experimental macOS 15
-(Apple Silicon / Intel); `git` when preparing the RP2040 SDK with `init`.
+(Apple Silicon / Intel); `git` when preparing the RP2040 or ESP32 SDK with `init`.
 
 Build from a checkout with Go 1.25+. `CGO_ENABLED=0` makes a static
 binary that runs on any Linux x86-64, so you can copy it to machines
@@ -85,7 +87,7 @@ are planned.
 
 | Command | What it does |
 |---|---|
-| `slepok init [--mcu rp2040\|stm32f103c8] [--board board] [dir]` | Creates a blink project or adds Slepok to existing sources. Downloads and verifies only the selected MCU profile's packages. `--profile` remains an equivalent selection flag. |
+| `slepok init [--mcu rp2040\|stm32f103c8\|esp32] [--board board] [dir]` | Creates a starter project or adds Slepok to existing sources. Downloads and verifies only the selected MCU profile's packages. `--profile` remains an equivalent selection flag. |
 | `slepok build [--ram]` | Configures and builds the project without network access. `--ram` builds and validates RP2040 `no_flash` firmware in `build_dir/ram`. |
 | `slepok flash [--elf file] [--serial id] [--speed kHz] [--no-build] [--dry-run]` | Builds and programs the selected RP2040 or STM32F103C8 through CMSIS-DAP using locked OpenOCD, verifies the write and resets the target. `--dry-run` does not build or access USB. |
 | `slepok run --ram [--no-build] [--dry-run] [--cmsis-dap-quirk]` | Builds a RAM ELF, loads and verifies it in RP2040 SRAM, then starts it without programming Flash. Supports the same probe/serial/speed/ELF options as `flash`. |
@@ -182,6 +184,7 @@ and [xPack OpenOCD USB access setup](https://xpack-dev-tools.github.io/openocd-x
 ```console
 $ slepok init --mcu rp2040 pico-blink
 $ slepok init --mcu stm32f103c8 bluepill-blink
+$ slepok init --mcu esp32 esp32-hello
 ```
 
 `--mcu` selects the MCU profile and its SDK. `STM32F103C8T6` is also
@@ -196,6 +199,28 @@ coexist in that store without being included in this project's snapshot.
 With no target flag, a new project defaults to RP2040 for compatibility;
 an existing project keeps its saved target. `--profile` remains supported;
 conflicting `--profile` and `--mcu` values are rejected.
+
+## ESP32 / ESP-IDF (experimental)
+
+```console
+$ slepok init --mcu esp32 esp32-hello
+$ cd esp32-hello
+$ slepok build
+$ slepok pack -o ../esp32-hello.slepok
+```
+
+This profile targets the original ESP32 (Xtensa), using ESP-IDF 5.5.6 and
+Espressif GCC 14.2. It includes portable CPython and pinned Python libraries;
+no `export` script, virtualenv activation, system pip installation or
+`SLEPOK_HOME` setting is needed. The template prints a FreeRTOS greeting,
+without assuming an LED pin. Outputs include the application ELF/BIN,
+bootloader BIN and partition-table BIN.
+
+Only this profile's dependencies are selected. The vendor Xtensa toolchain
+archive contains shared support for ESP32/S2/S3; no separate RISC-V, ARM,
+OpenOCD or Pico tools are downloaded. ESP32-C/S/H/P variants and serial/SWD
+flashing through `slepok flash` are outside this initial profile.
+See [scope and acceptance](docs/ESP32.md) for offline and native-host checks.
 
 ## STM32 Blue Pill (experimental)
 

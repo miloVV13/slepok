@@ -1,0 +1,9 @@
+name = "esp-rom-elfs"
+version = "20260528"
+license = "Apache-2.0"
+[sources.any]
+digest = "sha256:072d9f076e0342499b6906850b58a3348134a1e3e797fc079423ed4243f2a564"
+url = "https://github.com/espressif/esp-rom-elfs/releases/download/20260528/esp-rom-elfs-20260528.tar.gz"
+sha256 = "caa463d3cbef2430a5a35847c1d9f2f152403b17a802050927ff60c8da54fe46"
+format = "tar.gz"
+strip = 0

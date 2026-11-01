@@ -8,6 +8,35 @@ permissions:
   contents: read
 
 jobs:
+  esp32:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-22.04, windows-2022, macos-15, macos-15-intel]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go build -trimpath -o slepok-ci.exe ./cmd/slepok
+      - name: ESP32 offline restore on Linux and native restore on macOS
+        if: runner.os != 'Windows'
+        run: bash scripts/esp32_smoke.sh ./slepok-ci.exe
+      - name: ESP32 native Windows restore
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/esp32_smoke.ps1 -Slepok ./slepok-ci.exe
+        env:
+          SLEPOK_SMOKE_DIAGNOSTICS: ${{ runner.temp }}/esp32-diagnostics
+      - uses: actions/upload-artifact@v4
+        if: failure() && runner.os == 'Windows'
+        with:
+          name: windows-esp32-diagnostics
+          path: ${{ runner.temp }}/esp32-diagnostics
+          if-no-files-found: ignore
+
   macos-rp2040:
     strategy:
       fail-fast: false

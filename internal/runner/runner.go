@@ -35,6 +35,7 @@ type Env struct {
 	Path      []string
 	Vars      map[string]string
 	Configure []string
+	Checks    [][]string
 	Outputs   []string
 	// StoreRoot is where the packages live; paths below it are not leaks.
 	StoreRoot string
@@ -112,6 +113,17 @@ func ResolveContext(ctx context.Context, prof *profile.Profile, lock *project.Lo
 			return nil, err
 		}
 		e.Configure = append(e.Configure, a)
+	}
+	for _, check := range prof.Checks {
+		args := make([]string, len(check))
+		for i, arg := range check {
+			x, err := expand(arg)
+			if err != nil {
+				return nil, err
+			}
+			args[i] = x
+		}
+		e.Checks = append(e.Checks, args)
 	}
 	// Flashing tools may be absent in older locks. Expose them in shells
 	// when installed without introducing required profile placeholders.
@@ -219,6 +231,14 @@ func Build(e *Env, src, build string, o Options) (*Result, error) {
 		return nil, err
 	}
 	r := &runner{env: e.buildEnviron(), dir: src, o: o, isolate: o.Isolate}
+	for _, check := range e.Checks {
+		if len(check) == 0 {
+			return nil, fmt.Errorf("empty profile check")
+		}
+		if err := r.run(check[0], check[1:]...); err != nil {
+			return nil, fmt.Errorf("profile dependency check failed: %w", err)
+		}
+	}
 	configure := append([]string{"-S", src, "-B", build}, e.Configure...)
 	if o.RAM {
 		configure = append(configure, "-DPICO_DEFAULT_BINARY_TYPE=no_flash")
@@ -336,7 +356,12 @@ var systemPrefixes = []string{"/usr/", "/bin/", "/sbin/", "/lib/", "/lib64/", "/
 // ignoredCacheKeys hold host paths by design and do not affect the build
 // output: the install prefix is never used, and CMake looks up uname in
 // hard-coded system directories only to detect the host OS.
-var ignoredCacheKeys = []string{"CMAKE_INSTALL_PREFIX", "CMAKE_UNAME"}
+var ignoredCacheKeys = []string{
+	"CMAKE_INSTALL_PREFIX", "CMAKE_UNAME",
+	// GNUInstallDirs caches installation destinations and the prior prefix.
+	// They do not supply compiler inputs; Ninja rules are checked separately.
+	"CMAKE_INSTALL_OLDINCLUDEDIR", "_GNUInstallDirs_LAST_CMAKE_INSTALL_PREFIX",
+}
 
 // Leaks reports CMake cache entries that point into the host system rather
 // than into the allowed directories (spec 17, stage 1 finding 1).
@@ -496,7 +521,11 @@ func outputs(ctx context.Context, build string, patterns []string) ([]Output, er
 			if err != nil {
 				return nil, err
 			}
-			out = append(out, Output{Path: filepath.Base(m), SHA256: sum})
+			rel, err := filepath.Rel(build, m)
+			if err != nil {
+				return nil, err
+			}
+			out = append(out, Output{Path: filepath.ToSlash(rel), SHA256: sum})
 		}
 	}
 	return out, nil

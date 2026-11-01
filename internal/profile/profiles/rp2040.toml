@@ -23,7 +23,7 @@ configure = [
     "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
 ]
 
-shared_components = ["arm-gcc", "cmake", "ninja", "zstd", "openocd"]
+shared_components = ["arm-gcc", "cmake", "ninja", "zstd", "openocd", "python"]
 
 outputs = ["*.uf2", "*.elf", "*.bin", "*.hex"]
 
@@ -55,39 +55,6 @@ configure = ["-DPython3_EXECUTABLE={python}/bin/python3", "-DCMAKE_MAKE_PROGRAM=
 PYTHONNOUSERSITE = "1"
 PYTHONUTF8 = "1"
 
-
-[[components]]
-name = "python"
-version = "3.12.16+20261026"
-license = "PSF-2.0"
-[components.sources.linux-x64]
-url = "https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.12.16+20261026-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz"
-sha256 = "ce4f6d0a6cfdb3bed6e44c2f9affd85943c76a42e25ad3a259002f31d6fb8a20"
-format = "tar.gz"
-strip = 1
-digest = "sha256:a7d41c384e4211540539ba314873faeab17b8b48bfc9c9980484a5a689cae4dc"
-
-[components.sources.windows-x64]
-layout = "windows-v1"
-url = "https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.12.16%2B20261026-x86_64-pc-windows-msvc-install_only_stripped.tar.gz"
-sha256 = "1f2ab53880fc67ea323398c6388e05af28addc99a8e389209f08a51fdff4b149"
-format = "tar.gz"
-strip = 1
-digest = "sha256:b5a68c7ea4578d0f4505b162fb8494af441b6dfdf213fef522c60a1daa81ebc4"
-
-[components.sources.macos-arm64]
-url = "https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.12.16%2B20261026-aarch64-apple-darwin-install_only_stripped.tar.gz"
-sha256 = "353d5f1b4fd2715e7053f12f068435d5bbad16b91e057006b5d01e0925709a7e"
-format = "tar.gz"
-strip = 1
-digest = "sha256:abad5317ce077b58ee0807ed5b22644a1cf723e8413675dd60ec141831ea1067"
-
-[components.sources.macos-x64]
-url = "https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.12.16%2B20261026-x86_64-apple-darwin-install_only_stripped.tar.gz"
-sha256 = "37c38fda76fec1fbf310adcbafb7f0d96af13b5511bf8ea954c3aa8eec185734"
-format = "tar.gz"
-strip = 1
-digest = "sha256:2b24ba80a4cce374dd3ea4383f639083989cc0b89f17cffd513d6a845258d7b5"
 
 [[components]]
 name = "pioasm"

@@ -317,6 +317,13 @@ func TestSelectedRelativeSubmodules(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(dest, "unused", "payload")); !os.IsNotExist(err) {
 		t.Fatal("unselected submodule populated")
 	}
+	// Both foreign Unix preparation and Windows link discovery must skip
+	// omitted gitlinks rather than accidentally walking the parent index.
+	_, err = newFetcher(t).InstallPortable("sdk", src)
+	requireOK(t, err)
+	src.Layout = profile.LayoutWindows
+	_, err = newFetcher(t).Install("sdk", src)
+	requireOK(t, err)
 	if err := f.submodules("git", dest, false, "missing"); err == nil {
 		t.Fatal("unknown selection accepted")
 	}

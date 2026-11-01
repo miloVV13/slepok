@@ -30,21 +30,27 @@ var FS fs.FS = builtin
 // ".gitignore" (embedding dot files needs care).
 func Template(id, name string) (map[string][]byte, error) {
 	dir := path.Join("templates", id)
-	entries, err := fs.ReadDir(FS, dir)
-	if err != nil {
-		return nil, fmt.Errorf("profile %s has no project template", id)
-	}
 	out := map[string][]byte{}
-	for _, e := range entries {
-		data, err := fs.ReadFile(FS, path.Join(dir, e.Name()))
+	err := fs.WalkDir(FS, dir, func(file string, entry fs.DirEntry, err error) error {
 		if err != nil {
-			return nil, err
+			return err
 		}
-		target := e.Name()
-		if target == "gitignore" {
-			target = ".gitignore"
+		if entry.IsDir() {
+			return nil
+		}
+		data, err := fs.ReadFile(FS, file)
+		if err != nil {
+			return err
+		}
+		target := strings.TrimPrefix(file, dir+"/")
+		if path.Base(target) == "gitignore" {
+			target = path.Join(path.Dir(target), ".gitignore")
 		}
 		out[target] = []byte(strings.ReplaceAll(string(data), "@NAME@", name))
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("profile %s template: %w", id, err)
 	}
 	return out, nil
 }
@@ -60,6 +66,7 @@ type Profile struct {
 	Path             []string          `toml:"path"`
 	Env              map[string]string `toml:"env"`
 	Configure        []string          `toml:"configure"`
+	Checks           [][]string        `toml:"checks,omitempty"`
 	Outputs          []string          `toml:"outputs"`
 	Components       []Component       `toml:"components"`
 	SharedComponents []string          `toml:"shared_components,omitempty"`
@@ -72,6 +79,7 @@ type Host struct {
 	Path      []string          `toml:"path"`
 	Env       map[string]string `toml:"env"`
 	Configure []string          `toml:"configure"`
+	Checks    [][]string        `toml:"checks,omitempty"`
 }
 
 func (p *Profile) ForHost(platform string) *Profile {
@@ -80,10 +88,14 @@ func (p *Profile) ForHost(platform string) *Profile {
 		return p
 	}
 	out := *p
+	out.Checks = cloneChecks(p.Checks)
 	if h.Path != nil {
 		out.Path = slices.Clone(h.Path)
 	}
 	out.Configure = append(slices.Clone(p.Configure), h.Configure...)
+	if h.Checks != nil {
+		out.Checks = cloneChecks(h.Checks)
+	}
 	out.Env = maps.Clone(p.Env)
 	if out.Env == nil {
 		out.Env = map[string]string{}
@@ -134,12 +146,23 @@ type SourceArchive struct {
 	SHA256  string   `toml:"sha256"`
 }
 
-// Source is either a downloadable archive or a git checkout.
+// PythonArchive is a pinned wheel, or an explicitly selected pure-Python
+// source distribution. Source distributions are copied, never executed.
+type PythonArchive struct {
+	URL     string   `toml:"url"`
+	SHA256  string   `toml:"sha256"`
+	Format  string   `toml:"format"`
+	Strip   int      `toml:"strip,omitempty"`
+	Include []string `toml:"include,omitempty"`
+}
+
+// Source is a downloadable archive, a Git checkout, or a Python library bundle.
 type Source struct {
 	// Layout selects an explicit, versioned package representation, independent
 	// of the machine preparing it. Empty retains the original native layout.
-	Layout string `toml:"layout,omitempty"`
-	URL    string `toml:"url,omitempty"`
+	Layout string          `toml:"layout,omitempty"`
+	Python []PythonArchive `toml:"python,omitempty"`
+	URL    string          `toml:"url,omitempty"`
 	// Mirrors serve the same file; the sha256 decides, not the source.
 	Mirrors []string `toml:"mirrors,omitempty"`
 	SHA256  string   `toml:"sha256,omitempty"`
@@ -254,6 +277,23 @@ func (p *Profile) validate() error {
 				seen[sub] = true
 			}
 			switch {
+			case len(s.Python) != 0:
+				if s.Git != "" || s.URL != "" || s.Layout != "" {
+					return fmt.Errorf("%s: Python bundle cannot mix source types or layouts", where)
+				}
+				for _, a := range s.Python {
+					if a.URL == "" || !sha256Re.MatchString(a.SHA256) || (a.Format != "wheel" && a.Format != "tar.gz") || a.Strip < 0 {
+						return fmt.Errorf("%s: invalid pinned Python archive", where)
+					}
+					if a.Format == "tar.gz" && len(a.Include) == 0 {
+						return fmt.Errorf("%s: Python source archive requires explicit include paths", where)
+					}
+					for _, inc := range a.Include {
+						if err := safepath.CheckForHost(inc); err != nil {
+							return err
+						}
+					}
+				}
 			case s.Git != "":
 				if s.Ref == "" || !commitRe.MatchString(s.Commit) {
 					return fmt.Errorf("%s: git source needs ref and a full commit hash", where)
@@ -272,6 +312,9 @@ func (p *Profile) validate() error {
 	for n := range names {
 		vars[n] = "x"
 	}
+	if err := validateChecks(p.Checks, vars); err != nil {
+		return err
+	}
 	for _, s := range slices.Concat(p.Path, p.Configure, slices.Collect(mapValues(p.Env))) {
 		if _, err := Expand(s, vars); err != nil {
 			return err
@@ -281,9 +324,34 @@ func (p *Profile) validate() error {
 		if !hostRe.MatchString(platform) {
 			return fmt.Errorf("invalid host %q", platform)
 		}
+		if err := validateChecks(h.Checks, vars); err != nil {
+			return err
+		}
 		for _, s := range slices.Concat(h.Path, h.Configure, slices.Collect(mapValues(h.Env))) {
 			if _, err := Expand(s, vars); err != nil {
 				return fmt.Errorf("host %s: %w", platform, err)
+			}
+		}
+	}
+	return nil
+}
+
+func cloneChecks(commands [][]string) [][]string {
+	out := make([][]string, len(commands))
+	for i, c := range commands {
+		out[i] = slices.Clone(c)
+	}
+	return out
+}
+
+func validateChecks(commands [][]string, vars map[string]string) error {
+	for _, command := range commands {
+		if len(command) == 0 || command[0] == "" {
+			return fmt.Errorf("profile check needs a command")
+		}
+		for _, arg := range command {
+			if _, err := Expand(arg, vars); err != nil {
+				return err
 			}
 		}
 	}

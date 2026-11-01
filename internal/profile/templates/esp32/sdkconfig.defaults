@@ -1,0 +1,4 @@
+# Keep the application description independent of build time and host paths.
+CONFIG_APP_REPRODUCIBLE_BUILD=y
+CONFIG_APP_COMPILE_TIME_DATE=n
+CONFIG_COMPILER_HIDE_PATHS_MACROS=y

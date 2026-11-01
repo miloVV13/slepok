@@ -1,0 +1,36 @@
+name = "xtensa-esp-elf"
+version = "esp-14.2.0_20260121"
+license = "GPL-3.0-or-later WITH GCC-exception-3.1 AND LicenseRef-Xtensa-Toolchain"
+
+[source_code]
+url = "https://github.com/espressif/crosstool-NG/releases/download/esp-14.2.0_20260121/crosstool-NG-esp-14.2.0_20260121-src.tar.xz"
+sha256 = "ac107a1a7aa941ab1e35e17dc08bde3ef2b468172ca0eb9ff788a1193b80dbb5"
+
+[sources.linux-x64]
+digest = "sha256:67f94367dd18f84c9c82c513c597f953c904efff83177908bfc9f5ea7d5dc0a3"
+url = "https://github.com/espressif/crosstool-NG/releases/download/esp-14.2.0_20260121/xtensa-esp-elf-14.2.0_20260121-x86_64-linux-gnu.tar.xz"
+sha256 = "da31f36d79d4e99f24e55a90a71e65d5694714f16199960bf7885724b706a48c"
+format = "tar.xz"
+strip = 1
+
+[sources.windows-x64]
+digest = "sha256:bdea2fb94134b50e23daa3cfdfa9da1486a9ae1650834eeab0f32bdbd476e688"
+layout = "windows-v1"
+url = "https://github.com/espressif/crosstool-NG/releases/download/esp-14.2.0_20260121/xtensa-esp-elf-14.2.0_20260121-x86_64-w64-mingw32.zip"
+sha256 = "82cbe0353c2e7c96acc8755c854aaa2d93d346c6a378fc692e60b3912c560108"
+format = "zip"
+strip = 1
+
+[sources.macos-arm64]
+digest = "sha256:5d4b05d7718b45be9ea8dbd1d701b4ce58014c6710f1406b542db1e6c53a011e"
+url = "https://github.com/espressif/crosstool-NG/releases/download/esp-14.2.0_20260121/xtensa-esp-elf-14.2.0_20260121-aarch64-apple-darwin.tar.xz"
+sha256 = "a450db49cea5f191a96345c5b7f0e1a9671a9cf132fecfd9fb1faf6c2a30637e"
+format = "tar.xz"
+strip = 1
+
+[sources.macos-x64]
+digest = "sha256:3b23b17922a42de269601c76efdddd13d3ea08c9033c1017d00d5c6649b55df6"
+url = "https://github.com/espressif/crosstool-NG/releases/download/esp-14.2.0_20260121/xtensa-esp-elf-14.2.0_20260121-x86_64-apple-darwin.tar.xz"
+sha256 = "02e5e3421222c9a708b21eca7826acb137668b188cb46fbde46339b26d4b2eeb"
+format = "tar.xz"
+strip = 1

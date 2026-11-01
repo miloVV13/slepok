@@ -66,7 +66,15 @@ func (f *Fetcher) gitSymlinks(dir string) (map[string]string, error) {
 				}
 				links[rel] = string(data)
 			case "160000":
-				if err := visit(filepath.Join(repo, filepath.FromSlash(name)), rel); err != nil {
+				// An explicitly omitted submodule has an empty directory,
+				// not its own repository. Git there would read the parent index.
+				child := filepath.Join(repo, filepath.FromSlash(name))
+				if _, err := os.Stat(filepath.Join(child, ".git")); os.IsNotExist(err) {
+					continue
+				} else if err != nil {
+					return err
+				}
+				if err := visit(child, rel); err != nil {
 					return err
 				}
 			}

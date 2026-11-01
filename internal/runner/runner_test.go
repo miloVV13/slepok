@@ -43,6 +43,7 @@ func TestResolve(t *testing.T) {
 		Path:       []string{"{tc}/bin"},
 		Env:        map[string]string{"TC_ROOT": "{tc}"},
 		Configure:  []string{"-DBOARD={board}", "-DTC={tc}"},
+		Checks:     [][]string{{"{tc}/bin/check", "{board}"}},
 	}
 	lock := &project.Lock{Packages: []project.LockedPackage{
 		{Name: "tc", Platform: "any", Source: profile.Source{Digest: digest}},
@@ -52,6 +53,9 @@ func TestResolve(t *testing.T) {
 	dir, _ := st.Path(digest)
 	if filepath.Clean(e.Path[0]) != filepath.Join(dir, "bin") || e.Vars["TC_ROOT"] != dir || e.Configure[0] != "-DBOARD=pico" {
 		t.Fatalf("Resolve = %+v", e)
+	}
+	if len(e.Checks) != 1 || e.Checks[0][0] != dir+"/bin/check" || e.Checks[0][1] != "pico" {
+		t.Fatal("unresolved profile check", e.Checks)
 	}
 	if p, err := e.LookPath("cmake"); err != nil || p != filepath.Join(dir, "bin", cmakeName) {
 		t.Fatalf("LookPath = %q, %v", p, err)
@@ -86,6 +90,8 @@ func TestLeaks(t *testing.T) {
 //Help text /usr/bin/ignored
 CMAKE_C_COMPILER:STRING=/store/packages/abc/bin/arm-none-eabi-gcc
 CMAKE_INSTALL_PREFIX:PATH=/usr/local
+CMAKE_INSTALL_OLDINCLUDEDIR:PATH=/usr/include
+_GNUInstallDirs_LAST_CMAKE_INSTALL_PREFIX:INTERNAL=/usr/local
 _Python3_EXECUTABLE:INTERNAL=/usr/bin/python3.14
 SOME_LIST:STRING=/proj/src;/opt/vendor/lib
 CMAKE_HOME_DIRECTORY:INTERNAL=/proj/src
@@ -291,5 +297,23 @@ func TestResolveSourceDateEpoch(t *testing.T) {
 	must(t, err)
 	if got := e.Vars["SOURCE_DATE_EPOCH"]; got != "42" {
 		t.Fatalf("SOURCE_DATE_EPOCH = %q, want the user's value", got)
+	}
+}
+
+func TestDependencyCheckStopsBeforeConfigure(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Unix shell fixture")
+	}
+	dir := t.TempDir()
+	marker := filepath.Join(dir, "configured")
+	must(t, os.WriteFile(filepath.Join(dir, "cmake"), []byte("#!/bin/sh\n: > '"+marker+"'\n"), 0755))
+	check := filepath.Join(dir, "check")
+	must(t, os.WriteFile(check, []byte("#!/bin/sh\nexit 17\n"), 0755))
+	_, err := Build(&Env{Path: []string{dir}, Checks: [][]string{{check}}}, dir, filepath.Join(dir, "build"), Options{})
+	if err == nil || !strings.Contains(err.Error(), "profile dependency check failed") {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(marker); !os.IsNotExist(err) {
+		t.Fatal("configure ran after a failed dependency check")
 	}
 }

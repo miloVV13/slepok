@@ -1,0 +1,1228 @@
+name = "esp-idf-python"
+version = "5.5.6-py312-1"
+license = "LicenseRef-ESP-IDF-Python-Dependencies"
+
+[sources.linux-x64]
+digest = "sha256:83ffbb1b26737204944f782b38e649070c1ca6d639d2738fb86d6399cbbfc9a2"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/99/91/8acff4f5e50511b911bbccb72b8628a49c68ce14148cd9f6431094859a90/annotated_types-0.8.0-py3-none-any.whl"
+sha256 = "f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/46/bd/551ee6af426af84ca33e02622be722925c196608e9127d731ef17c47f06e/argcomplete-3.7.2-py3-none-any.whl"
+sha256 = "6029205678bdd9c1c728a155f5f9ecf5812393f969eef58807641a2bc2aa5b19"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/c0/8a/c9d2e34decc080374ea3dcca6d46c86907c1eb2ea5c47a13c7d0cf28e084/bitarray-3.12.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+sha256 = "8a32e10bd3c7e287df1e4c3da73efda5585a56ec59337b1467245f53dd469a99"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/bf/02/1a870bab76f2896d827aa4963be95e56675ffa1453e53525d13c43036edf/bitstring-4.4.0-py3-none-any.whl"
+sha256 = "feac49524fcf3ef27e6081e86f02b10d2adf6c3773bf22fbe0e7eea9534bc737"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/32/d1/a3652fe2c19134d0d15922177821d863cbd7e842d53a21bbe7e8e3a1b5ac/certifi-2026.10.23-py3-none-any.whl"
+sha256 = "e9b54de76e530bb6cf0ccd036787103acb58fd42ba930ea8bf948ddbaa2f61d1"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://dl.espressif.com/pypi/cffi/cffi-2.1.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_34_x86_64.whl"
+sha256 = "f24f823a88b5f8d3079d5c06f1b8838a8d23fd92ca1fb2e661a7b30ce44277f8"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/7f/c5/38806a25ab5e65fc178f39affeda20858efafede2fce1ffc2556cfc9fe73/charset_normalizer-3.5.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+sha256 = "3d31298449090ab8d47b7b1b2a555ff73cac7ed438a08b7ac160980c7ebed649"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/7e/d4/7ebdbd03970677812aac39c869717059dbb71a4cfc033ca6e5221787892c/click-8.1.8-py3-none-any.whl"
+sha256 = "63c132bbbed01578a06712a2d1f497bb62d9c1c0d329b7903a866228027263b2"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl"
+sha256 = "4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/b2/fb/08b3f4bf05da99aba8ffea52a558758def16e8516bc75ca94ff73587e7d3/construct-2.10.70-py3-none-any.whl"
+sha256 = "c80be81ef595a1a821ec69dc16099550ed22197615f4320b57cc9ce2a672cb30"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://dl.espressif.com/pypi/cryptography/cryptography-44.0.3-cp39-abi3-manylinux_2_34_x86_64.whl"
+sha256 = "ffb79e0b68fb258bfcb958d0f06453fde2f8f8190a5e780489e0d7f5c55c3e94"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/51/79/119091c98e2bf49e24ed9f3ae69f816d715d2904aefa6a2baa039a2ba0b0/ecdsa-0.19.2-py2.py3-none-any.whl"
+sha256 = "840f5dc5e375c68f36c1a7a5b9caad28f95daa65185c9253c0c08dd952bb7399"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/68/9f/7d68a55b3ced37e1c1935d0bb5a8aeecdf5b94f5fa899691b3737472d03a/esp_coredump-1.17.2-py3-none-any.whl"
+sha256 = "376d594d565fede658481d3780ed5623b9b993592078dfcf75fecbab53901a70"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/57/c1/646665675d568796978b967700ddab69c6d444a852cfb6ce1aab5be64af2/esp_idf_diag-0.2.0-py3-none-any.whl"
+sha256 = "0a23b8ebf263231e9323fc6098c01ec4a51d6dd4ce8af7a1f766e78a91284642"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/64/75/838e8a83de80477504b297dec0c10e0815eb13dc7a2330f23ce15e0cd331/esp_idf_kconfig-2.5.4-py3-none-any.whl"
+sha256 = "b2aaafb54c9eca2cef362adbda69a026265cc4a818aa10202ec16b9c7042ebe6"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/e8/f9/a6449bf5cd1376b35657128668a5303e46fe164d7e77ad92b048854afa76/esp_idf_monitor-1.10.0-py3-none-any.whl"
+sha256 = "b7a328f580f771ce1c3e306f6ac7d8c2c2e54f9091fa3f60908214be072feb48"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/71/29/6d0c93dd2eca11491be5da86b9a50ff77c9deb09d9f521aab4c7d7ea79e6/esp_idf_nvs_partition_gen-0.1.9-py3-none-any.whl"
+sha256 = "9655b81dcfac034372bc00ac301f26830619abdd622949efb70cb7f78c80ba12"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/df/0a/0d9117c0f1cd521e4e5f1c7e1b12fd2009ad7878ae593650e87cd67a896e/esp_idf_panic_decoder-1.5.0-py3-none-any.whl"
+sha256 = "c711abafb99efdc343e19c45b6416b14a863fbe29115fafa8264cefaab85b8ea"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/b9/72/9cf583ab6dc3e482b7adefa5076db0b874bb00d63022bc8d69b80d8a545b/esp_idf_size-1.7.1-py3-none-any.whl"
+sha256 = "34d35fe95f4b1e971099457591ad9399fc09c08fd1cc0d157aa11961dfb4562f"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/0d/63/5cbd52f1993887756b7d60d4b7a8a99ee0b2efda7526ae43d3fa2eefbf7f/esp_pylib-1.2.0-py3-none-any.whl"
+sha256 = "581fd31eb20db4b80519fe883eaeacf5b3c6a2c0b7cce353a7d326ae7cbd4f5f"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/84/56/caad4b087a8942a3c59a0f56e9ffb055860a172dcf895236f167ad4a17a7/freertos_gdb-1.0.4-py3-none-any.whl"
+sha256 = "f924aa5c51318d9978afffca57bb07b979569a2c0adddacfcd931ac8d58ee53b"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/ab/d3/6286330276703a6096f26a440aa1fc480949a31a097babb6f7ff8ef98fdf/idf_component_manager-2.5.2-py3-none-any.whl"
+sha256 = "a03989e62f6522dc09475587d1f6395dde408dbc2fb71fc7609c648e477a097a"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/58/a2/bb081bab032533a855d44de1d56f8e8426114ff1ba5d1f07a438a0a654f8/idna-3.20-py3-none-any.whl"
+sha256 = "ab7ae7122974553370f0bdb919e1a960b2cd1bc1ef0276416d896db81c14582c"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/97/78/79461288da2b13ed0a13deb65c4ad1428acb674b95278fa9abf1cefe62a2/intelhex-2.3.0-py2.py3-none-any.whl"
+sha256 = "87cc5225657524ec6361354be928adfd56bcf2a3dcc646c40f8f094c39c07db4"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/0c/ec/e1db9922bceb168197a558a2b8c03a7963f1afe93517ddd3cf99f202f996/jsonref-1.1.0-py3-none-any.whl"
+sha256 = "590dc7773df6c21cbf948b5dac07a72a251db28b0238ceecce0a2abfa8ec30a9"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/b3/81/4da04ced5a082363ecfa159c010d200ecbd959ae410c10c0264a38cac0f5/markdown_it_py-4.2.0-py3-none-any.whl"
+sha256 = "9f7ebbcd14fe59494226453aed97c1070d83f8d24b6fc3a3bcf9a38092641c4a"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl"
+sha256 = "84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/63/34/ba1c580383c9eada3711951fef0795c80b829a078d72188184bcab9dd527/packaging-26.3-py3-none-any.whl"
+sha256 = "d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/9a/70/875f4a23bfc4731703a5835487d0d2fb999031bd415e7d17c0ae615c18b7/pathvalidate-3.3.1-py3-none-any.whl"
+sha256 = "5263baab691f8e1af96092fa5137ee17df5bdfbd6cff1fcac4d6ef4bc2e1735f"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://dl.espressif.com/pypi/psutil/psutil-7.2.2-cp36-abi3-manylinux_2_34_x86_64.whl"
+sha256 = "b7793713afd616418f0f02bd1c26d4320f7ab145ff631e443c44ab20ca192134"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/70/8b/d511486697773a3b2789f248576bee892882ee87b6c2408ffc10a1588bcc/pyclang-0.7.0-py3-none-any.whl"
+sha256 = "a19d333ab02ab0df486e29fabf961b8e3748d8b5343d8170764e49f114bb8393"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/b6/ae/315bbeee126a769cbde43cf4908acb4b40408d8bf8bbf334dd7368d8dadf/pycparser-3.12-py3-none-any.whl"
+sha256 = "a076f3f489b39b43ed13563a1dafe42447445bec2e294154ec5c57fcdda4c85e"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/97/01/c71a71258b58659c72504e5fd65b451f6e36e34dc931d0b237ded213c814/pydantic-2.14.2-py3-none-any.whl"
+sha256 = "7efbf7507b937931cd32a5755acb00ea1cf5ccb1d4e8067a5850d5069e382118"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/08/93/2a6556bbdb8e918175af9d849a5d0b367b5644e41939d040f3a7215b1339/pydantic_core-2.50.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+sha256 = "9667637665acba166a7dbbc786f14c50512d3a01f7199e0e1a13b929e92d7c7a"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/39/88/4131c51ff87b7cd7f82a1194d0c0a2b7ca68c72d9da04c3b7e69ab91a79f/pydantic_settings-2.16.2-py3-none-any.whl"
+sha256 = "8d523e5c129b097686bde019bd6109bff53f4c8c3f63f1ddf9933ffa42e5ab4f"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/46/2a/f9697576603dae937727827505a6126a066affb227034e77e6f9068910da/pyelftools-0.33-py3-none-any.whl"
+sha256 = "f215ad5f47d3f1373a21496a6c9e0707c622840d0622f23ff7ce08678b020036"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/c8/4b/71df806f4d260ddf01f9e431f5a6538a4155db3ec84a131d7e087178c591/pygdbmi-0.11.0.0-py3-none-any.whl"
+sha256 = "f7cac28e1d558927444c880ed1e65da1a5d8686121a3aac16f42fb84d3ceb60d"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/71/46/17f022dd3e953bf20a04a028a21ec746d942f8d2af30fa0f124fa0e6a684/pygments-2.21.0-py3-none-any.whl"
+sha256 = "2363c69b61c4a97c838da3b130dcd6468f4848992b21a82f2a63ec34377137d9"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/10/5e/1aa9a93198c6b64513c9d7752de7422c06402de6600a8767da1524f9570b/pyparsing-3.2.5-py3-none-any.whl"
+sha256 = "e38a4f02064cf41fe6593d328d0512495ad1f3d8a91c4f73fc401b3079a59a5e"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/07/bc/587a445451b253b285629263eb51c2d8e9bcea4fc97826266d186f96f558/pyserial-3.5-py2.py3-none-any.whl"
+sha256 = "c4451db6ba391ca6ca299fb3ec7bae67a5c55dde170964c7a14ceefec02f2cf0"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/60/d1/38f3a3405989a89ac18390803e70c6ad7c7760da4f9b83cbeca0c44a0c72/python_dotenv-1.2.4-py3-none-any.whl"
+sha256 = "42269a8a5b3fd54ffa6f3d84b18abed50064717576b4ecf03dc4a55d8aa04fdc"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://dl.espressif.com/pypi/pyyaml/pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_34_x86_64.whl"
+sha256 = "40081aeb26b48dbb486ceb81c4cf0ed49b688d41d9b0e8db405193ed9a395f74"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/09/19/1bb346c0e581557c88946d2bb979b2bee8992e72314cfb418b5440e383db/reedsolo-1.7.0-py3-none-any.whl"
+sha256 = "2b6a3e402a1ee3e1eea3f932f81e6c0b7bbc615588074dca1dbbcdeb055002bd"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/a0/f4/c67b0b3f1b9245e8d266f0f112c500d50e5b4e83cb6f3b71b6528104182a/requests-2.34.2-py3-none-any.whl"
+sha256 = "2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/e1/d5/de8f089119205a09da657ed4784c584ede8381a0ce6821212a6d4ca47054/requests_file-3.0.1-py2.py3-none-any.whl"
+sha256 = "d0f5eb94353986d998f80ac63c7f146a307728be051d4d1cd390dbdb59c10fa2"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/3f/51/d4db610ef29373b879047326cbf6fa98b6c1969d6f6dc423279de2b1be2c/requests_toolbelt-1.0.0-py2.py3-none-any.whl"
+sha256 = "cccfdd665f0a24fcf4726e690f65639d272bb0637b9b92dfd91a5568ccf6bd06"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/82/3b/64d4899d73f91ba49a8c18a8ff3f0ea8f1c1d75481760df8c68ef5235bf5/rich-15.0.0-py3-none-any.whl"
+sha256 = "33bd4ef74232fb73fe9279a257718407f169c09b78a87ad3d296f548e27de0bb"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/b5/51/b2b91aec091e86bc961e5164f00207d89f133cc82b5ddad541d2132ea819/rich_click-1.9.9-py3-none-any.whl"
+sha256 = "365e7a9d0adb42e41ea832a0a12e02c44c079a26536dee688125eb9814f97274"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/b8/0c/51f6841f1d84f404f92463fc2b1ba0da357ca1e3db6b7fbda26956c3b82a/ruamel_yaml-0.19.1-py3-none-any.whl"
+sha256 = "27592957fedf6e0b62f281e96effd28043345e0e66001f97683aa9a40c667c93"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/ef/55/6dc6d6bb953bdfc52519a0059592c52b6e3b8ad51cf8256dffceb55b0610/setuptools-84.2.1-py3-none-any.whl"
+sha256 = "ca140b45d5325a9478f880e351484f62fef15f336462e449ca0c03c873d589c2"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl"
+sha256 = "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://dl.espressif.com/pypi/tibs/tibs-0.5.7-cp38-abi3-manylinux_2_34_x86_64.whl"
+sha256 = "9d2041b70f8b470031c1f2b5a73520a43708f058c42c496525d3c43933a40577"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/a7/03/921a3d3c75785aca9ebfbfcabfbc3a1be12e2ab5265deb026d55a5a3f83e/tqdm-4.70.1-py3-none-any.whl"
+sha256 = "c293e525e6fef9c20e8728fd4612df02a0aa31bb5fe91ecd93e123b1b7bffa73"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/8a/2f/6e6781b31677231366cb3cf27bc8269157f6d4b03c9032865a4f5f2bbe7e/tree_sitter-0.26.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+sha256 = "5a6b333b0282d8bb0af741f9b018bd2523d4eecb2686bf6717066a625fecfaa4"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/e9/8c/0dfb88d726f8821d1c4c36042f092be974a800afd734307a595b8604190c/tree_sitter_c-0.24.2-cp310-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl"
+sha256 = "5041ef67eb68ce6bc8bb0b1f8ef3a5585ce523dae0c7eec109ab0627dd75aede"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/51/e9/3a7820be2bb0fe53b6bc9c3be26d3d1158004e4c3ab953aa6840b955b1e9/truststore-0.10.5-py3-none-any.whl"
+sha256 = "9aaaedaefaf06d8b206278cf8b5012bc897f485a874503501e12d776df78951c"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl"
+sha256 = "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/67/81/4add07e5172b7ac40d8ed5ff580409a7801a4fe26d529bdd915401dabfbe/typing_inspection-0.4.4-py3-none-any.whl"
+sha256 = "65b8397ba37ccbce054456aaccddfc91e6e3083c92824df348d96ca832f3f147"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/33/cf/8435d5a7159e2a9c83a95896ed596f68cf798005fe107cc655b5c5c14704/urllib3-1.26.20-py2.py3-none-any.whl"
+sha256 = "0ed14ccfbf1c30a9072c7ca157e4319b70d65f623e91e7b32fadb2853431016e"
+format = "wheel"
+
+[[sources.linux-x64.python]]
+url = "https://files.pythonhosted.org/packages/84/19/f68b27fd43564d69277e956d13b8c2b352e7f1af4fb5d6e5c43e5419e61c/esptool-4.12.0.tar.gz"
+sha256 = "d797f6529d582173508baf0572542ddadf53aae8c92c84ea9f420f242464103c"
+format = "tar.gz"
+strip = 1
+include = ["esptool", "espefuse", "espsecure", "esp_rfc2217_server", "esptool.egg-info", "LICENSE"]
+
+[sources.windows-x64]
+digest = "sha256:d3fe06063a502ea51288c677a9c9e56e4ea14221f6c0498c68e92a55b5ce582c"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/99/91/8acff4f5e50511b911bbccb72b8628a49c68ce14148cd9f6431094859a90/annotated_types-0.8.0-py3-none-any.whl"
+sha256 = "f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/46/bd/551ee6af426af84ca33e02622be722925c196608e9127d731ef17c47f06e/argcomplete-3.7.2-py3-none-any.whl"
+sha256 = "6029205678bdd9c1c728a155f5f9ecf5812393f969eef58807641a2bc2aa5b19"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/b6/8f/ec311c3b256ea4619ee845469d5c987c833b4af889e3428f2eddbb92ae46/bitarray-3.12.3-cp312-cp312-win_amd64.whl"
+sha256 = "f49d2b2ed5d140996765c4c3cfda3152dda1f9868f6733923e98bfb06fc9ff2d"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/bf/02/1a870bab76f2896d827aa4963be95e56675ffa1453e53525d13c43036edf/bitstring-4.4.0-py3-none-any.whl"
+sha256 = "feac49524fcf3ef27e6081e86f02b10d2adf6c3773bf22fbe0e7eea9534bc737"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/32/d1/a3652fe2c19134d0d15922177821d863cbd7e842d53a21bbe7e8e3a1b5ac/certifi-2026.10.23-py3-none-any.whl"
+sha256 = "e9b54de76e530bb6cf0ccd036787103acb58fd42ba930ea8bf948ddbaa2f61d1"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/d9/79/615cc094e2fb508cade7de88d3b4f6c4ec2bab695c97bce9153dc65aadf5/cffi-2.1.1-cp312-cp312-win_amd64.whl"
+sha256 = "f53e442b08449d42821fa4a4fba000095af9f62742a500f978a9f557ec44339a"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/eb/e6/e6e083884cbcfd49c64865af05027fe7011be7b2d9179524f099a1b611f3/charset_normalizer-3.5.2-cp312-cp312-win_amd64.whl"
+sha256 = "780fbe7cab297b81dad9fb8dc5eb003c0468ffb0d9e5f65068c53a34661a96bc"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/7e/d4/7ebdbd03970677812aac39c869717059dbb71a4cfc033ca6e5221787892c/click-8.1.8-py3-none-any.whl"
+sha256 = "63c132bbbed01578a06712a2d1f497bb62d9c1c0d329b7903a866228027263b2"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl"
+sha256 = "4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/b2/fb/08b3f4bf05da99aba8ffea52a558758def16e8516bc75ca94ff73587e7d3/construct-2.10.70-py3-none-any.whl"
+sha256 = "c80be81ef595a1a821ec69dc16099550ed22197615f4320b57cc9ce2a672cb30"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/c9/ad/51f212198681ea7b0deaaf8846ee10af99fba4e894f67b353524eab2bbe5/cryptography-44.0.3-cp39-abi3-win_amd64.whl"
+sha256 = "5d186f32e52e66994dce4f766884bcb9c68b8da62d61d9d215bfe5fb56d21334"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/51/79/119091c98e2bf49e24ed9f3ae69f816d715d2904aefa6a2baa039a2ba0b0/ecdsa-0.19.2-py2.py3-none-any.whl"
+sha256 = "840f5dc5e375c68f36c1a7a5b9caad28f95daa65185c9253c0c08dd952bb7399"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/68/9f/7d68a55b3ced37e1c1935d0bb5a8aeecdf5b94f5fa899691b3737472d03a/esp_coredump-1.17.2-py3-none-any.whl"
+sha256 = "376d594d565fede658481d3780ed5623b9b993592078dfcf75fecbab53901a70"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/57/c1/646665675d568796978b967700ddab69c6d444a852cfb6ce1aab5be64af2/esp_idf_diag-0.2.0-py3-none-any.whl"
+sha256 = "0a23b8ebf263231e9323fc6098c01ec4a51d6dd4ce8af7a1f766e78a91284642"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/64/75/838e8a83de80477504b297dec0c10e0815eb13dc7a2330f23ce15e0cd331/esp_idf_kconfig-2.5.4-py3-none-any.whl"
+sha256 = "b2aaafb54c9eca2cef362adbda69a026265cc4a818aa10202ec16b9c7042ebe6"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/e8/f9/a6449bf5cd1376b35657128668a5303e46fe164d7e77ad92b048854afa76/esp_idf_monitor-1.10.0-py3-none-any.whl"
+sha256 = "b7a328f580f771ce1c3e306f6ac7d8c2c2e54f9091fa3f60908214be072feb48"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/71/29/6d0c93dd2eca11491be5da86b9a50ff77c9deb09d9f521aab4c7d7ea79e6/esp_idf_nvs_partition_gen-0.1.9-py3-none-any.whl"
+sha256 = "9655b81dcfac034372bc00ac301f26830619abdd622949efb70cb7f78c80ba12"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/df/0a/0d9117c0f1cd521e4e5f1c7e1b12fd2009ad7878ae593650e87cd67a896e/esp_idf_panic_decoder-1.5.0-py3-none-any.whl"
+sha256 = "c711abafb99efdc343e19c45b6416b14a863fbe29115fafa8264cefaab85b8ea"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/b9/72/9cf583ab6dc3e482b7adefa5076db0b874bb00d63022bc8d69b80d8a545b/esp_idf_size-1.7.1-py3-none-any.whl"
+sha256 = "34d35fe95f4b1e971099457591ad9399fc09c08fd1cc0d157aa11961dfb4562f"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/0d/63/5cbd52f1993887756b7d60d4b7a8a99ee0b2efda7526ae43d3fa2eefbf7f/esp_pylib-1.2.0-py3-none-any.whl"
+sha256 = "581fd31eb20db4b80519fe883eaeacf5b3c6a2c0b7cce353a7d326ae7cbd4f5f"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/84/56/caad4b087a8942a3c59a0f56e9ffb055860a172dcf895236f167ad4a17a7/freertos_gdb-1.0.4-py3-none-any.whl"
+sha256 = "f924aa5c51318d9978afffca57bb07b979569a2c0adddacfcd931ac8d58ee53b"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/ab/d3/6286330276703a6096f26a440aa1fc480949a31a097babb6f7ff8ef98fdf/idf_component_manager-2.5.2-py3-none-any.whl"
+sha256 = "a03989e62f6522dc09475587d1f6395dde408dbc2fb71fc7609c648e477a097a"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/58/a2/bb081bab032533a855d44de1d56f8e8426114ff1ba5d1f07a438a0a654f8/idna-3.20-py3-none-any.whl"
+sha256 = "ab7ae7122974553370f0bdb919e1a960b2cd1bc1ef0276416d896db81c14582c"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/97/78/79461288da2b13ed0a13deb65c4ad1428acb674b95278fa9abf1cefe62a2/intelhex-2.3.0-py2.py3-none-any.whl"
+sha256 = "87cc5225657524ec6361354be928adfd56bcf2a3dcc646c40f8f094c39c07db4"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/0c/ec/e1db9922bceb168197a558a2b8c03a7963f1afe93517ddd3cf99f202f996/jsonref-1.1.0-py3-none-any.whl"
+sha256 = "590dc7773df6c21cbf948b5dac07a72a251db28b0238ceecce0a2abfa8ec30a9"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/b3/81/4da04ced5a082363ecfa159c010d200ecbd959ae410c10c0264a38cac0f5/markdown_it_py-4.2.0-py3-none-any.whl"
+sha256 = "9f7ebbcd14fe59494226453aed97c1070d83f8d24b6fc3a3bcf9a38092641c4a"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl"
+sha256 = "84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/63/34/ba1c580383c9eada3711951fef0795c80b829a078d72188184bcab9dd527/packaging-26.3-py3-none-any.whl"
+sha256 = "d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/9a/70/875f4a23bfc4731703a5835487d0d2fb999031bd415e7d17c0ae615c18b7/pathvalidate-3.3.1-py3-none-any.whl"
+sha256 = "5263baab691f8e1af96092fa5137ee17df5bdfbd6cff1fcac4d6ef4bc2e1735f"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/b4/90/e2159492b5426be0c1fef7acba807a03511f97c5f86b3caeda6ad92351a7/psutil-7.2.2-cp37-abi3-win_amd64.whl"
+sha256 = "eb7e81434c8d223ec4a219b5fc1c47d0417b12be7ea866e24fb5ad6e84b3d988"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/70/8b/d511486697773a3b2789f248576bee892882ee87b6c2408ffc10a1588bcc/pyclang-0.7.0-py3-none-any.whl"
+sha256 = "a19d333ab02ab0df486e29fabf961b8e3748d8b5343d8170764e49f114bb8393"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/b6/ae/315bbeee126a769cbde43cf4908acb4b40408d8bf8bbf334dd7368d8dadf/pycparser-3.12-py3-none-any.whl"
+sha256 = "a076f3f489b39b43ed13563a1dafe42447445bec2e294154ec5c57fcdda4c85e"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/97/01/c71a71258b58659c72504e5fd65b451f6e36e34dc931d0b237ded213c814/pydantic-2.14.2-py3-none-any.whl"
+sha256 = "7efbf7507b937931cd32a5755acb00ea1cf5ccb1d4e8067a5850d5069e382118"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/b4/fb/679144362d7e5162519d9f6631ec982521417de3196351c6c56485f5b29f/pydantic_core-2.50.2-cp312-cp312-win_amd64.whl"
+sha256 = "b381574614245f18fdb2d6d1aa8f149e225869c47b5ee7f81812de8977817314"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/39/88/4131c51ff87b7cd7f82a1194d0c0a2b7ca68c72d9da04c3b7e69ab91a79f/pydantic_settings-2.16.2-py3-none-any.whl"
+sha256 = "8d523e5c129b097686bde019bd6109bff53f4c8c3f63f1ddf9933ffa42e5ab4f"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/46/2a/f9697576603dae937727827505a6126a066affb227034e77e6f9068910da/pyelftools-0.33-py3-none-any.whl"
+sha256 = "f215ad5f47d3f1373a21496a6c9e0707c622840d0622f23ff7ce08678b020036"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/c8/4b/71df806f4d260ddf01f9e431f5a6538a4155db3ec84a131d7e087178c591/pygdbmi-0.11.0.0-py3-none-any.whl"
+sha256 = "f7cac28e1d558927444c880ed1e65da1a5d8686121a3aac16f42fb84d3ceb60d"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/71/46/17f022dd3e953bf20a04a028a21ec746d942f8d2af30fa0f124fa0e6a684/pygments-2.21.0-py3-none-any.whl"
+sha256 = "2363c69b61c4a97c838da3b130dcd6468f4848992b21a82f2a63ec34377137d9"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/10/5e/1aa9a93198c6b64513c9d7752de7422c06402de6600a8767da1524f9570b/pyparsing-3.2.5-py3-none-any.whl"
+sha256 = "e38a4f02064cf41fe6593d328d0512495ad1f3d8a91c4f73fc401b3079a59a5e"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/07/bc/587a445451b253b285629263eb51c2d8e9bcea4fc97826266d186f96f558/pyserial-3.5-py2.py3-none-any.whl"
+sha256 = "c4451db6ba391ca6ca299fb3ec7bae67a5c55dde170964c7a14ceefec02f2cf0"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/60/d1/38f3a3405989a89ac18390803e70c6ad7c7760da4f9b83cbeca0c44a0c72/python_dotenv-1.2.4-py3-none-any.whl"
+sha256 = "42269a8a5b3fd54ffa6f3d84b18abed50064717576b4ecf03dc4a55d8aa04fdc"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/86/bf/899e81e4cce32febab4fb42bb97dcdf66bc135272882d1987881a4b519e9/pyyaml-6.0.3-cp312-cp312-win_amd64.whl"
+sha256 = "5fcd34e47f6e0b794d17de1b4ff496c00986e1c83f7ab2fb8fcfe9616ff7477b"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/09/19/1bb346c0e581557c88946d2bb979b2bee8992e72314cfb418b5440e383db/reedsolo-1.7.0-py3-none-any.whl"
+sha256 = "2b6a3e402a1ee3e1eea3f932f81e6c0b7bbc615588074dca1dbbcdeb055002bd"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/a0/f4/c67b0b3f1b9245e8d266f0f112c500d50e5b4e83cb6f3b71b6528104182a/requests-2.34.2-py3-none-any.whl"
+sha256 = "2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/e1/d5/de8f089119205a09da657ed4784c584ede8381a0ce6821212a6d4ca47054/requests_file-3.0.1-py2.py3-none-any.whl"
+sha256 = "d0f5eb94353986d998f80ac63c7f146a307728be051d4d1cd390dbdb59c10fa2"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/3f/51/d4db610ef29373b879047326cbf6fa98b6c1969d6f6dc423279de2b1be2c/requests_toolbelt-1.0.0-py2.py3-none-any.whl"
+sha256 = "cccfdd665f0a24fcf4726e690f65639d272bb0637b9b92dfd91a5568ccf6bd06"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/82/3b/64d4899d73f91ba49a8c18a8ff3f0ea8f1c1d75481760df8c68ef5235bf5/rich-15.0.0-py3-none-any.whl"
+sha256 = "33bd4ef74232fb73fe9279a257718407f169c09b78a87ad3d296f548e27de0bb"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/b5/51/b2b91aec091e86bc961e5164f00207d89f133cc82b5ddad541d2132ea819/rich_click-1.9.9-py3-none-any.whl"
+sha256 = "365e7a9d0adb42e41ea832a0a12e02c44c079a26536dee688125eb9814f97274"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/b8/0c/51f6841f1d84f404f92463fc2b1ba0da357ca1e3db6b7fbda26956c3b82a/ruamel_yaml-0.19.1-py3-none-any.whl"
+sha256 = "27592957fedf6e0b62f281e96effd28043345e0e66001f97683aa9a40c667c93"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/ef/55/6dc6d6bb953bdfc52519a0059592c52b6e3b8ad51cf8256dffceb55b0610/setuptools-84.2.1-py3-none-any.whl"
+sha256 = "ca140b45d5325a9478f880e351484f62fef15f336462e449ca0c03c873d589c2"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl"
+sha256 = "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/46/ab/aab78827ba7e0d65fe346b86d1d61e0792c38d5f9b7547e0f71b7027c835/tibs-0.5.7-cp38-abi3-win_amd64.whl"
+sha256 = "a61d36155f8ab8642e1b6744e13822f72050fc7ec4f86ec6965295afa04949e2"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/a7/03/921a3d3c75785aca9ebfbfcabfbc3a1be12e2ab5265deb026d55a5a3f83e/tqdm-4.70.1-py3-none-any.whl"
+sha256 = "c293e525e6fef9c20e8728fd4612df02a0aa31bb5fe91ecd93e123b1b7bffa73"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/d1/36/4d67927fd47b89af4a00f65f55a7370e28778cd50e972c2430487e3ecc27/tree_sitter-0.26.0-cp312-cp312-win_amd64.whl"
+sha256 = "ca89e361a276dbc934b28a43dd881199e25d34ff5493ee0ce45f3c52a6124a37"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/c1/f7/72a1d6b42dd31fd37e03ff67e7dc5ee572301499e6b216002b8dd42a1714/tree_sitter_c-0.24.2-cp310-abi3-win_amd64.whl"
+sha256 = "abb549225091f7b25df2dd3a0143ece6e208f7055d8bcb4700b41ee79b9ef1e1"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/51/e9/3a7820be2bb0fe53b6bc9c3be26d3d1158004e4c3ab953aa6840b955b1e9/truststore-0.10.5-py3-none-any.whl"
+sha256 = "9aaaedaefaf06d8b206278cf8b5012bc897f485a874503501e12d776df78951c"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl"
+sha256 = "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/67/81/4add07e5172b7ac40d8ed5ff580409a7801a4fe26d529bdd915401dabfbe/typing_inspection-0.4.4-py3-none-any.whl"
+sha256 = "65b8397ba37ccbce054456aaccddfc91e6e3083c92824df348d96ca832f3f147"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/33/cf/8435d5a7159e2a9c83a95896ed596f68cf798005fe107cc655b5c5c14704/urllib3-1.26.20-py2.py3-none-any.whl"
+sha256 = "0ed14ccfbf1c30a9072c7ca157e4319b70d65f623e91e7b32fadb2853431016e"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/8b/ee/8c5da36191524856fb2c675f8cae99211ccf77bcd4e4a9010477e08000ac/windows_curses-2.4.2-cp312-cp312-win_amd64.whl"
+sha256 = "df782859176f9e8142618e4966d6cee7a53a8b1c819faeb6e606a60fa4f8972a"
+format = "wheel"
+
+[[sources.windows-x64.python]]
+url = "https://files.pythonhosted.org/packages/84/19/f68b27fd43564d69277e956d13b8c2b352e7f1af4fb5d6e5c43e5419e61c/esptool-4.12.0.tar.gz"
+sha256 = "d797f6529d582173508baf0572542ddadf53aae8c92c84ea9f420f242464103c"
+format = "tar.gz"
+strip = 1
+include = ["esptool", "espefuse", "espsecure", "esp_rfc2217_server", "esptool.egg-info", "LICENSE"]
+
+[sources.macos-arm64]
+digest = "sha256:633f50c75f76cd00a3ffb48b9587dcd5c17ab857fd0bb2654e459fc0606cd103"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/99/91/8acff4f5e50511b911bbccb72b8628a49c68ce14148cd9f6431094859a90/annotated_types-0.8.0-py3-none-any.whl"
+sha256 = "f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/46/bd/551ee6af426af84ca33e02622be722925c196608e9127d731ef17c47f06e/argcomplete-3.7.2-py3-none-any.whl"
+sha256 = "6029205678bdd9c1c728a155f5f9ecf5812393f969eef58807641a2bc2aa5b19"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/84/79/435925f261b08c44d5affc9556cffd06dae2626535f0af44dd044855c334/bitarray-3.12.3-cp312-cp312-macosx_11_0_arm64.whl"
+sha256 = "9c5dfba2b068a54915f274adb7b4ab2852d2ba28f02151c0927b1135d75bf8dd"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/bf/02/1a870bab76f2896d827aa4963be95e56675ffa1453e53525d13c43036edf/bitstring-4.4.0-py3-none-any.whl"
+sha256 = "feac49524fcf3ef27e6081e86f02b10d2adf6c3773bf22fbe0e7eea9534bc737"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/32/d1/a3652fe2c19134d0d15922177821d863cbd7e842d53a21bbe7e8e3a1b5ac/certifi-2026.10.23-py3-none-any.whl"
+sha256 = "e9b54de76e530bb6cf0ccd036787103acb58fd42ba930ea8bf948ddbaa2f61d1"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/54/7d/16e5a096677b5e313ca80cd5e5170efa3ea44624a82bb111925522da64b1/cffi-2.1.1-cp312-cp312-macosx_11_0_arm64.whl"
+sha256 = "f81b3b8f3d4e343550fa4baa0e479bba9f2d29ce9c2e9b51d1ce1718d7442fcf"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/e7/c8/693809898870237d82785a03f3b2b58fe4c9f14669f84a7d4e623c92a59e/charset_normalizer-3.5.2-cp312-cp312-macosx_10_13_universal2.whl"
+sha256 = "ed2a239c0ea213acc1908150a3037257083c7c083128f1a4cec2ec4b97dca491"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/7e/d4/7ebdbd03970677812aac39c869717059dbb71a4cfc033ca6e5221787892c/click-8.1.8-py3-none-any.whl"
+sha256 = "63c132bbbed01578a06712a2d1f497bb62d9c1c0d329b7903a866228027263b2"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl"
+sha256 = "4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/b2/fb/08b3f4bf05da99aba8ffea52a558758def16e8516bc75ca94ff73587e7d3/construct-2.10.70-py3-none-any.whl"
+sha256 = "c80be81ef595a1a821ec69dc16099550ed22197615f4320b57cc9ce2a672cb30"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://dl.espressif.com/pypi/cryptography/cryptography-44.0.3-cp39-abi3-macosx_10_13_universal2.whl"
+sha256 = "d1be4baa62978c03d2b386c2589882006a27ba02317bf9ea6623cfca272e6007"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/51/79/119091c98e2bf49e24ed9f3ae69f816d715d2904aefa6a2baa039a2ba0b0/ecdsa-0.19.2-py2.py3-none-any.whl"
+sha256 = "840f5dc5e375c68f36c1a7a5b9caad28f95daa65185c9253c0c08dd952bb7399"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/68/9f/7d68a55b3ced37e1c1935d0bb5a8aeecdf5b94f5fa899691b3737472d03a/esp_coredump-1.17.2-py3-none-any.whl"
+sha256 = "376d594d565fede658481d3780ed5623b9b993592078dfcf75fecbab53901a70"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/57/c1/646665675d568796978b967700ddab69c6d444a852cfb6ce1aab5be64af2/esp_idf_diag-0.2.0-py3-none-any.whl"
+sha256 = "0a23b8ebf263231e9323fc6098c01ec4a51d6dd4ce8af7a1f766e78a91284642"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/64/75/838e8a83de80477504b297dec0c10e0815eb13dc7a2330f23ce15e0cd331/esp_idf_kconfig-2.5.4-py3-none-any.whl"
+sha256 = "b2aaafb54c9eca2cef362adbda69a026265cc4a818aa10202ec16b9c7042ebe6"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/e8/f9/a6449bf5cd1376b35657128668a5303e46fe164d7e77ad92b048854afa76/esp_idf_monitor-1.10.0-py3-none-any.whl"
+sha256 = "b7a328f580f771ce1c3e306f6ac7d8c2c2e54f9091fa3f60908214be072feb48"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/71/29/6d0c93dd2eca11491be5da86b9a50ff77c9deb09d9f521aab4c7d7ea79e6/esp_idf_nvs_partition_gen-0.1.9-py3-none-any.whl"
+sha256 = "9655b81dcfac034372bc00ac301f26830619abdd622949efb70cb7f78c80ba12"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/df/0a/0d9117c0f1cd521e4e5f1c7e1b12fd2009ad7878ae593650e87cd67a896e/esp_idf_panic_decoder-1.5.0-py3-none-any.whl"
+sha256 = "c711abafb99efdc343e19c45b6416b14a863fbe29115fafa8264cefaab85b8ea"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/b9/72/9cf583ab6dc3e482b7adefa5076db0b874bb00d63022bc8d69b80d8a545b/esp_idf_size-1.7.1-py3-none-any.whl"
+sha256 = "34d35fe95f4b1e971099457591ad9399fc09c08fd1cc0d157aa11961dfb4562f"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/0d/63/5cbd52f1993887756b7d60d4b7a8a99ee0b2efda7526ae43d3fa2eefbf7f/esp_pylib-1.2.0-py3-none-any.whl"
+sha256 = "581fd31eb20db4b80519fe883eaeacf5b3c6a2c0b7cce353a7d326ae7cbd4f5f"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/84/56/caad4b087a8942a3c59a0f56e9ffb055860a172dcf895236f167ad4a17a7/freertos_gdb-1.0.4-py3-none-any.whl"
+sha256 = "f924aa5c51318d9978afffca57bb07b979569a2c0adddacfcd931ac8d58ee53b"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/ab/d3/6286330276703a6096f26a440aa1fc480949a31a097babb6f7ff8ef98fdf/idf_component_manager-2.5.2-py3-none-any.whl"
+sha256 = "a03989e62f6522dc09475587d1f6395dde408dbc2fb71fc7609c648e477a097a"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/58/a2/bb081bab032533a855d44de1d56f8e8426114ff1ba5d1f07a438a0a654f8/idna-3.20-py3-none-any.whl"
+sha256 = "ab7ae7122974553370f0bdb919e1a960b2cd1bc1ef0276416d896db81c14582c"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/97/78/79461288da2b13ed0a13deb65c4ad1428acb674b95278fa9abf1cefe62a2/intelhex-2.3.0-py2.py3-none-any.whl"
+sha256 = "87cc5225657524ec6361354be928adfd56bcf2a3dcc646c40f8f094c39c07db4"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/0c/ec/e1db9922bceb168197a558a2b8c03a7963f1afe93517ddd3cf99f202f996/jsonref-1.1.0-py3-none-any.whl"
+sha256 = "590dc7773df6c21cbf948b5dac07a72a251db28b0238ceecce0a2abfa8ec30a9"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/b3/81/4da04ced5a082363ecfa159c010d200ecbd959ae410c10c0264a38cac0f5/markdown_it_py-4.2.0-py3-none-any.whl"
+sha256 = "9f7ebbcd14fe59494226453aed97c1070d83f8d24b6fc3a3bcf9a38092641c4a"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl"
+sha256 = "84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/63/34/ba1c580383c9eada3711951fef0795c80b829a078d72188184bcab9dd527/packaging-26.3-py3-none-any.whl"
+sha256 = "d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/9a/70/875f4a23bfc4731703a5835487d0d2fb999031bd415e7d17c0ae615c18b7/pathvalidate-3.3.1-py3-none-any.whl"
+sha256 = "5263baab691f8e1af96092fa5137ee17df5bdfbd6cff1fcac4d6ef4bc2e1735f"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/80/c4/f5af4c1ca8c1eeb2e92ccca14ce8effdeec651d5ab6053c589b074eda6e1/psutil-7.2.2-cp36-abi3-macosx_11_0_arm64.whl"
+sha256 = "1a7b04c10f32cc88ab39cbf606e117fd74721c831c98a27dc04578deb0c16979"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/70/8b/d511486697773a3b2789f248576bee892882ee87b6c2408ffc10a1588bcc/pyclang-0.7.0-py3-none-any.whl"
+sha256 = "a19d333ab02ab0df486e29fabf961b8e3748d8b5343d8170764e49f114bb8393"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/b6/ae/315bbeee126a769cbde43cf4908acb4b40408d8bf8bbf334dd7368d8dadf/pycparser-3.12-py3-none-any.whl"
+sha256 = "a076f3f489b39b43ed13563a1dafe42447445bec2e294154ec5c57fcdda4c85e"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/97/01/c71a71258b58659c72504e5fd65b451f6e36e34dc931d0b237ded213c814/pydantic-2.14.2-py3-none-any.whl"
+sha256 = "7efbf7507b937931cd32a5755acb00ea1cf5ccb1d4e8067a5850d5069e382118"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/f9/0b/92463ae7be78d73885487f72c4599902c2cc190378bccaad5718b7495250/pydantic_core-2.50.2-cp312-cp312-macosx_11_0_arm64.whl"
+sha256 = "596921489390a002d6a5e303384a0f1f98384f8bb550fbf38a1aafa6093da0f9"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/39/88/4131c51ff87b7cd7f82a1194d0c0a2b7ca68c72d9da04c3b7e69ab91a79f/pydantic_settings-2.16.2-py3-none-any.whl"
+sha256 = "8d523e5c129b097686bde019bd6109bff53f4c8c3f63f1ddf9933ffa42e5ab4f"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/46/2a/f9697576603dae937727827505a6126a066affb227034e77e6f9068910da/pyelftools-0.33-py3-none-any.whl"
+sha256 = "f215ad5f47d3f1373a21496a6c9e0707c622840d0622f23ff7ce08678b020036"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/c8/4b/71df806f4d260ddf01f9e431f5a6538a4155db3ec84a131d7e087178c591/pygdbmi-0.11.0.0-py3-none-any.whl"
+sha256 = "f7cac28e1d558927444c880ed1e65da1a5d8686121a3aac16f42fb84d3ceb60d"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/71/46/17f022dd3e953bf20a04a028a21ec746d942f8d2af30fa0f124fa0e6a684/pygments-2.21.0-py3-none-any.whl"
+sha256 = "2363c69b61c4a97c838da3b130dcd6468f4848992b21a82f2a63ec34377137d9"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/10/5e/1aa9a93198c6b64513c9d7752de7422c06402de6600a8767da1524f9570b/pyparsing-3.2.5-py3-none-any.whl"
+sha256 = "e38a4f02064cf41fe6593d328d0512495ad1f3d8a91c4f73fc401b3079a59a5e"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/07/bc/587a445451b253b285629263eb51c2d8e9bcea4fc97826266d186f96f558/pyserial-3.5-py2.py3-none-any.whl"
+sha256 = "c4451db6ba391ca6ca299fb3ec7bae67a5c55dde170964c7a14ceefec02f2cf0"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/60/d1/38f3a3405989a89ac18390803e70c6ad7c7760da4f9b83cbeca0c44a0c72/python_dotenv-1.2.4-py3-none-any.whl"
+sha256 = "42269a8a5b3fd54ffa6f3d84b18abed50064717576b4ecf03dc4a55d8aa04fdc"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://dl.espressif.com/pypi/pyyaml/pyyaml-6.0.3-cp312-cp312-macosx_11_0_arm64.whl"
+sha256 = "a8744486ee335df2c894c4ac74aca6db7476306e3a6fc035d16b9438e30ab6c8"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/09/19/1bb346c0e581557c88946d2bb979b2bee8992e72314cfb418b5440e383db/reedsolo-1.7.0-py3-none-any.whl"
+sha256 = "2b6a3e402a1ee3e1eea3f932f81e6c0b7bbc615588074dca1dbbcdeb055002bd"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/a0/f4/c67b0b3f1b9245e8d266f0f112c500d50e5b4e83cb6f3b71b6528104182a/requests-2.34.2-py3-none-any.whl"
+sha256 = "2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/e1/d5/de8f089119205a09da657ed4784c584ede8381a0ce6821212a6d4ca47054/requests_file-3.0.1-py2.py3-none-any.whl"
+sha256 = "d0f5eb94353986d998f80ac63c7f146a307728be051d4d1cd390dbdb59c10fa2"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/3f/51/d4db610ef29373b879047326cbf6fa98b6c1969d6f6dc423279de2b1be2c/requests_toolbelt-1.0.0-py2.py3-none-any.whl"
+sha256 = "cccfdd665f0a24fcf4726e690f65639d272bb0637b9b92dfd91a5568ccf6bd06"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/82/3b/64d4899d73f91ba49a8c18a8ff3f0ea8f1c1d75481760df8c68ef5235bf5/rich-15.0.0-py3-none-any.whl"
+sha256 = "33bd4ef74232fb73fe9279a257718407f169c09b78a87ad3d296f548e27de0bb"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/b5/51/b2b91aec091e86bc961e5164f00207d89f133cc82b5ddad541d2132ea819/rich_click-1.9.9-py3-none-any.whl"
+sha256 = "365e7a9d0adb42e41ea832a0a12e02c44c079a26536dee688125eb9814f97274"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/b8/0c/51f6841f1d84f404f92463fc2b1ba0da357ca1e3db6b7fbda26956c3b82a/ruamel_yaml-0.19.1-py3-none-any.whl"
+sha256 = "27592957fedf6e0b62f281e96effd28043345e0e66001f97683aa9a40c667c93"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/ef/55/6dc6d6bb953bdfc52519a0059592c52b6e3b8ad51cf8256dffceb55b0610/setuptools-84.2.1-py3-none-any.whl"
+sha256 = "ca140b45d5325a9478f880e351484f62fef15f336462e449ca0c03c873d589c2"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl"
+sha256 = "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/74/71/4c21ccc5c2e1672f9cd91ed2c46604c250cffd9d386113772dded128b5cf/tibs-0.5.7-cp38-abi3-macosx_11_0_arm64.whl"
+sha256 = "a883ca13a922a66b2c1326a9c188123a574741a72510a4bf52fd6f97db191e44"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/a7/03/921a3d3c75785aca9ebfbfcabfbc3a1be12e2ab5265deb026d55a5a3f83e/tqdm-4.70.1-py3-none-any.whl"
+sha256 = "c293e525e6fef9c20e8728fd4612df02a0aa31bb5fe91ecd93e123b1b7bffa73"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/54/6f/8bb61957f16ec1b1d92410a006cdc84a952b6352a7313b2ad299f2d21484/tree_sitter-0.26.0-cp312-cp312-macosx_11_0_arm64.whl"
+sha256 = "918d89529786873f0982a0f59c2a303cd065fbfd1b903d71a8e4e1584f67b42e"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/c1/1c/1140db75e7e375cda3c68792a33826c4fd40b5b98c3259d93c75f6c8368f/tree_sitter_c-0.24.2-cp310-abi3-macosx_11_0_arm64.whl"
+sha256 = "97bc80a224d48215d4e6e6376bf30d114f4c317b8145ff1b02afe785d4ba7bdd"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/51/e9/3a7820be2bb0fe53b6bc9c3be26d3d1158004e4c3ab953aa6840b955b1e9/truststore-0.10.5-py3-none-any.whl"
+sha256 = "9aaaedaefaf06d8b206278cf8b5012bc897f485a874503501e12d776df78951c"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl"
+sha256 = "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/67/81/4add07e5172b7ac40d8ed5ff580409a7801a4fe26d529bdd915401dabfbe/typing_inspection-0.4.4-py3-none-any.whl"
+sha256 = "65b8397ba37ccbce054456aaccddfc91e6e3083c92824df348d96ca832f3f147"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/33/cf/8435d5a7159e2a9c83a95896ed596f68cf798005fe107cc655b5c5c14704/urllib3-1.26.20-py2.py3-none-any.whl"
+sha256 = "0ed14ccfbf1c30a9072c7ca157e4319b70d65f623e91e7b32fadb2853431016e"
+format = "wheel"
+
+[[sources.macos-arm64.python]]
+url = "https://files.pythonhosted.org/packages/84/19/f68b27fd43564d69277e956d13b8c2b352e7f1af4fb5d6e5c43e5419e61c/esptool-4.12.0.tar.gz"
+sha256 = "d797f6529d582173508baf0572542ddadf53aae8c92c84ea9f420f242464103c"
+format = "tar.gz"
+strip = 1
+include = ["esptool", "espefuse", "espsecure", "esp_rfc2217_server", "esptool.egg-info", "LICENSE"]
+
+[sources.macos-x64]
+digest = "sha256:09e261658827331282cf4cdeab35ac01d9760f646afe88184f34e87780aa6e64"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/99/91/8acff4f5e50511b911bbccb72b8628a49c68ce14148cd9f6431094859a90/annotated_types-0.8.0-py3-none-any.whl"
+sha256 = "f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/46/bd/551ee6af426af84ca33e02622be722925c196608e9127d731ef17c47f06e/argcomplete-3.7.2-py3-none-any.whl"
+sha256 = "6029205678bdd9c1c728a155f5f9ecf5812393f969eef58807641a2bc2aa5b19"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/a4/dd/be78bc0a881e8b814f4430bf8e127c5d0749e0346bc617d8439cd0c0be05/bitarray-3.12.3-cp312-cp312-macosx_10_13_x86_64.whl"
+sha256 = "0b11cf0cba845328de6115f45e49311bb8e8ff9e5374875466dc7983f10496f7"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/bf/02/1a870bab76f2896d827aa4963be95e56675ffa1453e53525d13c43036edf/bitstring-4.4.0-py3-none-any.whl"
+sha256 = "feac49524fcf3ef27e6081e86f02b10d2adf6c3773bf22fbe0e7eea9534bc737"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/32/d1/a3652fe2c19134d0d15922177821d863cbd7e842d53a21bbe7e8e3a1b5ac/certifi-2026.10.23-py3-none-any.whl"
+sha256 = "e9b54de76e530bb6cf0ccd036787103acb58fd42ba930ea8bf948ddbaa2f61d1"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/10/69/43965eccfdead3b9220015fd1320e117be8c6ed01a62ffab76eeb752f5d5/cffi-2.1.1-cp312-cp312-macosx_10_15_x86_64.whl"
+sha256 = "c8c69575568085ba0b1b10c0249d779a214aea6f6522e949a0fc9fb0fcb449d0"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/e7/c8/693809898870237d82785a03f3b2b58fe4c9f14669f84a7d4e623c92a59e/charset_normalizer-3.5.2-cp312-cp312-macosx_10_13_universal2.whl"
+sha256 = "ed2a239c0ea213acc1908150a3037257083c7c083128f1a4cec2ec4b97dca491"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/7e/d4/7ebdbd03970677812aac39c869717059dbb71a4cfc033ca6e5221787892c/click-8.1.8-py3-none-any.whl"
+sha256 = "63c132bbbed01578a06712a2d1f497bb62d9c1c0d329b7903a866228027263b2"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl"
+sha256 = "4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/b2/fb/08b3f4bf05da99aba8ffea52a558758def16e8516bc75ca94ff73587e7d3/construct-2.10.70-py3-none-any.whl"
+sha256 = "c80be81ef595a1a821ec69dc16099550ed22197615f4320b57cc9ce2a672cb30"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://dl.espressif.com/pypi/cryptography/cryptography-44.0.3-cp39-abi3-macosx_10_13_universal2.whl"
+sha256 = "d1be4baa62978c03d2b386c2589882006a27ba02317bf9ea6623cfca272e6007"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/51/79/119091c98e2bf49e24ed9f3ae69f816d715d2904aefa6a2baa039a2ba0b0/ecdsa-0.19.2-py2.py3-none-any.whl"
+sha256 = "840f5dc5e375c68f36c1a7a5b9caad28f95daa65185c9253c0c08dd952bb7399"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/68/9f/7d68a55b3ced37e1c1935d0bb5a8aeecdf5b94f5fa899691b3737472d03a/esp_coredump-1.17.2-py3-none-any.whl"
+sha256 = "376d594d565fede658481d3780ed5623b9b993592078dfcf75fecbab53901a70"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/57/c1/646665675d568796978b967700ddab69c6d444a852cfb6ce1aab5be64af2/esp_idf_diag-0.2.0-py3-none-any.whl"
+sha256 = "0a23b8ebf263231e9323fc6098c01ec4a51d6dd4ce8af7a1f766e78a91284642"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/64/75/838e8a83de80477504b297dec0c10e0815eb13dc7a2330f23ce15e0cd331/esp_idf_kconfig-2.5.4-py3-none-any.whl"
+sha256 = "b2aaafb54c9eca2cef362adbda69a026265cc4a818aa10202ec16b9c7042ebe6"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/e8/f9/a6449bf5cd1376b35657128668a5303e46fe164d7e77ad92b048854afa76/esp_idf_monitor-1.10.0-py3-none-any.whl"
+sha256 = "b7a328f580f771ce1c3e306f6ac7d8c2c2e54f9091fa3f60908214be072feb48"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/71/29/6d0c93dd2eca11491be5da86b9a50ff77c9deb09d9f521aab4c7d7ea79e6/esp_idf_nvs_partition_gen-0.1.9-py3-none-any.whl"
+sha256 = "9655b81dcfac034372bc00ac301f26830619abdd622949efb70cb7f78c80ba12"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/df/0a/0d9117c0f1cd521e4e5f1c7e1b12fd2009ad7878ae593650e87cd67a896e/esp_idf_panic_decoder-1.5.0-py3-none-any.whl"
+sha256 = "c711abafb99efdc343e19c45b6416b14a863fbe29115fafa8264cefaab85b8ea"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/b9/72/9cf583ab6dc3e482b7adefa5076db0b874bb00d63022bc8d69b80d8a545b/esp_idf_size-1.7.1-py3-none-any.whl"
+sha256 = "34d35fe95f4b1e971099457591ad9399fc09c08fd1cc0d157aa11961dfb4562f"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/0d/63/5cbd52f1993887756b7d60d4b7a8a99ee0b2efda7526ae43d3fa2eefbf7f/esp_pylib-1.2.0-py3-none-any.whl"
+sha256 = "581fd31eb20db4b80519fe883eaeacf5b3c6a2c0b7cce353a7d326ae7cbd4f5f"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/84/56/caad4b087a8942a3c59a0f56e9ffb055860a172dcf895236f167ad4a17a7/freertos_gdb-1.0.4-py3-none-any.whl"
+sha256 = "f924aa5c51318d9978afffca57bb07b979569a2c0adddacfcd931ac8d58ee53b"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/ab/d3/6286330276703a6096f26a440aa1fc480949a31a097babb6f7ff8ef98fdf/idf_component_manager-2.5.2-py3-none-any.whl"
+sha256 = "a03989e62f6522dc09475587d1f6395dde408dbc2fb71fc7609c648e477a097a"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/58/a2/bb081bab032533a855d44de1d56f8e8426114ff1ba5d1f07a438a0a654f8/idna-3.20-py3-none-any.whl"
+sha256 = "ab7ae7122974553370f0bdb919e1a960b2cd1bc1ef0276416d896db81c14582c"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/97/78/79461288da2b13ed0a13deb65c4ad1428acb674b95278fa9abf1cefe62a2/intelhex-2.3.0-py2.py3-none-any.whl"
+sha256 = "87cc5225657524ec6361354be928adfd56bcf2a3dcc646c40f8f094c39c07db4"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/0c/ec/e1db9922bceb168197a558a2b8c03a7963f1afe93517ddd3cf99f202f996/jsonref-1.1.0-py3-none-any.whl"
+sha256 = "590dc7773df6c21cbf948b5dac07a72a251db28b0238ceecce0a2abfa8ec30a9"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/b3/81/4da04ced5a082363ecfa159c010d200ecbd959ae410c10c0264a38cac0f5/markdown_it_py-4.2.0-py3-none-any.whl"
+sha256 = "9f7ebbcd14fe59494226453aed97c1070d83f8d24b6fc3a3bcf9a38092641c4a"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl"
+sha256 = "84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/63/34/ba1c580383c9eada3711951fef0795c80b829a078d72188184bcab9dd527/packaging-26.3-py3-none-any.whl"
+sha256 = "d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/9a/70/875f4a23bfc4731703a5835487d0d2fb999031bd415e7d17c0ae615c18b7/pathvalidate-3.3.1-py3-none-any.whl"
+sha256 = "5263baab691f8e1af96092fa5137ee17df5bdfbd6cff1fcac4d6ef4bc2e1735f"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/e7/36/5ee6e05c9bd427237b11b3937ad82bb8ad2752d72c6969314590dd0c2f6e/psutil-7.2.2-cp36-abi3-macosx_10_9_x86_64.whl"
+sha256 = "ed0cace939114f62738d808fdcecd4c869222507e266e574799e9c0faa17d486"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/70/8b/d511486697773a3b2789f248576bee892882ee87b6c2408ffc10a1588bcc/pyclang-0.7.0-py3-none-any.whl"
+sha256 = "a19d333ab02ab0df486e29fabf961b8e3748d8b5343d8170764e49f114bb8393"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/b6/ae/315bbeee126a769cbde43cf4908acb4b40408d8bf8bbf334dd7368d8dadf/pycparser-3.12-py3-none-any.whl"
+sha256 = "a076f3f489b39b43ed13563a1dafe42447445bec2e294154ec5c57fcdda4c85e"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/97/01/c71a71258b58659c72504e5fd65b451f6e36e34dc931d0b237ded213c814/pydantic-2.14.2-py3-none-any.whl"
+sha256 = "7efbf7507b937931cd32a5755acb00ea1cf5ccb1d4e8067a5850d5069e382118"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/d6/65/6609a66cda909d414c58438f9bd70b1e947fe12c25f6bd40c93121afd7ef/pydantic_core-2.50.2-cp312-cp312-macosx_10_12_x86_64.whl"
+sha256 = "e3d824b6152e1c0fd58dc6266f2de470eb7b2286135294f5f7cd26a0f0693738"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/39/88/4131c51ff87b7cd7f82a1194d0c0a2b7ca68c72d9da04c3b7e69ab91a79f/pydantic_settings-2.16.2-py3-none-any.whl"
+sha256 = "8d523e5c129b097686bde019bd6109bff53f4c8c3f63f1ddf9933ffa42e5ab4f"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/46/2a/f9697576603dae937727827505a6126a066affb227034e77e6f9068910da/pyelftools-0.33-py3-none-any.whl"
+sha256 = "f215ad5f47d3f1373a21496a6c9e0707c622840d0622f23ff7ce08678b020036"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/c8/4b/71df806f4d260ddf01f9e431f5a6538a4155db3ec84a131d7e087178c591/pygdbmi-0.11.0.0-py3-none-any.whl"
+sha256 = "f7cac28e1d558927444c880ed1e65da1a5d8686121a3aac16f42fb84d3ceb60d"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/71/46/17f022dd3e953bf20a04a028a21ec746d942f8d2af30fa0f124fa0e6a684/pygments-2.21.0-py3-none-any.whl"
+sha256 = "2363c69b61c4a97c838da3b130dcd6468f4848992b21a82f2a63ec34377137d9"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/10/5e/1aa9a93198c6b64513c9d7752de7422c06402de6600a8767da1524f9570b/pyparsing-3.2.5-py3-none-any.whl"
+sha256 = "e38a4f02064cf41fe6593d328d0512495ad1f3d8a91c4f73fc401b3079a59a5e"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/07/bc/587a445451b253b285629263eb51c2d8e9bcea4fc97826266d186f96f558/pyserial-3.5-py2.py3-none-any.whl"
+sha256 = "c4451db6ba391ca6ca299fb3ec7bae67a5c55dde170964c7a14ceefec02f2cf0"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/60/d1/38f3a3405989a89ac18390803e70c6ad7c7760da4f9b83cbeca0c44a0c72/python_dotenv-1.2.4-py3-none-any.whl"
+sha256 = "42269a8a5b3fd54ffa6f3d84b18abed50064717576b4ecf03dc4a55d8aa04fdc"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://dl.espressif.com/pypi/pyyaml/pyyaml-6.0.3-cp312-cp312-macosx_10_13_x86_64.whl"
+sha256 = "747e70a2225e00b4b9429d21c76d0cc701feaff5e5b3db95fa27d7b571287d5d"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/09/19/1bb346c0e581557c88946d2bb979b2bee8992e72314cfb418b5440e383db/reedsolo-1.7.0-py3-none-any.whl"
+sha256 = "2b6a3e402a1ee3e1eea3f932f81e6c0b7bbc615588074dca1dbbcdeb055002bd"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/a0/f4/c67b0b3f1b9245e8d266f0f112c500d50e5b4e83cb6f3b71b6528104182a/requests-2.34.2-py3-none-any.whl"
+sha256 = "2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/e1/d5/de8f089119205a09da657ed4784c584ede8381a0ce6821212a6d4ca47054/requests_file-3.0.1-py2.py3-none-any.whl"
+sha256 = "d0f5eb94353986d998f80ac63c7f146a307728be051d4d1cd390dbdb59c10fa2"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/3f/51/d4db610ef29373b879047326cbf6fa98b6c1969d6f6dc423279de2b1be2c/requests_toolbelt-1.0.0-py2.py3-none-any.whl"
+sha256 = "cccfdd665f0a24fcf4726e690f65639d272bb0637b9b92dfd91a5568ccf6bd06"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/82/3b/64d4899d73f91ba49a8c18a8ff3f0ea8f1c1d75481760df8c68ef5235bf5/rich-15.0.0-py3-none-any.whl"
+sha256 = "33bd4ef74232fb73fe9279a257718407f169c09b78a87ad3d296f548e27de0bb"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/b5/51/b2b91aec091e86bc961e5164f00207d89f133cc82b5ddad541d2132ea819/rich_click-1.9.9-py3-none-any.whl"
+sha256 = "365e7a9d0adb42e41ea832a0a12e02c44c079a26536dee688125eb9814f97274"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/b8/0c/51f6841f1d84f404f92463fc2b1ba0da357ca1e3db6b7fbda26956c3b82a/ruamel_yaml-0.19.1-py3-none-any.whl"
+sha256 = "27592957fedf6e0b62f281e96effd28043345e0e66001f97683aa9a40c667c93"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/ef/55/6dc6d6bb953bdfc52519a0059592c52b6e3b8ad51cf8256dffceb55b0610/setuptools-84.2.1-py3-none-any.whl"
+sha256 = "ca140b45d5325a9478f880e351484f62fef15f336462e449ca0c03c873d589c2"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl"
+sha256 = "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/12/2d/de2c579d3eea0f18212b5b16decb04568b7a0ef912d00581a77492609d4e/tibs-0.5.7-cp38-abi3-macosx_10_12_x86_64.whl"
+sha256 = "859f05315ffb307d3474c505d694f3a547f00730a024c982f5f60316a5505b3c"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/a7/03/921a3d3c75785aca9ebfbfcabfbc3a1be12e2ab5265deb026d55a5a3f83e/tqdm-4.70.1-py3-none-any.whl"
+sha256 = "c293e525e6fef9c20e8728fd4612df02a0aa31bb5fe91ecd93e123b1b7bffa73"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/87/ca/565702c44815393e3a973552ad546db4e5ca081ca8698640b4e93d809f51/tree_sitter-0.26.0-cp312-cp312-macosx_10_13_x86_64.whl"
+sha256 = "6cb2bd20efb2544c19ac54486ab7cb8ec7b36f913bbe1ce95df84acb96743d9c"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/28/c1/26ed17730ec2c17bedc1b673349e5e0a466c578e3eb0327c3b73cf52bf97/tree_sitter_c-0.24.2-cp310-abi3-macosx_10_9_x86_64.whl"
+sha256 = "4d4579a8b54f0a442f903d88d3304cab77cd5c2031d4015baa4f2f8e15d6dcb7"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/51/e9/3a7820be2bb0fe53b6bc9c3be26d3d1158004e4c3ab953aa6840b955b1e9/truststore-0.10.5-py3-none-any.whl"
+sha256 = "9aaaedaefaf06d8b206278cf8b5012bc897f485a874503501e12d776df78951c"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl"
+sha256 = "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/67/81/4add07e5172b7ac40d8ed5ff580409a7801a4fe26d529bdd915401dabfbe/typing_inspection-0.4.4-py3-none-any.whl"
+sha256 = "65b8397ba37ccbce054456aaccddfc91e6e3083c92824df348d96ca832f3f147"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/33/cf/8435d5a7159e2a9c83a95896ed596f68cf798005fe107cc655b5c5c14704/urllib3-1.26.20-py2.py3-none-any.whl"
+sha256 = "0ed14ccfbf1c30a9072c7ca157e4319b70d65f623e91e7b32fadb2853431016e"
+format = "wheel"
+
+[[sources.macos-x64.python]]
+url = "https://files.pythonhosted.org/packages/84/19/f68b27fd43564d69277e956d13b8c2b352e7f1af4fb5d6e5c43e5419e61c/esptool-4.12.0.tar.gz"
+sha256 = "d797f6529d582173508baf0572542ddadf53aae8c92c84ea9f420f242464103c"
+format = "tar.gz"
+strip = 1
+include = ["esptool", "espefuse", "espsecure", "esp_rfc2217_server", "esptool.egg-info", "LICENSE"]

@@ -85,6 +85,9 @@ func (f *Fetcher) Install(name string, src profile.Source) (string, error) {
 		}
 		return src.Digest, nil
 	}
+	if len(src.Python) != 0 {
+		return f.installPython(name, src, false)
+	}
 	work, err := f.Store.TempDir("fetch-")
 	if err != nil {
 		return "", err
@@ -463,15 +466,15 @@ func (f *Fetcher) submodules(git, dir string, windowsLayout bool, selected ...st
 		}
 		return nil
 	}
-	paths, err := f.runGit(git, "-C", dir, "config", "--file", ".gitmodules", "--get-regexp", `^submodule\..*\.path$`)
+	paths, err := f.runGit(git, "-C", dir, "config", "--file", ".gitmodules", "--list")
 	if err != nil {
 		return err
 	}
 	// Validate the complete selection before downloading or mutating children.
 	available := map[string]bool{}
 	for _, line := range strings.Split(paths, "\n") {
-		_, sub, ok := strings.Cut(line, " ")
-		if ok {
+		key, sub, ok := strings.Cut(line, "=")
+		if ok && strings.HasPrefix(key, "submodule.") && strings.HasSuffix(key, ".path") {
 			available[sub] = true
 		}
 	}
@@ -486,8 +489,8 @@ func (f *Fetcher) submodules(git, dir string, windowsLayout bool, selected ...st
 		wanted[sub] = true
 	}
 	for _, line := range strings.Split(paths, "\n") {
-		key, sub, ok := strings.Cut(line, " ")
-		if !ok {
+		key, sub, ok := strings.Cut(line, "=")
+		if !ok || !strings.HasPrefix(key, "submodule.") || !strings.HasSuffix(key, ".path") {
 			continue
 		}
 		if err := safepath.CheckForHost(sub); err != nil {

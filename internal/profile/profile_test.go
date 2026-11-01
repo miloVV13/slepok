@@ -140,3 +140,20 @@ func TestExpand(t *testing.T) {
 		t.Fatal("Expand accepted an unknown placeholder")
 	}
 }
+
+func TestNestedTemplate(t *testing.T) {
+	saved := FS
+	t.Cleanup(func() { FS = saved })
+	FS = fstest.MapFS{
+		"templates/example/CMakeLists.txt": {Data: []byte("project(@NAME@)")},
+		"templates/example/main/main.c":    {Data: []byte("@NAME@")},
+		"templates/example/main/gitignore": {Data: []byte("generated")},
+	}
+	files, err := Template("example", "hello")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(files["main/main.c"]) != "hello" || string(files["main/.gitignore"]) != "generated" || len(files) != 3 {
+		t.Fatal(files)
+	}
+}
