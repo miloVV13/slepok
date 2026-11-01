@@ -86,6 +86,14 @@ jobs:
       - name: Native STM32 build, pack, restore and compare BIN
         shell: pwsh
         run: ./scripts/stm32_smoke.ps1 -Slepok ./slepok.exe
+        env:
+          SLEPOK_SMOKE_DIAGNOSTICS: ${{ runner.temp }}/stm32-diagnostics
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: windows-stm32-diagnostics
+          path: ${{ runner.temp }}/stm32-diagnostics
+          if-no-files-found: ignore
 
   stm32-offline:
     runs-on: ubuntu-22.04

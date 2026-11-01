@@ -421,6 +421,21 @@ func windowsAbsolute(p string) bool {
 var ninjaWords = regexp.MustCompile(`"[^"]*"|'[^']*'|(?:\$ |[^\s"';|&<>])+`)
 var ninjaUnescape = strings.NewReplacer("$ ", " ", "$:", ":", "$$", "$")
 
+// CMake wraps Windows custom commands in cmd.exe /C "...". Those outer
+// quotes enclose a command sequence, not a single path; inner quotes still
+// delimit paths with spaces. Peel only this known wrapper before tokenizing.
+// This changes parsing, never which host paths are allowed.
+var ninjaCmdWrapper = regexp.MustCompile(`(?i)\bcmd\.exe"?\s+(?:/S\s+)?/C\s+"(.*)"\s*$`)
+
+func ninjaCommandText(line string) string {
+	match := ninjaCmdWrapper.FindStringSubmatchIndex(line)
+	if match == nil {
+		return line
+	}
+	// Preserve cmd.exe and its flags for the normal exact-file check.
+	return line[:match[2]-1] + line[match[2]:match[3]]
+}
+
 // NinjaLeaks checks the generated graph and included rule files, where custom
 // commands can refer to host tools without adding anything to CMakeCache.txt.
 func NinjaLeaks(build string, allowed []string, systemFiles ...string) ([]string, error) {
@@ -448,7 +463,7 @@ func NinjaLeaks(build string, allowed []string, systemFiles ...string) ([]string
 			if strings.HasPrefix(strings.TrimSpace(s.Text()), "#") {
 				continue
 			}
-			for _, word := range ninjaWords.FindAllString(s.Text(), -1) {
+			for _, word := range ninjaWords.FindAllString(ninjaCommandText(s.Text()), -1) {
 				word = strings.Trim(word, `"'`)
 				word = ninjaUnescape.Replace(word)
 				for _, value := range strings.Split(word, "=") {

@@ -143,6 +143,36 @@ func TestWindowsHostPaths(t *testing.T) {
 	}
 }
 
+func TestNinjaWindowsCmdWrapperPreservesQuotedPaths(t *testing.T) {
+	dir := t.TempDir()
+	cmd := `C:\Windows\System32\cmd.exe`
+	allowed := []string{`C:\Temp\store a`, `C:\Project With Spaces`}
+	lines := []string{
+		`POST_BUILD = C:\Windows\System32\cmd.exe /C "cd /D "C:\Project With Spaces\build" && "C:\Temp\store a\packages\gcc\bin\objcopy.exe" -O binary "C:/Project With Spaces/build/app.elf" "C:/Project With Spaces/build/app.bin""`,
+		`POST_BUILD = "C:\Windows\System32\cmd.exe" /S /C "cd /D "C:/Project With Spaces/build" && "C:/Temp/store a/packages/gcc/bin/objcopy.exe" -O ihex "C:/Project With Spaces/build/app.elf" "C:/Project With Spaces/build/app.hex""`,
+	}
+	file := filepath.Join(dir, "build.ninja")
+	must(t, os.WriteFile(file, []byte(strings.Join(lines, "\n")), 0644))
+	leaks, err := NinjaLeaks(dir, allowed, cmd)
+	must(t, err)
+	if len(leaks) != 0 {
+		t.Fatalf("quoted pinned paths inside cmd /C were split: %v", leaks)
+	}
+	// Removing the wrapper's quotes must not exempt external tools or paths
+	// that merely share a prefix with the store, including parent traversal.
+	lines = append(lines,
+		`command = C:\Windows\System32\cmd.exe /C ""C:/Program Files/Python/python.exe" generate.py"`,
+		`command = C:\Windows\System32\cmd.exe /C ""C:/Temp/store a-other/tool.exe""`,
+		`command = C:\Windows\System32\cmd.exe /C ""C:/Temp/store a/../Other/tool.exe""`,
+	)
+	must(t, os.WriteFile(file, []byte(strings.Join(lines, "\n")), 0644))
+	leaks, err = NinjaLeaks(dir, allowed, cmd)
+	must(t, err)
+	if len(leaks) != 3 || !strings.Contains(strings.Join(leaks, "\n"), "C:/Program Files/Python/python.exe") {
+		t.Fatalf("real host dependencies were missed or paths were split: %v", leaks)
+	}
+}
+
 func TestWindowsSystemCommandIsAnExactException(t *testing.T) {
 	dir := t.TempDir()
 	cmd := `C:\Windows\System32\cmd.exe`

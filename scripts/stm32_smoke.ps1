@@ -30,6 +30,21 @@ try {
     if ($plan -notmatch 'stm32f1x.cfg' -or -not $plan.Contains($escapedReceiver)) { throw 'Wrong receiver Flash plan' }
     if ((Get-FileHash -Algorithm SHA256 build/bluepill.bin).Hash -ne $original) { throw 'Restored BIN differs' }
     Write-Host 'STM32 native Windows restore/build passed; BIN identical. Network isolation was not enforced.'
+} catch {
+    if ($env:SLEPOK_SMOKE_DIAGNOSTICS) {
+        New-Item -ItemType Directory -Force -Path $env:SLEPOK_SMOKE_DIAGNOSTICS | Out-Null
+        foreach ($name in @('bluepill', 'restored')) {
+            $build = Join-Path $work "$name/build"
+            foreach ($relative in @('build.ninja', 'CMakeFiles/rules.ninja', 'CMakeCache.txt')) {
+                $source = Join-Path $build $relative
+                if (Test-Path $source) {
+                    $label = $name + '-' + [IO.Path]::GetFileName($relative)
+                    Copy-Item -LiteralPath $source -Destination (Join-Path $env:SLEPOK_SMOKE_DIAGNOSTICS $label)
+                }
+            }
+        }
+    }
+    throw
 } finally {
     Set-Location $savedLocation
     $env:SLEPOK_HOME = $savedHome
