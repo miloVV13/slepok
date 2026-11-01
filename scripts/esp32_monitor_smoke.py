@@ -72,9 +72,22 @@ try:
     wait_for(b'Quit:')
     wait_for(b'SLEPOK_PTY_SERIAL_MESSAGE', uart_message=b'SLEPOK_PTY_SERIAL_MESSAGE\r\n')
     wait_for(b'app_main', uart_message=('SLEPOK_PC ' + plan['Address'] + '\r\n').encode())
+    typed = 'Ж'.encode()
+    os.write(console, typed)
+    uart_input = bytearray()
+    deadline = time.monotonic() + 5
+    while typed not in uart_input:
+        if time.monotonic() > deadline:
+            raise RuntimeError('UTF-8 console input did not reach UART')
+        readable, _, _ = select.select([uart_master], [], [], 0.2)
+        if readable:
+            uart_input.extend(os.read(uart_master, 65536))
     os.write(console, b'\x14\x06')  # Ctrl+T, Ctrl+F: disabled flash shortcut
     wait_for(b"use 'slepok build' or 'slepok flash --port PORT'")
-    os.write(console, b'\x1d')      # Ctrl+]: clean monitor/TTY shutdown
+    if plan['ExitMode'] == 'signal':
+        os.kill(pid, signal.SIGTERM)
+    else:
+        os.write(console, b'\x1d')  # Ctrl+]: clean monitor/TTY shutdown
     deadline = time.monotonic() + 10
     while time.monotonic() < deadline:
         got, status = os.waitpid(pid, os.WNOHANG)
@@ -85,10 +98,10 @@ try:
             break
         time.sleep(0.05)
     if not finished:
-        raise RuntimeError('Monitor did not exit on Ctrl+]')
+        raise RuntimeError('Monitor did not exit: ' + plan['ExitMode'])
     if termios.tcgetattr(console) != original_console_settings:
         raise RuntimeError('Monitor did not restore console settings')
-    print('ESP32 PTY monitor passed: UART text, addr2line, disabled flash shortcut, Ctrl+] exit, terminal restored.')
+    print('ESP32 PTY monitor passed: UART text, UTF-8 input, addr2line, disabled flash shortcut, ' + plan['ExitMode'] + ' exit, terminal restored.')
 except BaseException:
     sys.stderr.buffer.write(output)
     raise

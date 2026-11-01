@@ -59,22 +59,26 @@ func TestRealESP32MonitorPTY(t *testing.T) {
 	if address == 0 {
 		t.Fatal("test fixture has no app_main symbol")
 	}
-	data, err := json.Marshal(struct {
-		*SerialPlan
-		Environment []string
-		Address     string
-	}{plan, e.buildEnviron(), fmt.Sprintf("0x%08x", address)})
-	must(t, err)
-	file := filepath.Join(t.TempDir(), "monitor-test.json")
-	must(t, os.WriteFile(file, data, 0600))
-	script, err := filepath.Abs(filepath.Join("..", "..", "scripts", "esp32_monitor_smoke.py"))
-	must(t, err)
-	cmd := exec.CommandContext(t.Context(), plan.Executable, script, file)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("PTY monitor: %v\n%s", err, output)
+	for _, exitMode := range []string{"key", "signal"} {
+		t.Run(exitMode, func(t *testing.T) {
+			data, err := json.Marshal(struct {
+				*SerialPlan
+				Environment       []string
+				Address, ExitMode string
+			}{plan, e.buildEnviron(), fmt.Sprintf("0x%08x", address), exitMode})
+			must(t, err)
+			file := filepath.Join(t.TempDir(), "monitor-test.json")
+			must(t, os.WriteFile(file, data, 0600))
+			script, err := filepath.Abs(filepath.Join("..", "..", "scripts", "esp32_monitor_smoke.py"))
+			must(t, err)
+			cmd := exec.CommandContext(t.Context(), plan.Executable, script, file)
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				t.Fatalf("PTY monitor: %v\n%s", err, output)
+			}
+			t.Log(string(output))
+		})
 	}
-	t.Log(string(output))
 }
 
 func serialFixture(t *testing.T) (*Env, string, map[string]any) {

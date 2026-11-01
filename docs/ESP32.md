@@ -56,7 +56,10 @@ It does not request a startup reset unless `--reset` is supplied. Use
 `--timestamps` for timestamps, `--elf path` to select an existing ELF,
 Ctrl+] to exit and Ctrl+T then Ctrl+H for help. Build/flash menu shortcuts
 are adapted to print the Slepok commands instead of invoking a host `make`.
-GDB/debugger integration remains a future task. `monitor --dry-run` and
+On POSIX the console uses bounded reads so Ctrl+] can stop it without
+waiting for another key, including on macOS. Cancelling the POSIX child
+uses SIGTERM and runs the monitor's terminal cleanup. GDB/debugger integration
+remains a future task. `monitor --dry-run` and
 `ports --dry-run` only print their invocations. No environment activation,
 user pip installation or SLEPOK_HOME override is required.
 
@@ -169,7 +172,7 @@ separate checks. Serial flash/monitor commands are implemented with metadata
 and CLI dry-run tests; actual board programming has not been accepted yet.
 An opt-in POSIX PTY test runs the real pinned IDF monitor/bridge, receives
 UART text, decodes an app_main address with the locked addr2line, checks
-the disabled flash shortcut, Ctrl+] exit and terminal
-restoration. PTYs emulate DTR/RTS ioctls; this does not test physical reset
+UTF-8 keyboard input, the disabled flash shortcut, Ctrl+] / SIGTERM exit
+and terminal restoration. PTYs emulate DTR/RTS ioctls; this does not test physical reset
 wiring or an actual ESP32. CI enables this test on Linux and macOS; it also
 checks flash/monitor plans on both sides of native snapshot restoration.

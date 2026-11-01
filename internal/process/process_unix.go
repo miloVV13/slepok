@@ -22,7 +22,7 @@ func configure(cmd *exec.Cmd) {
 
 func configureInteractive(cmd *exec.Cmd) {
 	// Let Python restore terminal settings and close the serial port.
-	cmd.Cancel = func() error { return cmd.Process.Signal(os.Interrupt) }
+	cmd.Cancel = func() error { return cmd.Process.Signal(syscall.SIGTERM) }
 }
 
 func SetIsolation(cmd *exec.Cmd, attr *syscall.SysProcAttr) {
