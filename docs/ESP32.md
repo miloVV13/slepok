@@ -63,7 +63,10 @@ whole-filename shortening triggering the vendor wrapper's config-basename
 mismatch (see [upstream issue](https://github.com/espressif/crosstool-NG/issues/68)).
 The package's bytes remain unchanged; Windows resolves aliases back to real
 paths when checking store boundaries. No user PATH or install-location
-setting is required.
+setting is required. The compiler directory alias is also remapped to
+`/TOOLCHAIN` in debug information: IDF remaps its long spelling, whereas
+GCC header line tables can retain the short spelling. This matters because
+the application BIN embeds the ELF hash.
 
 ## Acceptance
 

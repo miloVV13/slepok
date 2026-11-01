@@ -19,7 +19,16 @@ PYTHONUTF8 = "1"
 [hosts.windows-x64]
 checks = [["{python}/python.exe", "{esp-idf}/tools/check_python_dependencies.py", "-r", "{esp-idf}/tools/requirements/requirements.core.txt"]]
 path = ["{python}", "{xtensa-esp-elf}/bin", "{cmake}/bin", "{ninja}"]
-configure = ["-DPYTHON={python}/python.exe", "-DCMAKE_MAKE_PROGRAM={ninja}/ninja.exe"]
+# IDF remaps the long compiler path; GCC also emits the directory alias in
+# header line tables. Map that spelling too so the embedded ELF hash survives
+# moving from one Windows store to another.
+configure = [
+    "-DPYTHON={python}/python.exe",
+    "-DCMAKE_MAKE_PROGRAM={ninja}/ninja.exe",
+    "-DCMAKE_C_FLAGS=-fdebug-prefix-map={xtensa-esp-elf}=/TOOLCHAIN",
+    "-DCMAKE_CXX_FLAGS=-fdebug-prefix-map={xtensa-esp-elf}=/TOOLCHAIN",
+    "-DCMAKE_ASM_FLAGS=-fdebug-prefix-map={xtensa-esp-elf}=/TOOLCHAIN",
+]
 [hosts.macos-arm64]
 path = ["{python}/bin", "{xtensa-esp-elf}/bin", "{cmake}/CMake.app/Contents/bin", "{ninja}"]
 [hosts.macos-x64]

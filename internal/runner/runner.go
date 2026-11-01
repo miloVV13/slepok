@@ -80,7 +80,7 @@ func ResolveContext(ctx context.Context, prof *profile.Profile, lock *project.Lo
 	}
 
 	if platform == "windows-x64" && vars["xtensa-esp-elf"] != "" {
-		vars["xtensa-esp-elf"] = shortWindowsDirectory(vars["xtensa-esp-elf"])
+		vars["xtensa-esp-elf"] = filepath.ToSlash(shortWindowsDirectory(vars["xtensa-esp-elf"]))
 	}
 
 	e := &Env{Vars: map[string]string{}, Packages: vars, Outputs: prof.Outputs, StoreRoot: st.Root()}
