@@ -1,6 +1,9 @@
 name = "esp-idf-python"
 version = "5.5.6-py312-1"
-license = "LicenseRef-ESP-IDF-Python-Dependencies"
+license = "GPL-2.0-or-later AND LicenseRef-ESP-IDF-Python-Dependencies"
+[source_code]
+url = "https://files.pythonhosted.org/packages/84/19/f68b27fd43564d69277e956d13b8c2b352e7f1af4fb5d6e5c43e5419e61c/esptool-4.12.0.tar.gz"
+sha256 = "d797f6529d582173508baf0572542ddadf53aae8c92c84ea9f420f242464103c"
 
 [sources.linux-x64]
 digest = "sha256:83ffbb1b26737204944f782b38e649070c1ca6d639d2738fb86d6399cbbfc9a2"

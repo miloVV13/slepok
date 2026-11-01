@@ -7,3 +7,11 @@ url = "https://github.com/espressif/esp-rom-elfs/releases/download/20260528/esp-
 sha256 = "caa463d3cbef2430a5a35847c1d9f2f152403b17a802050927ff60c8da54fe46"
 format = "tar.gz"
 strip = 0
+
+[sources.windows-x64]
+layout = "windows-v1"
+digest = "sha256:f733a93ed660905db2b82cb26145b917f56e4643fdf7f3d578986162f37367ec"
+url = "https://github.com/espressif/esp-rom-elfs/releases/download/20260528/esp-rom-elfs-20260528.tar.gz"
+sha256 = "caa463d3cbef2430a5a35847c1d9f2f152403b17a802050927ff60c8da54fe46"
+format = "tar.gz"
+strip = 0

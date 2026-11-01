@@ -54,13 +54,17 @@ by their parent Git commits. The complete SDK source tree remains present;
 this first profile does not promise every optional SDK feature. The supplied
 minimal example is the acceptance baseline. Licenses stay in the SDK and
 Python distributions. The compiler profile records Espressif's corresponding
-source archive for `pack --with-sources`.
+source archive; the Python profile records the esptool source archive for
+`pack --with-sources`.
 
 ## Acceptance
 
-The local Linux example builds, and the SDK Python requirement check passes.
-The full offline snapshot round trip and native Windows/macOS checks are
-being completed; hardware acceptance has not been performed. Do not treat a
+The local Linux `init → build → pack → validate → unpack → build` round
+trip passed with an empty receiver store and network isolation. Application,
+bootloader and partition-table BIN files are byte-identical. The example
+snapshot is approximately 418 MiB. SDK Python requirement checks and Go
+race tests pass. Native Windows/macOS CI is being checked; hardware
+acceptance has not been performed. Do not treat a
 cross-prepared package digest as evidence that its native binaries ran.
 
 Automated checks (no hardware access):
