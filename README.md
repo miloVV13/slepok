@@ -28,8 +28,8 @@ Slepok automatically; no SDK installation or global `PATH` changes are needed.
 > Experimental macOS 15 support (Apple Silicon and Intel) has passed native
 > RP2040 build/pack/restore tests with identical UF2 in CI. A clean offline
 > Mac receiver still needs manual acceptance. STM32 hardware acceptance is pending. An experimental classic ESP32 profile
-> with ESP-IDF 5.5.6 is available; native Windows/macOS and hardware acceptance
-> are tracked in [ESP32 notes](docs/ESP32.md).
+> with ESP-IDF 5.5.6 passes native build/restore checks on all four hosts.
+> Hardware and manual cross-OS acceptance remain open; see [ESP32 notes](docs/ESP32.md).
 
 ## Why
 

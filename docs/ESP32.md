@@ -70,15 +70,18 @@ the application BIN embeds the ELF hash.
 
 ## Acceptance
 
-The local Linux `init → build → pack → validate → unpack → build` round
-trip passed with an empty receiver store and network isolation. Application,
-bootloader and partition-table BIN files are byte-identical. The example
-snapshot is approximately 418 MiB. SDK Python requirement checks and Go
-race tests pass. Native macOS Apple Silicon and Intel round trips also
-passed in [CI](https://github.com/miloVV13/slepok/actions/runs/41303302622).
-Windows acceptance is being completed; hardware acceptance has not been
-performed. Do not treat a
-cross-prepared package digest as evidence that its native binaries ran.
+The complete `init → build → pack → validate → unpack → build` round trip
+passed on Linux x64, Windows x64, macOS Apple Silicon and macOS Intel in
+[CI for c2e71c6](https://github.com/miloVV13/slepok/actions/runs/41306378502).
+Application, bootloader and partition-table BIN files are byte-identical
+between producer and receiver on each host. Linux used an empty receiver
+store with network isolation; Windows/macOS did not enforce isolation.
+The local Linux example snapshot is approximately 418 MiB. SDK Python
+requirement checks, Go race tests and vet checks also pass.
+
+Hardware acceptance and a manual cross-OS transfer have not been performed.
+The earlier deferred STM32 hardware and manual macOS offline checks remain
+open.
 
 Automated checks (no hardware access):
 
