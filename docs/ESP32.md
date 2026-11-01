@@ -57,14 +57,24 @@ Python distributions. The compiler profile records Espressif's corresponding
 source archive; the Python profile records the esptool source archive for
 `pack --with-sources`.
 
+On Windows Slepok resolves an available short directory alias for the
+Xtensa package while retaining full tool filenames. This avoids CMake's
+whole-filename shortening triggering the vendor wrapper's config-basename
+mismatch (see [upstream issue](https://github.com/espressif/crosstool-NG/issues/68)).
+The package's bytes remain unchanged; Windows resolves aliases back to real
+paths when checking store boundaries. No user PATH or install-location
+setting is required.
+
 ## Acceptance
 
 The local Linux `init → build → pack → validate → unpack → build` round
 trip passed with an empty receiver store and network isolation. Application,
 bootloader and partition-table BIN files are byte-identical. The example
 snapshot is approximately 418 MiB. SDK Python requirement checks and Go
-race tests pass. Native Windows/macOS CI is being checked; hardware
-acceptance has not been performed. Do not treat a
+race tests pass. Native macOS Apple Silicon and Intel round trips also
+passed in [CI](https://github.com/miloVV13/slepok/actions/runs/41303302622).
+Windows acceptance is being completed; hardware acceptance has not been
+performed. Do not treat a
 cross-prepared package digest as evidence that its native binaries ran.
 
 Automated checks (no hardware access):

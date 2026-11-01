@@ -64,3 +64,27 @@ func TestWindowsShortToolPathsRespectStoreBoundaries(t *testing.T) {
 		t.Fatalf("wrong Ninja dependencies: %v", leaks)
 	}
 }
+
+func TestXtensaShortDirectoryPreservesToolName(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "toolchain with spaces")
+	bin := filepath.Join(root, "bin")
+	must(t, os.MkdirAll(bin, 0755))
+	const name = "xtensa-esp32-elf-gcc.exe"
+	original := filepath.Join(bin, name)
+	must(t, os.WriteFile(original, []byte("fixture"), 0644))
+	shortened := shortWindowsDirectory(root)
+	tool := filepath.Join(shortened, "bin", name)
+	a, err := os.Stat(original)
+	must(t, err)
+	b, err := os.Stat(tool)
+	must(t, err)
+	if !os.SameFile(a, b) || filepath.Base(tool) != name {
+		t.Fatal("tool identity or semantic filename changed", tool)
+	}
+	if strings.Contains(shortPath(t, root), "~") && strings.Contains(tool, " ") {
+		t.Fatal("tool directory still contains spaces", tool)
+	}
+	if hostPath(tool, []string{root}) {
+		t.Fatal("directory alias escaped store dependency check", tool)
+	}
+}

@@ -79,6 +79,10 @@ func ResolveContext(ctx context.Context, prof *profile.Profile, lock *project.Lo
 		vars["arm-gcc"] = dir
 	}
 
+	if platform == "windows-x64" && vars["xtensa-esp-elf"] != "" {
+		vars["xtensa-esp-elf"] = shortWindowsDirectory(vars["xtensa-esp-elf"])
+	}
+
 	e := &Env{Vars: map[string]string{}, Packages: vars, Outputs: prof.Outputs, StoreRoot: st.Root()}
 	// A SOURCE_DATE_EPOCH set by the user wins, as is the convention.
 	if v := os.Getenv("SOURCE_DATE_EPOCH"); v != "" {
