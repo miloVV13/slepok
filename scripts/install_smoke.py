@@ -52,6 +52,12 @@ def main():
             result = subprocess.run(["bash", str(script), *args], env=env, capture_output=True, text=True)
             assert (result.returncode == 0) == success, result.stdout + result.stderr
 
+        fish_config = home / "config/fish/conf.d/slepok.fish"
+        fish_config.parent.mkdir(parents=True)
+        fish_config.write_text("# user config\n")
+        install(success=False)
+        assert fish_config.read_text() == "# user config\n"
+        fish_config.unlink()
         install()
         install()  # upgrade/idempotency
         command = home / ".local/bin/slepok"

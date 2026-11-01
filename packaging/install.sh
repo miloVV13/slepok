@@ -11,7 +11,7 @@ while (($#)); do
         *) echo "Usage: bash install.sh [--prefix /absolute/path] [--no-modify-path]" >&2; exit 2 ;;
     esac
 done
-[[ $prefix = /* && $prefix != *$'\n'* && $prefix != *$'\r'* ]] || { echo 'Invalid prefix' >&2; exit 2; }
+[[ $prefix = /* && $prefix != *:* && $prefix != *$'\n'* && $prefix != *$'\r'* ]] || { echo 'Invalid prefix' >&2; exit 2; }
 prefix=${prefix%/}
 [[ -n $prefix ]] || { echo 'Cannot install into /' >&2; exit 2; }
 case "$(uname -s)/$(uname -m)" in
@@ -45,6 +45,12 @@ fi
 "$source_dir/slepok" version
 app=$prefix/lib/slepok
 bin=$prefix/bin
+fish_dir=${XDG_CONFIG_HOME:-$HOME/.config}/fish/conf.d
+if [[ $modify_path = yes && -e $fish_dir/slepok.fish ]]; then
+    [[ $(head -n 1 "$fish_dir/slepok.fish") = '# Managed by Slepok installer' ]] || {
+        echo "Refusing to replace unrelated config: $fish_dir/slepok.fish" >&2; exit 1;
+    }
+fi
 mkdir -p "$bin"
 if [[ -e $app && ! -f $app/.slepok-install ]]; then
     echo "Refusing to replace unrelated directory: $app" >&2; exit 1
@@ -87,9 +93,11 @@ if [[ $modify_path = yes ]]; then
             break
         fi
     done
-    fish_dir=${XDG_CONFIG_HOME:-$HOME/.config}/fish/conf.d
     mkdir -p "$fish_dir"
     fish_bin=$(printf '%s' "$bin" | sed "s/\\\\/\\\\\\\\/g; s/'/\\\\'/g")
     printf "# Managed by Slepok installer\nif not contains -- '%s' \$PATH\n    set -gx PATH '%s' \$PATH\nend\n" "$fish_bin" "$fish_bin" > "$fish_dir/slepok.fish"
 fi
-printf '\nInstalled %s. Open a new terminal and run: slepok version\n' "$bin/slepok"
+printf '\nInstalled %s\n' "$bin/slepok"
+if [[ $modify_path = yes ]]; then
+    echo 'Open a new terminal and run: slepok version'
+fi
