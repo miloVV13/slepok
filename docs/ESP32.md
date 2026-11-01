@@ -168,7 +168,8 @@ Manual Windows ↔ Linux migration and physical board acceptance remain
 separate checks. Serial flash/monitor commands are implemented with metadata
 and CLI dry-run tests; actual board programming has not been accepted yet.
 An opt-in POSIX PTY test runs the real pinned IDF monitor/bridge, receives
-UART text, checks the disabled flash shortcut, Ctrl+] exit and terminal
+UART text, decodes an app_main address with the locked addr2line, checks
+the disabled flash shortcut, Ctrl+] exit and terminal
 restoration. PTYs emulate DTR/RTS ioctls; this does not test physical reset
 wiring or an actual ESP32. CI enables this test on Linux and macOS; it also
 checks flash/monitor plans on both sides of native snapshot restoration.

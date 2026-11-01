@@ -71,6 +71,7 @@ def wait_for(marker, timeout=20, uart_message=None):
 try:
     wait_for(b'Quit:')
     wait_for(b'SLEPOK_PTY_SERIAL_MESSAGE', uart_message=b'SLEPOK_PTY_SERIAL_MESSAGE\r\n')
+    wait_for(b'app_main', uart_message=('SLEPOK_PC ' + plan['Address'] + '\r\n').encode())
     os.write(console, b'\x14\x06')  # Ctrl+T, Ctrl+F: disabled flash shortcut
     wait_for(b"use 'slepok build' or 'slepok flash --port PORT'")
     os.write(console, b'\x1d')      # Ctrl+]: clean monitor/TTY shutdown
@@ -87,7 +88,7 @@ try:
         raise RuntimeError('Monitor did not exit on Ctrl+]')
     if termios.tcgetattr(console) != original_console_settings:
         raise RuntimeError('Monitor did not restore console settings')
-    print('ESP32 PTY monitor passed: UART text, disabled flash shortcut, Ctrl+] exit.')
+    print('ESP32 PTY monitor passed: UART text, addr2line, disabled flash shortcut, Ctrl+] exit, terminal restored.')
 except BaseException:
     sys.stderr.buffer.write(output)
     raise

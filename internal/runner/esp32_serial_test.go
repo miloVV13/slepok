@@ -2,8 +2,10 @@ package runner
 
 import (
 	"context"
+	"debug/elf"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -42,10 +44,26 @@ func TestRealESP32MonitorPTY(t *testing.T) {
 	must(t, err)
 	plan, err := PlanESP32Monitor(t.Context(), e, st, p.Dir, p.BuildDir(), "", "/dev/slepok-virtual", 115200, false, false)
 	must(t, err)
+	image, err := elf.Open(plan.Args[len(plan.Args)-1])
+	must(t, err)
+	symbols, err := image.Symbols()
+	_ = image.Close()
+	must(t, err)
+	address := uint64(0)
+	for _, symbol := range symbols {
+		if symbol.Name == "app_main" {
+			address = symbol.Value
+			break
+		}
+	}
+	if address == 0 {
+		t.Fatal("test fixture has no app_main symbol")
+	}
 	data, err := json.Marshal(struct {
 		*SerialPlan
 		Environment []string
-	}{plan, e.buildEnviron()})
+		Address     string
+	}{plan, e.buildEnviron(), fmt.Sprintf("0x%08x", address)})
 	must(t, err)
 	file := filepath.Join(t.TempDir(), "monitor-test.json")
 	must(t, os.WriteFile(file, data, 0600))
