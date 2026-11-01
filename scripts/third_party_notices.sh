@@ -5,7 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-out=THIRD_PARTY_NOTICES.md
+out=${1:-THIRD_PARTY_NOTICES.md}
 self=$(go list -m)
 
 go_license=$(go env GOROOT)/LICENSE

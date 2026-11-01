@@ -61,9 +61,23 @@ Requirements: Linux x86-64 with glibc 2.34 or newer (Ubuntu 22.04+,
 Debian 12+, Fedora 35+), Windows 10/11 x64, or experimental macOS 15
 (Apple Silicon / Intel); `git` when preparing the RP2040 or ESP32 SDK with `init`.
 
-Build from a checkout with Go 1.25+. `CGO_ENABLED=0` makes a static
-binary that runs on any Linux x86-64, so you can copy it to machines
-without Go:
+Download a ready binary from [Releases](https://github.com/miloVV13/slepok/releases).
+Early versions are marked **Pre-release**. No Go installation is needed:
+
+- **Windows:** run `slepok-VERSION-windows-x64-setup.exe`. It installs for
+  the current user and adds `slepok` to PATH. Open a new terminal.
+- **Linux:** extract `slepok-VERSION-linux-x64.tar.gz` and run the included
+  `bash install.sh`. Open a new terminal, then use `slepok` from any directory.
+- **Portable / macOS:** extract the archive for your platform and run the
+  included executable directly. Portable archives also work on offline receivers.
+
+Verify downloads with the release's `SHA256SUMS`. Updates and removal preserve
+SDK stores, projects and snapshots. See [installation instructions](docs/INSTALL.md)
+for locations, custom prefixes, updates and uninstalling. Windows installers
+are currently unsigned; macOS support remains experimental.
+
+To build from a checkout instead, use Go 1.25+. `CGO_ENABLED=0` makes
+the Linux binary static:
 
 ```console
 $ CGO_ENABLED=0 go build -trimpath -o slepok ./cmd/slepok
@@ -79,9 +93,9 @@ the error message names the file, its sha256 and where to put it: fetch it
 any other way (a browser, a VPN, another computer) and run the command
 again. The checksum makes sure it is the right file.
 
-Once the repository is published, `go install
-github.com/miloVV13/slepok/cmd/slepok@latest` works too; release binaries
-are planned.
+Go users can also run `go install github.com/miloVV13/slepok/cmd/slepok@latest`
+(ensure Go's bin directory is in PATH). Release archives include the exact
+source commit, toolchain version and third-party license notices.
 
 ## Commands
 

@@ -1,1 +1,3 @@
 prototype/work/
+dist/
+__pycache__/

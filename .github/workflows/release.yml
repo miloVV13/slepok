@@ -1,0 +1,119 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to validate (no release is published)'
+        default: 'v0.1.0-alpha.3'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  portable:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.3'
+      - name: Package binaries and licenses
+        env:
+          RELEASE_VERSION: ${{ inputs.version || github.ref_name }}
+        run: python3 scripts/release.py "$RELEASE_VERSION"
+      - name: Check Linux installation and archive integrity
+        run: python3 scripts/install_smoke.py dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: portable
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/install.sh
+            dist/SHA256SUMS
+
+  windows-installer:
+    needs: portable
+    runs-on: windows-2022
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: portable
+          path: dist
+      - name: Build installer and check install, upgrade and removal
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ inputs.version || github.ref_name }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $zip = Get-ChildItem dist/*-windows-x64.zip
+          $expected = ((Get-Content dist/SHA256SUMS | Where-Object { $_.EndsWith('  ' + $zip.Name) }) -split '  ')[0]
+          if ((Get-FileHash $zip.FullName -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expected) { throw 'Archive checksum mismatch' }
+          Expand-Archive $zip.FullName payload
+          $version = $env:RELEASE_VERSION.Substring(1)
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DReleaseVersion=$version" "/DPayload=$pwd\payload" "/O$pwd\dist" packaging/windows.iss
+          if ($LASTEXITCODE) { throw 'Inno Setup failed' }
+          ./scripts/install_smoke.ps1 (Get-ChildItem dist/*-setup.exe).FullName $version
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: dist/*-setup.exe
+
+  macos-portable:
+    needs: portable
+    strategy:
+      matrix:
+        include:
+          - runner: macos-15
+            host: macos-arm64
+          - runner: macos-15-intel
+            host: macos-x64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: portable
+          path: dist
+      - name: Execute the packaged binary
+        env:
+          HOST: ${{ matrix.host }}
+        run: |
+          mkdir payload
+          tar -xzf dist/*-"$HOST".tar.gz -C payload
+          cd payload
+          shasum -a 256 -c SHA256SUMS
+          ./slepok version
+          bash install.sh --prefix "$RUNNER_TEMP/slepok install" --no-modify-path
+          "$RUNNER_TEMP/slepok install/bin/slepok" version
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [portable, windows-installer, macos-portable]
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: '*'
+          merge-multiple: true
+          path: dist
+      - name: Publish verified assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          cd dist
+          sha256sum -c SHA256SUMS
+          sha256sum ./*-setup.exe >> SHA256SUMS
+          flags=()
+          if [[ "$RELEASE_TAG" = *-* ]]; then flags+=(--prerelease); fi
+          gh release create "$RELEASE_TAG" --verify-tag --title "Slepok ${RELEASE_TAG#v}" --notes-file ../packaging/RELEASE_NOTES.md "${flags[@]}" ./*
