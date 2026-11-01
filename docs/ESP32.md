@@ -148,6 +148,16 @@ store with network isolation; Windows/macOS did not enforce isolation.
 The local Linux example snapshot is approximately 418 MiB. SDK Python
 requirement checks, Go race tests and vet checks also pass.
 
+Serial integration passed on all four hosts in
+[CI for eec20c4](https://github.com/miloVV13/slepok/actions/runs/41317313813):
+locked esptool/monitor/ports backends start without user environment setup,
+flash and monitor dry-run plans use receiver artifacts, and snapshot BIN
+files remain identical. Linux and both macOS architectures also passed the
+PTY tests for UART text, UTF-8 input, address decoding, disabled build/flash
+shortcuts, Ctrl+] / SIGTERM exit and terminal restoration. Windows physical
+console interaction, real UART wiring, reset and device programming are
+not covered by those tests.
+
 Hardware acceptance and a manual cross-OS transfer have not been performed.
 The earlier deferred STM32 hardware and manual macOS offline checks remain
 open.
