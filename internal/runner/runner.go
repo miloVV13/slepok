@@ -374,7 +374,9 @@ func Leaks(cache string, allowed []string, systemFiles ...string) ([]string, err
 
 func hostPath(v string, allowed []string, systemFiles ...string) bool {
 	if windowsAbsolute(v) {
-		norm := func(p string) string { return strings.ToLower(path.Clean(strings.ReplaceAll(p, `\`, "/"))) }
+		norm := func(p string) string {
+			return strings.ToLower(path.Clean(strings.ReplaceAll(longWindowsPath(p), `\`, "/")))
+		}
 		value := norm(v)
 		// OS command interpreters are runtime dependencies, like /bin/sh on
 		// Linux. Exempt the exact selected file, never its containing directory.
