@@ -14,6 +14,7 @@ import (
 	"github.com/BurntSushi/toml"
 
 	"github.com/miloVV13/slepok/internal/manifest"
+	"github.com/miloVV13/slepok/internal/safepath"
 )
 
 //go:embed profiles/*.toml components/*.toml all:templates
@@ -148,6 +149,9 @@ type Source struct {
 	Git    string `toml:"git,omitempty"`
 	Ref    string `toml:"ref,omitempty"`
 	Commit string `toml:"commit,omitempty"`
+	// Submodules limits top-level Git submodules; empty retains all. Nested
+	// submodules of a selected dependency are always included.
+	Submodules []string `toml:"submodules,omitempty"`
 
 	// Digest is the expected package digest. Empty means not pinned yet.
 	Digest string `toml:"digest,omitempty"`
@@ -241,6 +245,13 @@ func (p *Profile) validate() error {
 			}
 			if s.Layout == LayoutWindows && !strings.HasPrefix(platform, "windows-") {
 				return fmt.Errorf("%s: Windows layout needs a Windows platform", where)
+			}
+			seen := map[string]bool{}
+			for _, sub := range s.Submodules {
+				if err := safepath.CheckForHost(sub); err != nil || seen[sub] || s.Git == "" {
+					return fmt.Errorf("%s: invalid or duplicate Git submodule %q", where, sub)
+				}
+				seen[sub] = true
 			}
 			switch {
 			case s.Git != "":

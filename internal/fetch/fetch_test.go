@@ -280,6 +280,51 @@ func TestCloneSubmodules(t *testing.T) {
 	}
 }
 
+// Relative URLs must be resolved against the source origin even for nested
+// submodules; an unselected dependency must never be contacted.
+func TestSelectedRelativeSubmodules(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git not installed")
+	}
+	base := t.TempDir()
+	makeRepo := func(name, modules string, children map[string]string) string {
+		dir := filepath.Join(base, name)
+		gitCmd(t, base, "init", "-q", dir)
+		layoutFile(t, dir, "payload", name, 0o644)
+		if modules != "" {
+			layoutFile(t, dir, ".gitmodules", modules, 0o644)
+		}
+		gitCmd(t, dir, "add", ".")
+		for path, commit := range children {
+			gitCmd(t, dir, "update-index", "--add", "--cacheinfo", "160000,"+commit+","+path)
+		}
+		gitCmd(t, dir, "commit", "-q", "-m", name)
+		gitCmd(t, dir, "tag", "v1")
+		return gitCmd(t, dir, "rev-parse", "HEAD")
+	}
+	leaf := makeRepo("leaf", "", nil)
+	child := makeRepo("child", "[submodule \"leaf\"]\n path = nested\n url = ../leaf\n", map[string]string{"nested": leaf})
+	head := makeRepo("super", "[submodule \"child\"]\n path = lib/child\n url = ../child\n[submodule \"unused\"]\n path = unused\n url = file:///missing-unselected-repo\n", map[string]string{"lib/child": child, "unused": leaf})
+	src := profile.Source{Git: fileURL(filepath.Join(base, "super")), Ref: "v1", Commit: head, Submodules: []string{"lib/child"}}
+	dest := filepath.Join(t.TempDir(), "checkout")
+	f := newFetcher(t)
+	requireOK(t, f.clone("sdk", src, dest))
+	data, err := os.ReadFile(filepath.Join(dest, "lib", "child", "nested", "payload"))
+	requireOK(t, err)
+	if string(data) != "leaf" {
+		t.Fatalf("nested content = %q", data)
+	}
+	if _, err := os.Stat(filepath.Join(dest, "unused", "payload")); !os.IsNotExist(err) {
+		t.Fatal("unselected submodule populated")
+	}
+	if err := f.submodules("git", dest, false, "missing"); err == nil {
+		t.Fatal("unknown selection accepted")
+	}
+	if err := f.submodules("git", dest, false, "lib/child", "lib/child"); err == nil {
+		t.Fatal("duplicate selection accepted")
+	}
+}
+
 func TestInstallRejectsWrongDigest(t *testing.T) {
 	data := tarGz(t, goodTree...)
 	srv, _ := flakyServer(t, data)

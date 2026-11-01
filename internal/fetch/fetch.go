@@ -439,7 +439,7 @@ func (f *Fetcher) cloneMode(name string, src profile.Source, dest string, placeh
 	if head != src.Commit {
 		return fmt.Errorf("%s %s is commit %s, expected %s; the upstream tag may have moved", src.Git, src.Ref, head, src.Commit)
 	}
-	return f.submodules(git, dest, placeholders)
+	return f.submodules(git, dest, placeholders, src.Submodules...)
 }
 
 // submodules checks out every submodule of the repository at dir at the
@@ -448,18 +448,42 @@ func (f *Fetcher) cloneMode(name string, src profile.Source, dest string, placeh
 // default branch and then fetches the wanted commit, this fetches exactly
 // that commit in one request and retries each submodule on its own, so a
 // flaky network does not restart the whole checkout.
-func (f *Fetcher) submodules(git, dir string, windowsLayout bool) error {
+func (f *Fetcher) submodules(git, dir string, windowsLayout bool, selected ...string) error {
 	root, err := os.OpenRoot(dir)
 	if err != nil {
 		return err
 	}
 	defer root.Close()
 	if _, err := os.Stat(filepath.Join(dir, ".gitmodules")); err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+		if len(selected) != 0 {
+			return fmt.Errorf("selected submodules missing: no .gitmodules")
+		}
 		return nil
 	}
 	paths, err := f.runGit(git, "-C", dir, "config", "--file", ".gitmodules", "--get-regexp", `^submodule\..*\.path$`)
 	if err != nil {
 		return err
+	}
+	// Validate the complete selection before downloading or mutating children.
+	available := map[string]bool{}
+	for _, line := range strings.Split(paths, "\n") {
+		_, sub, ok := strings.Cut(line, " ")
+		if ok {
+			available[sub] = true
+		}
+	}
+	wanted := map[string]bool{}
+	for _, sub := range selected {
+		if err := safepath.CheckForHost(sub); err != nil {
+			return err
+		}
+		if !available[sub] || wanted[sub] {
+			return fmt.Errorf("unknown or duplicate submodule %q", sub)
+		}
+		wanted[sub] = true
 	}
 	for _, line := range strings.Split(paths, "\n") {
 		key, sub, ok := strings.Cut(line, " ")
@@ -469,8 +493,16 @@ func (f *Fetcher) submodules(git, dir string, windowsLayout bool) error {
 		if err := safepath.CheckForHost(sub); err != nil {
 			return fmt.Errorf("submodule: %w", err)
 		}
+		if len(wanted) != 0 && !wanted[sub] {
+			continue
+		}
 		name := strings.TrimSuffix(strings.TrimPrefix(key, "submodule."), ".path")
-		url, err := f.runGit(git, "-C", dir, "config", "--file", ".gitmodules", "submodule."+name+".url")
+		// Let Git resolve relative URLs against the parent's origin. Reading
+		// .gitmodules directly would treat ../../vendor/repo as a local path.
+		if _, err := f.runGit(git, "-C", dir, "submodule", "init", "--", sub); err != nil {
+			return err
+		}
+		url, err := f.runGit(git, "-C", dir, "config", "--local", "submodule."+name+".url")
 		if err != nil {
 			return err
 		}
@@ -498,6 +530,7 @@ func (f *Fetcher) submodules(git, dir string, windowsLayout bool) error {
 			checkout = append(checkout, "checkout", "--quiet", "FETCH_HEAD")
 			for _, args := range [][]string{
 				{"-C", subdir, "init", "--quiet"},
+				{"-C", subdir, "remote", "add", "origin", url},
 				{"-C", subdir, "fetch", "--quiet", "--depth", "1", url, commit},
 				checkout,
 			} {
