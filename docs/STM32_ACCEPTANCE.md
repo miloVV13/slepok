@@ -66,6 +66,10 @@ No `SLEPOK_HOME` or global SDK/PATH setup is required for ordinary use.
 
 ## Hardware acceptance — pending
 
+Deferred at the user's request on 2026-11-01. Real Blue Pill programming
+has not been checked. Keep this acceptance open and resume when hardware
+is available; its deferral does not block development of the ESP32 profile.
+
 Use a board whose actual MCU matches STM32F103C8T6. SWDIO is PA13 and
 SWCLK is PA14; share GND and provide 3.3 V target power. Leave BOOT0 low
 for normal Flash boot. Follow the programmer firmware's output pin map.
