@@ -33,12 +33,16 @@ try {
     if ($env:SLEPOK_SMOKE_DIAGNOSTICS) {
         New-Item -ItemType Directory -Force -Path $env:SLEPOK_SMOKE_DIAGNOSTICS | Out-Null
         foreach ($name in @('hello', 'restored')) {
-            foreach ($relative in @('build.ninja', 'CMakeFiles/rules.ninja', 'CMakeCache.txt', 'compile_commands.json')) {
+            foreach ($relative in @('build.ninja', 'CMakeFiles/rules.ninja', 'CMakeCache.txt', 'compile_commands.json', 'sdkconfig', 'toolchain/cflags', 'toolchain/cxxflags', 'toolchain/asmflags', 'toolchain/ldflags', 'hello.elf', 'hello.bin', 'bootloader/bootloader.elf', 'bootloader/bootloader.bin', 'partition_table/partition-table.bin')) {
                 $source = Join-Path $work "$name/build/$relative"
                 if (Test-Path $source) {
-                    Copy-Item -LiteralPath $source -Destination (Join-Path $env:SLEPOK_SMOKE_DIAGNOSTICS ($name + '-' + [IO.Path]::GetFileName($relative)))
+                    Copy-Item -LiteralPath $source -Destination (Join-Path $env:SLEPOK_SMOKE_DIAGNOSTICS ($name + '-' + $relative.Replace('/', '-')))
                 }
             }
+        }
+        $logs = Join-Path $env:SLEPOK_HOME 'logs'
+        if (Test-Path $logs) {
+            Copy-Item -LiteralPath $logs -Destination (Join-Path $env:SLEPOK_SMOKE_DIAGNOSTICS 'logs') -Recurse
         }
     }
     throw
