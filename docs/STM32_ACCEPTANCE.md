@@ -11,6 +11,19 @@ It must not contain Pico SDK, Python, pioasm or picotool.
 
 ## Automated checks
 
+On 2026-11-01, [CI for code c448d32](https://github.com/miloVV13/slepok/actions/runs/41299720548)
+passed the Windows and Linux STM32 round trips: init, build, pack,
+validate, restore into a fresh store, build and identical BIN comparison.
+The restored dry-run selected that store's OpenOCD and `stm32f1x.cfg`.
+Windows used store paths with spaces; its receiver was not network-
+isolated. Linux's receiver was isolated from the network. This is build
+and snapshot acceptance, separate from the hardware checks below.
+
+macOS Intel/Apple Silicon STM32 round trips had already passed in the
+[initial profile CI](https://github.com/miloVV13/slepok/actions/runs/41209320423)
+(the Windows job failed in that earlier run). Neither macOS run proves
+a physically disconnected clean receiver or hardware programming.
+
 ```sh
 go test -race ./...
 go vet ./...
@@ -25,6 +38,14 @@ network access. macOS does not enforce network isolation. The Windows
 equivalent is `scripts/stm32_smoke.ps1 -Slepok C:\path\slepok.exe`;
 it also does not enforce network isolation. No automated test programs
 hardware. Use a separate test project/store for acceptance.
+
+Windows regression coverage includes two CMake/Ninja path forms:
+quoted tool paths inside `cmd.exe /C` command sequences, and existing
+8.3 aliases such as `STOREA~1`. The dependency checker parses the command
+wrapper and resolves aliases through Windows before checking store
+boundaries. It still rejects external tools, lookalike directory prefixes
+and paths escaping allowed directories through `..`. Failed Windows smoke runs retain generated Ninja
+files and CMake caches as CI diagnostic artifacts.
 
 ## Native manual build and migration
 

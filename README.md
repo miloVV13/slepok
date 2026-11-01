@@ -225,10 +225,11 @@ its configured SWDIO/SWCLK to PA13/PA14 and share GND with the powered
 target. This initial integration accepts CMSIS-DAP; ST-Link selection
 is not implemented. `build --ram` and `run --ram` remain RP2040-only.
 
-Linux native compilation and offline restore/build are covered by the
-STM32 smoke test, including identical BIN comparison and a dry-run plan
-using the receiver's OpenOCD. Native Windows/macOS builds are included
-in CI; their results and real Blue Pill programming need acceptance.
+Linux and Windows native build/pack/restore/build have passed in CI with
+identical BIN and a dry-run plan using the receiver's OpenOCD. Linux
+enforces an offline receiver; Windows does not enforce network isolation.
+Native macOS builds are also covered by CI. Real Blue Pill programming
+and manual migration between Windows and Linux still need acceptance.
 See [STM32 acceptance](docs/STM32_ACCEPTANCE.md).
 
 ## Running RP2040 firmware in RAM (experimental)
