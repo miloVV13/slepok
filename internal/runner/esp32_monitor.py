@@ -5,6 +5,11 @@ import signal
 import sys
 from types import SimpleNamespace
 
+# pathlib on Windows ignores HOME. Keep the config loader independent of the
+# host profile, using the immutable helper directory (no per-user config).
+if os.name == "nt":
+    os.environ["USERPROFILE"] = os.path.dirname(os.path.abspath(__file__))
+
 from esp_idf_monitor import idf_monitor
 
 

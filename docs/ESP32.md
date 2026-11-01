@@ -59,7 +59,9 @@ are adapted to print the Slepok commands instead of invoking a host `make`.
 On POSIX the console uses bounded reads so Ctrl+] can stop it without
 waiting for another key, including on macOS. Cancelling the POSIX child
 uses SIGTERM and runs the monitor's terminal cleanup. GDB/debugger integration
-remains a future task. `monitor --dry-run` and
+remains a future task. On Windows the adapter supplies an internal
+read-only home directory for the vendor config loader; user USERPROFILE
+or environment setup is not required. `monitor --dry-run` and
 `ports --dry-run` only print their invocations. No environment activation,
 user pip installation or SLEPOK_HOME override is required.
 
