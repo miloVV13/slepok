@@ -491,8 +491,18 @@ func NinjaLeaks(build string, allowed []string, systemFiles ...string) ([]string
 		s.Buffer(make([]byte, 64<<10), 1<<20)
 		seen := map[string]bool{}
 		for line := 1; s.Scan(); line++ {
-			if strings.HasPrefix(strings.TrimSpace(s.Text()), "#") {
+			text := strings.TrimSpace(s.Text())
+			if strings.HasPrefix(text, "#") {
 				continue
+			}
+			// Ninja descriptions are console messages. CMake's DESC edge
+			// variable is consumed by its rule's description, not the shell.
+			// Unlike command arguments, message paths need no quoting.
+			if key, _, ok := strings.Cut(text, "="); ok {
+				key = strings.TrimSpace(key)
+				if key == "DESC" || key == "description" {
+					continue
+				}
 			}
 			for _, word := range ninjaWords.FindAllString(ninjaCommandText(s.Text()), -1) {
 				word = strings.Trim(word, `"'`)

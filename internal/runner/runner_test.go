@@ -179,6 +179,33 @@ func TestNinjaWindowsCmdWrapperPreservesQuotedPaths(t *testing.T) {
 	}
 }
 
+func TestNinjaDescriptionsAreNotCompilerInputs(t *testing.T) {
+	dir := t.TempDir()
+	graph := `rule CUSTOM_COMMAND
+  command = $COMMAND
+  description = $DESC
+build memory.ld: CUSTOM_COMMAND
+  COMMAND = "C:/Temp/store a/packages/cmake/bin/cmake.exe" "-DSOURCE=C:/Temp/store a/packages/sdk/memory.ld.in"
+  DESC = Generating C:/Temp/store a/packages/sdk/memory.ld.in linker script...
+  description = Display /usr/bin/unused-text
+`
+	must(t, os.WriteFile(filepath.Join(dir, "build.ninja"), []byte(graph), 0644))
+	leaks, err := NinjaLeaks(dir, []string{"C:/Temp/store a"})
+	must(t, err)
+	if len(leaks) != 0 {
+		t.Fatal("display text treated as input", leaks)
+	}
+	graph += `build bad: CUSTOM_COMMAND
+  COMMAND = "C:/Temp/store a-other/tool.exe" "-DSOURCE=C:/External SDK/input"
+`
+	must(t, os.WriteFile(filepath.Join(dir, "build.ninja"), []byte(graph), 0644))
+	leaks, err = NinjaLeaks(dir, []string{"C:/Temp/store a"})
+	must(t, err)
+	if len(leaks) != 2 {
+		t.Fatal("actual external command/input not detected", leaks)
+	}
+}
+
 func TestWindowsSystemCommandIsAnExactException(t *testing.T) {
 	dir := t.TempDir()
 	cmd := `C:\Windows\System32\cmd.exe`
