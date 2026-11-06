@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net/url"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/miloVV13/slepok/internal/pkgtar"
@@ -28,6 +30,25 @@ func (f *Fetcher) installPython(name string, src profile.Source, portable bool) 
 		if err != nil {
 			return "", err
 		}
+		if name == "project-python" {
+			u, err := url.Parse(a.URL)
+			if err != nil {
+				return "", err
+			}
+			filename := path.Base(u.Path)
+			if !strings.HasSuffix(filename, ".whl") {
+				return "", fmt.Errorf("project Python dependencies require wheels")
+			}
+			file, err := os.Open(archive)
+			if err != nil {
+				return "", err
+			}
+			err = tree.File(f.ctx(), ".slepok-wheels/"+filename, 0o644, file)
+			file.Close()
+			if err != nil {
+				return "", err
+			}
+		}
 		sink := &pythonSink{portableSink: portableSink{tree, f.ctx()}, archive: a, seen: map[string]bool{}}
 		format := a.Format
 		if format == "wheel" {
@@ -44,7 +65,11 @@ func (f *Fetcher) installPython(name string, src profile.Source, portable bool) 
 	}
 	// PYTHONPATH exposes the library root; sitecustomize also processes the
 	// pinned wheels' .pth files as an ordinary site-packages installation does.
-	if err := tree.File(f.ctx(), "sitecustomize.py", 0o644, strings.NewReader("import os, site\nsite.addsitedir(os.path.dirname(__file__))\n")); err != nil {
+	startup := "import os, site\nsite.addsitedir(os.path.dirname(__file__))\n"
+	if name == "project-python" {
+		startup = "import os, site\nfor directory in os.environ.get('PYTHONPATH', '').split(os.pathsep):\n    if directory: site.addsitedir(directory)\n"
+	}
+	if err := tree.File(f.ctx(), "sitecustomize.py", 0o644, strings.NewReader(startup)); err != nil {
 		return "", err
 	}
 	file, err := os.CreateTemp(work, "canonical-")

@@ -78,6 +78,30 @@ func TestPythonBundlePortableAndNativeAgree(t *testing.T) {
 	}
 }
 
+func TestProjectPythonCarriesOriginalWheel(t *testing.T) {
+	wheel := pythonWheel(t, map[string]string{"demo.py": "value = 42\n", "demo-1.dist-info/METADATA": "Name: demo\nVersion: 1\n"})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write(wheel) }))
+	defer srv.Close()
+	f := newFetcher(t)
+	src := profile.Source{Python: []profile.PythonArchive{{URL: srv.URL + "/demo-1-py3-none-any.whl", SHA256: sha(wheel), Format: "wheel"}}}
+	digest, err := f.Install("project-python", src)
+	requireOK(t, err)
+	dir, err := f.Store.Path(digest)
+	requireOK(t, err)
+	data, err := os.ReadFile(filepath.Join(dir, ".slepok-wheels", "demo-1-py3-none-any.whl"))
+	requireOK(t, err)
+	if !bytes.Equal(data, wheel) {
+		t.Fatal("original wheel missing or changed")
+	}
+	src.Digest = digest
+	other := newFetcher(t)
+	got, err := other.InstallPortable("project-python", src)
+	requireOK(t, err)
+	if got != digest {
+		t.Fatal("foreign and native Python bundles differ")
+	}
+}
+
 func TestPythonBundleRejectsUnsupportedOrConflictingFiles(t *testing.T) {
 	for _, files := range []map[string]string{
 		{"demo-1.data/headers/header.h": "x"},

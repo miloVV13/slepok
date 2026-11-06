@@ -99,6 +99,11 @@ source commit, toolchain version and third-party license notices.
 
 ## Commands
 
+Build-time Python libraries can be declared with exact versions in
+`[python].requirements` in `slepok.toml`. Run `slepok init` to pin the full
+wheel graph; snapshots carry those libraries for offline builds. See
+[project Python dependencies](docs/PYTHON.md) for CMake integration and limits.
+
 | Command | What it does |
 |---|---|
 | `slepok init [--mcu rp2040\|stm32f103c8\|esp32] [--board board] [dir]` | Creates a starter project or adds Slepok to existing sources. Downloads and verifies only the selected MCU profile's packages. `--profile` remains an equivalent selection flag. |

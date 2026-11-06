@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 
 	"github.com/BurntSushi/toml"
@@ -28,9 +29,16 @@ type Config struct {
 	Profile string `toml:"profile"`
 	Board   string `toml:"board"`
 	// Platforms are the host platforms snapshots carry packages for.
-	Platforms []string `toml:"platforms"`
-	BuildDir  string   `toml:"build_dir"`
+	Platforms []string     `toml:"platforms"`
+	BuildDir  string       `toml:"build_dir"`
+	Python    PythonConfig `toml:"python,omitempty"`
 }
+
+type PythonConfig struct {
+	Requirements []string `toml:"requirements,omitempty"`
+}
+
+var pinnedPythonRequirement = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*(\[[A-Za-z0-9_,.-]+\])?==[A-Za-z0-9][A-Za-z0-9.!+_-]*$`)
 
 type Lock struct {
 	Profile        string `toml:"profile"`
@@ -38,8 +46,9 @@ type Lock struct {
 	// SourceDateEpoch is exported as SOURCE_DATE_EPOCH to every build, so
 	// that dates the toolchain embeds (__DATE__, __TIME__) are the same on
 	// every machine: the moment the environment was pinned.
-	SourceDateEpoch int64           `toml:"source_date_epoch,omitempty"`
-	Packages        []LockedPackage `toml:"package"`
+	SourceDateEpoch    int64           `toml:"source_date_epoch,omitempty"`
+	Packages           []LockedPackage `toml:"package"`
+	PythonRequirements []string        `toml:"python_requirements,omitempty"`
 }
 
 type LockedPackage struct {
@@ -127,6 +136,11 @@ func decodeFile(p string, v any) error {
 
 // Validate checks the configuration against the profile it names.
 func (c *Config) Validate() error {
+	for _, requirement := range c.Python.Requirements {
+		if !pinnedPythonRequirement.MatchString(requirement) {
+			return fmt.Errorf("python.requirements: %q must be name==version (optional extras allowed)", requirement)
+		}
+	}
 	prof, err := profile.Load(c.Profile)
 	if err != nil {
 		return err
@@ -139,6 +153,17 @@ func (c *Config) Validate() error {
 	}
 	if err := safepath.CheckForHost(c.BuildDir); err != nil {
 		return fmt.Errorf("build_dir: %w", err)
+	}
+	return nil
+}
+
+// CheckPythonLock prevents a changed configuration from silently building with old libraries.
+func (p *Project) CheckPythonLock() error {
+	if p.Lock == nil {
+		return fmt.Errorf("missing slepok.lock; run slepok init")
+	}
+	if !slices.Equal(p.Config.Python.Requirements, p.Lock.PythonRequirements) {
+		return fmt.Errorf("Python requirements changed; run slepok init to pin the new environment")
 	}
 	return nil
 }

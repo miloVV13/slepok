@@ -135,6 +135,30 @@ func ResolveContext(ctx context.Context, prof *profile.Profile, lock *project.Lo
 		e.Path = append(e.Path, filepath.Join(root, "bin"))
 		e.Vars["OPENOCD_SCRIPTS"] = filepath.Join(root, "openocd", "scripts")
 	}
+	if len(lock.PythonRequirements) != 0 {
+		pythonRoot := vars["python"]
+		if pythonRoot == "" {
+			return nil, fmt.Errorf("missing project Python runtime; run slepok init")
+		}
+		pythonBin, executable := filepath.Join(pythonRoot, "bin"), "python3"
+		if platform == "windows-x64" {
+			pythonBin, executable = pythonRoot, "python.exe"
+		}
+		if !slices.Contains(e.Path, pythonBin) {
+			e.Path = append([]string{pythonBin}, e.Path...)
+		}
+		e.Configure = append(e.Configure, "-DPython3_EXECUTABLE="+filepath.Join(pythonBin, executable))
+		root := vars["project-python"]
+		if root == "" {
+			return nil, fmt.Errorf("missing project Python libraries for %s; run slepok init", platform)
+		}
+		if existing := e.Vars["PYTHONPATH"]; existing != "" {
+			root += string(os.PathListSeparator) + existing
+		}
+		e.Vars["PYTHONPATH"] = root
+		e.Vars["PYTHONNOUSERSITE"] = "1"
+		e.Vars["PYTHONDONTWRITEBYTECODE"] = "1"
+	}
 	return e, nil
 }
 

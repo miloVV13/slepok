@@ -152,6 +152,11 @@ func runInit(ctx context.Context, fs *flag.FlagSet, args []string) error {
 	if err != nil {
 		return err
 	}
+	// Removed or edited requirements must not trigger downloads of the old
+	// library graph before the new graph is resolved.
+	if !slices.Equal(cfg.Python.Requirements, lock.PythonRequirements) || len(cfg.Python.Requirements) == 0 {
+		lock.Packages = slices.DeleteFunc(lock.Packages, func(p project.LockedPackage) bool { return p.Name == "project-python" })
+	}
 	if err := project.WriteConfig(dir, cfg); err != nil {
 		return err
 	}
@@ -190,6 +195,9 @@ func runInit(ctx context.Context, fs *flag.FlagSet, args []string) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
+	if err := prepareProjectPython(ctx, cfg, lock, st, f); err != nil {
+		return err
+	}
 	if lock.SourceDateEpoch == 0 {
 		lock.SourceDateEpoch = time.Now().Unix()
 	}
@@ -204,6 +212,14 @@ func runInit(ctx context.Context, fs *flag.FlagSet, args []string) error {
 // lockFor returns the existing lock of the project, so that every machine
 // gets exactly the same packages, or a new one from the profile.
 func lockFor(dir string, cfg project.Config, prof *profile.Profile) (*project.Lock, error) {
+	components := slices.Clone(prof.Components)
+	if len(cfg.Python.Requirements) != 0 && !slices.ContainsFunc(components, func(c profile.Component) bool { return c.Name == "python" }) {
+		c, err := profile.LoadComponent("python")
+		if err != nil {
+			return nil, err
+		}
+		components = append(components, c)
+	}
 	lock := &project.Lock{Profile: prof.ID, ProfileVersion: prof.Version}
 	if p, err := project.Load(dir); err == nil && p.Lock != nil {
 		if p.Lock.Profile != cfg.Profile {
@@ -219,7 +235,7 @@ func lockFor(dir string, cfg project.Config, prof *profile.Profile) (*project.Lo
 		existing[pkg.Name+"/"+pkg.Platform] = pkg
 	}
 	for _, platform := range cfg.Platforms {
-		for _, c := range prof.Components {
+		for _, c := range components {
 			if !c.Supports(platform) {
 				continue
 			}
@@ -335,6 +351,9 @@ var buildCmd = &command{
 func loadEnv(ctx context.Context) (*project.Project, *runner.Env, error) {
 	p, err := project.Find(".")
 	if err != nil {
+		return nil, nil, err
+	}
+	if err := p.CheckPythonLock(); err != nil {
 		return nil, nil, err
 	}
 	prof, err := profile.Load(p.Config.Profile)
@@ -567,6 +586,9 @@ func snapshotPackages(p *project.Project, st *store.Store, prof *profile.Profile
 		available := map[string]bool{}
 		for _, pkg := range pkgs {
 			available[pkg.Name] = true
+		}
+		if len(p.Config.Python.Requirements) != 0 && !available["project-python"] {
+			return nil, fmt.Errorf("missing project Python wheels for %s; run slepok init", platform)
 		}
 		for _, c := range prof.Components {
 			if !c.Supports(platform) {

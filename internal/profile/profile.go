@@ -149,6 +149,8 @@ type SourceArchive struct {
 // PythonArchive is a pinned wheel, or an explicitly selected pure-Python
 // source distribution. Source distributions are copied, never executed.
 type PythonArchive struct {
+	Name    string   `toml:"name,omitempty"`
+	Version string   `toml:"version,omitempty"`
 	URL     string   `toml:"url"`
 	SHA256  string   `toml:"sha256"`
 	Format  string   `toml:"format"`
@@ -208,23 +210,9 @@ func Load(id string) (*Profile, error) {
 	}
 	var shared []Component
 	for _, name := range p.SharedComponents {
-		if !componentNameRe.MatchString(name) {
-			return nil, fmt.Errorf("profile %s: invalid shared component %q", id, name)
-		}
-		data, err := fs.ReadFile(FS, path.Join("components", name+".toml"))
+		component, err := LoadComponent(name)
 		if err != nil {
-			return nil, fmt.Errorf("profile %s: shared component %s: %w", id, name, err)
-		}
-		var component Component
-		md, err := toml.Decode(string(data), &component)
-		if err != nil {
-			return nil, fmt.Errorf("shared component %s: %w", name, err)
-		}
-		if len(md.Undecoded()) > 0 {
-			return nil, fmt.Errorf("shared component %s: unknown keys %v", name, md.Undecoded())
-		}
-		if component.Name != name {
-			return nil, fmt.Errorf("shared component %s declares name %q", name, component.Name)
+			return nil, fmt.Errorf("profile %s: %w", id, err)
 		}
 		shared = append(shared, component)
 	}
@@ -233,6 +221,26 @@ func Load(id string) (*Profile, error) {
 		return nil, fmt.Errorf("profile %s: %w", id, err)
 	}
 	return &p, nil
+}
+
+// LoadComponent returns a shared, pinned tool for optional project dependencies.
+func LoadComponent(name string) (Component, error) {
+	var c Component
+	if !componentNameRe.MatchString(name) {
+		return c, fmt.Errorf("invalid shared component %q", name)
+	}
+	data, err := fs.ReadFile(FS, path.Join("components", name+".toml"))
+	if err != nil {
+		return c, err
+	}
+	md, err := toml.Decode(string(data), &c)
+	if err != nil {
+		return c, err
+	}
+	if len(md.Undecoded()) > 0 || c.Name != name {
+		return c, fmt.Errorf("invalid shared component %s", name)
+	}
+	return c, nil
 }
 
 var (
